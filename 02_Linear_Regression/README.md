@@ -36,7 +36,7 @@ Sau khi hoàn thành chương này, sinh viên có thể:
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/chuminhuneti/Machine-Learning/blob/main/02_Linear_Regression/notebooks/Linear_Regression.ipynb)
 
-### .42. Bài giảng HTML
+### 4.2. Bài giảng HTML
 
 - [Xem bài giảng Linear Regression – Từng bước](https://chuminhuneti.github.io/Machine-Learning/02_Linear_Regression/html/Linear_Regression_tung_buoc.html)
 - [Danh sách tài liệu HTML](html/)
