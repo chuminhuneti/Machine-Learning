@@ -47,12 +47,11 @@ Sau khi hoàn thành chương này, sinh viên có thể:
 
 ### 4.4. Tài liệu học tập (Word và PDF)
 
-- [Danh sách tài liệu](documents/)
+- [Đọc tài liệu PDF](documents/Linear_Regression.pdf)
 
 ### 4.5. Bài giảng trình chiếu
 
-- [Danh sách bài giảng PowerPoint](slides/)
-
+- [Xem slide PDF](slides/Linear_Regressiom_Slides.pdf)
 
 
 ## 5. Công cụ thực hành
