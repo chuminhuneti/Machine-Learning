@@ -27,3 +27,8 @@ Day la lan cap nhat dau tien tu may tinh.
 Tôi thử tính năng pull để cập nhật thay đổ tiwf GitHub về pc
 
 Bạn cần nhấn Fetch origin, sau đó nhấn Pull origin nếu có cập nhật cần lấy về.
+
+## Experiment
+
+This branch is used for experimenting
+with Adam optimization.
