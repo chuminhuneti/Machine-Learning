@@ -47,3 +47,10 @@ Các Notebook `.ipynb` có thể được xem trực tiếp trên GitHub hoặc 
 ---
 
 **Machine Learning – Học từ nguyên lý, thực hành bằng dữ liệu, phát triển tư duy mô hình.**
+
+
+---
+
+## Copyright
+
+All Rights Reserved. See [LICENSE](LICENSE.md).
