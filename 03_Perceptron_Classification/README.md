@@ -32,7 +32,6 @@ Sau khi hoàn thành chương này, sinh viên có thể:
 ### 4.2. Bài giảng HTML
 
 - [Xem bài giảng Linear Regression – Từng bước](https://chuminhuneti.github.io/Machine-Learning/03_Perceptron_Classification/html/Perceptron_Minh_hoa.html)
-- [Danh sách tài liệu HTML](html/)
 
 ### 4.3. Mã nguồn Python
 
