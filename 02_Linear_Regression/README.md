@@ -9,3 +9,21 @@ Chương này tập trung vào quá trình huấn luyện mô hình hồi quy tu
 ## 2. Nội dung
 
 ### 2.1. Mô hình hồi quy tuyến tính
+
+
+## Tài liệu học tập
+
+### 1. Notebook thực hành
+- [Linear Regression Notebook](notebooks/)
+
+### 2. Mã nguồn Python
+- [Python Code](code/)
+
+### 3. Tài liệu tham khảo
+- [PDF và Word](documents/)
+
+### 4. Tài liệu HTML
+- [HTML](html/)
+
+### 5. Bài giảng trình chiếu
+- [PowerPoint Slides](slides/)
