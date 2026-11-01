@@ -73,4 +73,4 @@ Sinh viên có thể sử dụng các công cụ sau:
 4. Thay đổi dữ liệu, tham số và thuật toán để quan sát ảnh hưởng đến quá trình huấn luyện.
 5. Sử dụng mã nguồn Python để tự xây dựng và thử nghiệm mô hình.
 
-**Lưu ý:** Khi thực hành trên Google Colab, sinh viên nên tạo một bản sao Notebook vào Google Drive trước khi chỉnh sửa để tránh làm thay đổi bản học liệu gốc trên GitHub.
+**Lưu ý:** Khi thực hành trên Google Colab, sinh viên nên chọn File → Save a copy in Drive để tạo bản Notebook riêng, thuận tiện cho việc chỉnh sửa và lưu trữ kết quả học tập. Notebook gốc trên GitHub được giữ nguyên.
