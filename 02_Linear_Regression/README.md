@@ -2,29 +2,69 @@
 
 ## 1. Giới thiệu
 
-Hồi quy tuyến tính (Linear Regression) là mô hình học máy có giám sát được sử dụng để dự đoán giá trị của một biến đầu ra liên tục dựa trên các biến đầu vào.
+Hồi quy tuyến tính (Linear Regression) là một mô hình học máy có giám sát, được sử dụng để dự đoán giá trị của biến đầu ra liên tục dựa trên các biến đầu vào.
 
-Chương này tập trung vào quá trình huấn luyện mô hình hồi quy tuyến tính, từ việc xây dựng mô hình, lựa chọn hàm mất mát đến sử dụng các thuật toán tối ưu để tìm tham số phù hợp.
+Trong chương này, chúng ta tập trung vào quá trình **huấn luyện mô hình hồi quy tuyến tính**, với ba thành phần cốt lõi:
 
-## 2. Nội dung
+- **Mô hình (Model):** Xây dựng hàm dự đoán và xác định các tham số cần học.
+- **Hàm mất mát (Loss Function):** Đo lường mức độ sai lệch giữa giá trị dự đoán và giá trị thực tế.
+- **Thuật toán tối ưu (Optimization Algorithm):** Điều chỉnh các tham số để tìm mô hình có hàm mất mát nhỏ.
 
-### 2.1. Mô hình hồi quy tuyến tính
+Chương học kết hợp lý thuyết, ví dụ tính toán, mã nguồn Python và thực hành trên Jupyter Notebook.
+
+## 2. Mục tiêu học tập
+
+Sau khi hoàn thành chương này, sinh viên có thể:
+
+- Hiểu cách xây dựng mô hình hồi quy tuyến tính từ dữ liệu.
+- Xác định và tính toán hàm mất mát của mô hình.
+- Hiểu cách tính gradient và ý nghĩa của gradient trong huấn luyện.
+- Trình bày và thực hiện thuật toán Gradient Descent.
+- Sử dụng Python để huấn luyện và đánh giá mô hình hồi quy tuyến tính.
+- Hiểu vai trò của các phương pháp điều chuẩn trong việc kiểm soát độ phức tạp của mô hình.
+
+## 3. Nội dung chương học
 
 
-## Tài liệu học tập
+## 4. Tài liệu học tập
 
-### 1. Notebook thực hành
-- [Linear Regression Notebook](notebooks/)
+### 4.1. Notebook thực hành
+
 - [Xem Notebook trên GitHub](notebooks/Linear_Regression.ipynb)
-- [Mở trực tiếp bằng Google Colab](https://colab.research.google.com/github/chuminhuneti/Machine-Learning/blob/main/02_Linear_Regression/notebooks/Linear_Regression.ipynb)
-### 2. Mã nguồn Python
-- [Python Code](code/)
+- [Mở Notebook trực tiếp bằng Google Colab](https://colab.research.google.com/github/chuminhuneti/Machine-Learning/blob/main/02_Linear_Regression/notebooks/Linear_Regression.ipynb)
 
-### 3. Tài liệu tham khảo
-- [PDF và Word](documents/)
+### 4.2. Mã nguồn Python
 
-### 4. Tài liệu HTML
-- [HTML](html/)
+- [Mã nguồn Python](code/)
 
-### 5. Bài giảng trình chiếu
-- [PowerPoint Slides](slides/)
+### 4.3. Tài liệu tham khảo
+
+- [Tài liệu PDF và Word](documents/)
+
+### 4.4. Tài liệu HTML
+
+- [Tài liệu HTML](html/)
+
+### 4.5. Bài giảng trình chiếu
+
+- [Slide bài giảng PowerPoint](slides/)
+
+## 5. Công cụ thực hành
+
+Sinh viên có thể sử dụng các công cụ sau:
+
+- Python.
+- Jupyter Notebook hoặc Google Colab.
+- NumPy, Pandas.
+- Matplotlib.
+- Scikit-learn.
+
+## 6. Hướng dẫn học tập
+
+1. Đọc tài liệu lý thuyết để nắm được mô hình, hàm mất mát và thuật toán tối ưu.
+2. Xem các ví dụ minh họa và bài giảng trình chiếu.
+3. Mở Notebook bằng Google Colab để chạy và thực hành.
+4. Thay đổi dữ liệu, tham số và thuật toán để quan sát ảnh hưởng đến quá trình huấn luyện.
+5. Sử dụng mã nguồn Python để tự xây dựng và thử nghiệm mô hình.
+
+**Lưu ý:** Khi thực hành trên Google Colab, sinh viên nên tạo một bản sao Notebook vào Google Drive trước khi chỉnh sửa để tránh làm thay đổi bản học liệu gốc trên GitHub.
