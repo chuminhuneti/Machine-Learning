@@ -1,0 +1,117 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Linear Regression từng bước</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root{--bg:#f3f5f9;--sf:#fff;--ink:#101a33;--ink2:#434d66;--mut:#677087;--line:#dce1ea;--pos:#2a78d6;--neg:#eb6834;--ok:#0f8a5f;--red:#d63a3a;--fb:"Be Vietnam Pro",system-ui,sans-serif;--fm:"JetBrains Mono",ui-monospace,monospace;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1320;--sf:#161c2c;--ink:#e8ebf3;--ink2:#bcc3d4;--mut:#8c95aa;--line:#2a3246;--pos:#3987e5;--neg:#d95926;--ok:#3fc08f;--red:#f06a6a;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0e1320;--sf:#161c2c;--ink:#e8ebf3;--ink2:#bcc3d4;--mut:#8c95aa;--line:#2a3246;--pos:#3987e5;--neg:#d95926;--ok:#3fc08f;--red:#f06a6a;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.65 var(--fb);padding:0 max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px))}
+.w{max-width:1000px;margin:0 auto}h1,h2{margin:0;line-height:1.2}h1{font-size:clamp(26px,5vw,42px)}h2{font-size:clamp(20px,3vw,27px)}
+section{padding:40px 0;border-top:1px solid var(--line)}section .w{display:flex;flex-direction:column;gap:16px}header{padding:40px 0 28px}header .w{display:flex;flex-direction:column;gap:14px}
+.ey{font:12px var(--fm);letter-spacing:.08em;text-transform:uppercase;color:var(--mut);margin:0 0 6px}.lede{color:var(--ink2);max-width:70ch;margin:0}
+.m{font-family:var(--fm);font-size:.92em;background:var(--line);padding:0 4px;border-radius:4px}
+.card{background:var(--sf);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.ctl{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}.ctl label{display:flex;gap:8px;align-items:center;font-size:14px}
+button{font:600 13px var(--fb);background:var(--ink);color:var(--bg);border:1px solid var(--ink);border-radius:8px;padding:7px 12px;cursor:pointer}button.g{background:none;color:var(--ink)}
+output{font-family:var(--fm);font-size:13px;min-width:48px}
+table{border-collapse:collapse;font:13px var(--fm);width:100%}th,td{padding:4px 8px;border-bottom:1px solid var(--line);text-align:right}th{color:var(--mut);font-weight:500}
+.sc{overflow-x:auto}.big{font:600 20px var(--fm)}.note{color:var(--mut);font-size:13px;margin:0}
+.ph{display:flex;flex-wrap:wrap;gap:8px}.ph span{padding:4px 10px;border:1px solid var(--line);border-radius:99px;font-size:13px;color:var(--mut)}.ph span.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.fx{font:13px/1.8 var(--fm);background:var(--bg);border-radius:8px;padding:10px;overflow-x:auto;white-space:pre}
+nav{position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);border-bottom:1px solid var(--line);padding:8px 0;z-index:5}nav a{margin-right:14px;font-size:13px;color:var(--ink2);text-decoration:none;white-space:nowrap}
+svg{width:100%;height:auto;display:block}.warn{color:var(--red);font-weight:600}
+</style></head><body>
+<header><div class="w"><p class="ey">Minh họa cho bài giảng Hồi quy tuyến tính</p><h1>Hồi quy tuyến tính, từng bước một</h1>
+<p class="lede">Mọi con số và biểu đồ được tính trực tiếp trong trình duyệt bằng đúng công thức của bài giảng, trên ví dụ 5 căn nhà (<span class="m">x</span> là diện tích, đơn vị 10 m², <span class="m">y</span> là giá, tỷ đồng). Kéo thanh trượt hoặc bấm nút để thấy mô hình học như thế nào.</p>
+<p class="lede"><b>Mô hình</b> <span class="m">ŷ = xw</span> + <b>Hàm mất mát</b> <span class="m">J = MSE</span> + <b>Tối ưu</b> Gradient Descent = <b>Huấn luyện</b></p></div></header>
+<nav><div class="w"><a href="#a1">1 Chọn đường</a><a href="#a2">2 Gradient Descent</a><a href="#a3">3 Phương trình chuẩn</a><a href="#a4">4 Quá khớp và Ridge</a><a href="#a5">5 MSE và MAE</a></div></nav>
+
+<section id="a1" style="border-top:0"><div class="w"><div><p class="ey">1 · Mô hình và hàm mất mát</p><h2>Vô số đường thẳng: đường nào tốt nhất?</h2></div>
+<p class="lede">Kéo <span class="m">w₀</span> (tịnh tiến) và <span class="m">w₁</span> (xoay) rồi quan sát các đoạn đỏ: đó là sai số <span class="m">eᵢ = ŷᵢ − yᵢ</span> đo theo phương dọc. MSE là trung bình bình phương của chúng.</p>
+<div class="card"><div class="ctl"><label>w₀ <input type="range" id="w0" min="-2" max="2" step="0.01" value="-0.35"><output id="w0o"></output></label><label>w₁ <input type="range" id="w1" min="0" max="1.2" step="0.01" value="0.55"><output id="w1o"></output></label>
+<button class="g" data-w="-0.35,0.55">Đường A</button><button class="g" data-w="0.2,0.35">Đường B</button><button class="g" data-w="-1,0.75">Đường C</button></div>
+<div class="cols"><div id="c1"></div><div class="sc"><table id="t1"></table><p class="big" id="j1" style="margin:10px 0 0"></p><p class="note">Bài giảng: đường A có J = 0,023; B = 0,3055; C = 0,2255.</p></div></div></div></div></section>
+
+<section id="a2"><div class="w"><div><p class="ey">2 · Gradient Descent</p><h2>Một lần cập nhật gồm bốn pha</h2></div>
+<p class="lede">Bắt đầu từ <span class="m">w = 0</span>. Mỗi vòng: (1) dự đoán và sai số, (2) mất mát J, (3) gradient <span class="m">∇J = (2/n)Xᵀe</span>, (4) cập nhật <span class="m">w ← w − η∇J</span>. Thử <b>η = 0,04</b> để thấy phân kỳ, rồi bật chuẩn hóa đặc trưng để thấy hội tụ chỉ sau vài bước.</p>
+<div class="card"><div class="ctl"><button id="bPh">Pha tiếp ▸</button><button id="bSt" class="g">Bước tiếp ⏭</button><button id="bBk" class="g">◂ Lùi</button><button id="bPl" class="g">▶ Tự động</button><button id="bRs" class="g">Đặt lại</button>
+<label>η <input type="range" id="eta" min="0.005" max="0.06" step="0.001" value="0.02"><output id="etao"></output></label><label><input type="checkbox" id="nz"> chuẩn hóa đặc trưng</label></div>
+<div class="ph" id="ph"></div>
+<div class="cols"><div class="stack"><div class="sc"><table id="t2"></table></div><div class="fx" id="fx"></div></div><div><div id="c2"></div><p class="note">Nền xanh càng đậm thì J càng thấp. Mỗi đường đen mảnh là một đường đồng mức, nối các điểm có cùng J (J = 0,05; 0,1; 0,2; 0,4; … nhân đôi dần ra ngoài). Đường đỏ là quỹ đạo của w, ngôi sao là w* tối ưu. Thung lũng dài và hẹp khiến thuật toán bò chậm; chuẩn hóa làm nó tròn hơn.</p></div></div>
+<div><p class="ey" style="margin:0">Mất mát J theo số bước (thang log)</p><div id="c3"></div></div></div></div></section>
+
+<section id="a3"><div class="w"><div><p class="ey">3 · Giải trực tiếp</p><h2>Phương trình chuẩn: không cần lặp</h2></div>
+<p class="lede">Đặt gradient bằng 0 ta được <span class="m">XᵀXw = Xᵀy</span>, tức <span class="m">w* = (XᵀX)⁻¹Xᵀy</span>. Với 5 căn nhà:</p><div class="card"><div class="fx" id="ne"></div></div></div></section>
+
+<section id="a4"><div class="w"><div><p class="ey">4 · Biến đổi đặc trưng, quá khớp và điều chuẩn</p><h2>Tăng bậc đa thức rồi kìm lại bằng Ridge</h2></div>
+<p class="lede">Chỉ cần thêm đặc trưng <span class="m">x², x³, …</span> là mô hình tuyến tính theo tham số vẫn khớp được đường cong. Nhưng bậc quá cao thì học cả nhiễu. 10 điểm huấn luyện (chấm đậm) và 200 điểm kiểm tra (chấm nhạt) là dữ liệu mô phỏng nên số liệu khác bảng của bài giảng, xu hướng thì giống.</p>
+<div class="card"><div class="ctl"><label>Bậc <input type="range" id="dg" min="1" max="9" step="1" value="2"><output id="dgo"></output></label><label>Ridge λ <input type="range" id="lm" min="0" max="5" step="1" value="0"><output id="lmo"></output></label></div>
+<div class="cols"><div id="c4"></div><div><table id="t4"></table><p class="note" id="n4" style="margin-top:8px"></p></div></div></div></div></section>
+
+<section id="a5"><div class="w"><div><p class="ey">5 · Hàm mất mát</p><h2>Một căn nhà ngoại lệ kéo lệch MSE mạnh hơn MAE</h2></div>
+<p class="lede">Thêm căn thứ sáu ở <span class="m">x = 8</span>. Kéo giá của nó lên cao: MSE bình phương sai số nên bị kéo theo, MAE (giá trị tuyệt đối) ít bị ảnh hưởng hơn.</p>
+<div class="card"><div class="ctl"><label>Giá căn thứ 6 <input type="range" id="oy" min="3" max="9" step="0.1" value="6"><output id="oyo"></output></label></div>
+<div class="cols"><div id="c5"></div><div><table id="t5"></table><p class="note" style="margin-top:8px">Xanh lá: MAE. Cam: MSE. Nét đứt: MSE khi chưa có ngoại lệ. Cột cuối là MAE đo trên 5 căn nhà bình thường. Bài giảng với y = 6,0: MSE cho w ≈ (−1,557; 0,829), MAE cho w ≈ (−0,80; 0,667).</p></div></div></div></div></section>
+
+<script>
+const $=i=>document.getElementById(i),f=(v,d=3)=>(+v).toFixed(d).replace('.',','),X=[3,4,5,6,7],Y=[1.2,1.9,2.4,3.2,3.3],n=5;
+const cs=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+function mk(W,H,xr,yr){const m=[38,10,10,26];return{W,H,m,xr,yr,sx:x=>m[0]+(x-xr[0])/(xr[1]-xr[0])*(W-m[0]-m[2]),sy:y=>H-m[3]-(y-yr[0])/(yr[1]-yr[0])*(H-m[1]-m[3])}}
+function ax(c,xs,ys){let s='';xs.forEach(v=>s+=`<line x1="${c.sx(v)}" x2="${c.sx(v)}" y1="${c.m[1]}" y2="${c.H-c.m[3]}" stroke="var(--line)"/><text x="${c.sx(v)}" y="${c.H-8}" font-size="11" fill="var(--mut)" text-anchor="middle">${v}</text>`);ys.forEach(v=>s+=`<line y1="${c.sy(v)}" y2="${c.sy(v)}" x1="${c.m[0]}" x2="${c.W-c.m[2]}" stroke="var(--line)"/><text y="${c.sy(v)+4}" x="${c.m[0]-5}" font-size="11" fill="var(--mut)" text-anchor="end">${v}</text>`);return s}
+const L=(c,w,a,b,col,dash)=>`<line x1="${c.sx(a)}" y1="${c.sy(w[0]+w[1]*a)}" x2="${c.sx(b)}" y2="${c.sy(w[0]+w[1]*b)}" stroke="${col}" stroke-width="2.4" ${dash?'stroke-dasharray="6 4"':''}/>`;
+const dot=(c,x,y,col,r=5,o=1)=>`<circle cx="${c.sx(x)}" cy="${c.sy(y)}" r="${r}" fill="${col}" opacity="${o}"/>`;
+const mse=(w,xs=X,ys=Y)=>xs.reduce((s,x,i)=>s+(w[0]+w[1]*x-ys[i])**2,0)/xs.length;
+function ls(xs,ys,wt){let a=0,b=0,c=0,p=0,q=0;xs.forEach((x,i)=>{const k=wt?wt[i]:1;a+=k;b+=k*x;c+=k*x*x;p+=k*ys[i];q+=k*x*ys[i]});const d=a*c-b*b;return[(c*p-b*q)/d,(a*q-b*p)/d]}
+// 1
+function r1(){const w=[+$('w0').value,+$('w1').value];$('w0o').textContent=f(w[0],2);$('w1o').textContent=f(w[1],2);const c=mk(420,300,[2,8],[0,4.5]);
+let s=`<svg viewBox="0 0 420 300">${ax(c,[2,3,4,5,6,7,8],[0,1,2,3,4])}${L(c,w,2,8,'var(--pos)')}`;let t='<tr><th>x</th><th>y</th><th>ŷ</th><th>e</th><th>e²</th></tr>';
+X.forEach((x,i)=>{const p=w[0]+w[1]*x,e=p-Y[i];s+=`<line x1="${c.sx(x)}" x2="${c.sx(x)}" y1="${c.sy(p)}" y2="${c.sy(Y[i])}" stroke="var(--red)" stroke-width="2.5"/>`+dot(c,x,Y[i],'var(--ink)');t+=`<tr><td>${x}</td><td>${f(Y[i],1)}</td><td>${f(p,2)}</td><td>${f(e,2)}</td><td>${f(e*e,3)}</td></tr>`});
+$('c1').innerHTML=s+'</svg>';$('t1').innerHTML=t;$('j1').textContent='J(w) = '+f(mse(w),4)}
+['w0','w1'].forEach(i=>$(i).oninput=r1);document.querySelectorAll('[data-w]').forEach(b=>b.onclick=()=>{const v=b.dataset.w.split(',');$('w0').value=v[0];$('w1').value=v[1];r1()});r1();
+// 2
+const G={h:[[0,0]],p:0,tm:null},mu=5,sg=Math.SQRT2;
+const feat=()=>$('nz').checked?X.map(x=>(x-mu)/sg):X;
+const Jf=(w,F)=>mse(w,F,Y),grad=(w,F)=>{const e=F.map((x,i)=>w[0]+w[1]*x-Y[i]);return[2/n*e.reduce((a,b)=>a+b,0),2/n*e.reduce((a,x,i)=>a+x*F[i],0)]};
+function upd(){const F=feat(),w=G.h[G.h.length-1],g=grad(w,F),h=+$('eta').value;G.h.push([w[0]-h*g[0],w[1]-h*g[1]])}
+function r2(){const F=feat(),nz=$('nz').checked,w=G.h[G.h.length-1],h=+$('eta').value,t=G.h.length-1;$('etao').textContent=f(h,3);
+const e=F.map((x,i)=>w[0]+w[1]*x-Y[i]),J=Jf(w,F),g=grad(w,F),P=G.p;
+$('ph').innerHTML=['1 Dự đoán và sai số','2 Mất mát J','3 Gradient','4 Cập nhật w'].map((a,i)=>`<span class="${i==P?'on':''}">${a}</span>`).join('');
+$('t2').innerHTML='<tr><th>'+(nz?'z':'x')+'</th><th>y</th><th>ŷ</th><th>e</th></tr>'+F.map((x,i)=>`<tr><td>${f(x,3)}</td><td>${f(Y[i],1)}</td><td>${f(w[0]+w[1]*x,3)}</td><td>${f(e[i],3)}</td></tr>`).join('');
+let s=`Bước t = ${t}   w = (${f(w[0])}; ${f(w[1])})\n`;if(P>=1)s+=`J(w) = ${isFinite(J)&&J<1e9?f(J,4):J.toExponential(2)}\n`;if(P>=2)s+=`∇J = (${f(g[0])}; ${f(g[1])})\n`;if(P>=3)s+=`w mới = w − ${f(h,3)}·∇J = (${f(w[0]-h*g[0])}; ${f(w[1]-h*g[1])})`;
+if(J>1e4)s+=`\n<span class="warn">Phân kỳ: η vượt ngưỡng ổn định (≈0,0358 với x chưa chuẩn hóa)</span>`;$('fx').innerHTML=s;
+// contour
+const R=nz?[[0,3],[-.6,1.6]]:[[-1.6,1.2],[-.2,1.1]],cv=mk(420,300,R[0],R[1]);let g2='';const N=34;
+for(let i=0;i<N;i++)for(let j=0;j<N;j++){const a=R[0][0]+(i+.5)/N*(R[0][1]-R[0][0]),b=R[1][0]+(j+.5)/N*(R[1][1]-R[1][0]),v=Math.log10(Jf([a,b],F)+.01),o=Math.max(0,Math.min(1,1-(v+2)/3.3));g2+=`<rect x="${cv.sx(a)}" y="${cv.sy(b+(R[1][1]-R[1][0])/N)}" width="${(cv.sx(R[0][1])-cv.sx(R[0][0]))/N+.6}" height="${(cv.sy(R[1][0])-cv.sy(R[1][1]))/N+.6}" fill="var(--pos)" opacity="${(o*.65).toFixed(2)}"/>`}
+let ct='';{const M=50,xa=i=>R[0][0]+i/M*(R[0][1]-R[0][0]),yb=j=>R[1][0]+j/M*(R[1][1]-R[1][0]),V=[];for(let i=0;i<=M;i++){V[i]=[];for(let j=0;j<=M;j++)V[i][j]=Jf([xa(i),yb(j)],F)}let d='';[.05,.1,.2,.4,.8,1.6,3.2,6.4,12.8,25.6].forEach(lv=>{for(let i=0;i<M;i++)for(let j=0;j<M;j++){const c=[[i,j],[i+1,j],[i+1,j+1],[i,j+1]],pt=[];for(let k=0;k<4;k++){const a=c[k],b=c[(k+1)%4],va=V[a[0]][a[1]],vb=V[b[0]][b[1]];if((va>lv)!=(vb>lv)){const t=(lv-va)/(vb-va);pt.push([cv.sx(xa(a[0]+t*(b[0]-a[0]))),cv.sy(yb(a[1]+t*(b[1]-a[1])))])}}for(let k=0;k+1<pt.length;k+=2)d+=`M${pt[k][0].toFixed(1)},${pt[k][1].toFixed(1)}L${pt[k+1][0].toFixed(1)},${pt[k+1][1].toFixed(1)}`}});ct=`<path d="${d}" fill="none" stroke="var(--ink)" stroke-width="1" opacity=".55"/>`}
+const ws=nz?[2.4,.7778]:[-.35,.55];let pth=G.h.filter(q=>isFinite(q[0])&&Math.abs(q[0])<50&&Math.abs(q[1])<50).map(q=>`${cv.sx(q[0])},${cv.sy(q[1])}`).join(' ');
+$('c2').innerHTML=`<svg viewBox="0 0 420 300">${g2}${ct}<polyline points="${pth}" fill="none" stroke="var(--red)" stroke-width="2"/>${G.h.slice(-1).map(q=>dot(cv,q[0],q[1],'var(--red)',4)).join('')}<text x="${cv.sx(ws[0])}" y="${cv.sy(ws[1])+5}" font-size="16" fill="var(--ok)" text-anchor="middle">★</text><text x="${cv.W/2}" y="${cv.H-6}" font-size="11" fill="var(--mut)" text-anchor="middle">${nz?'w₀′':'w₀'} (ngang) và ${nz?'w₁′':'w₁'} (dọc)</text></svg>`;
+const Js=G.h.map(q=>Math.max(Jf(q,F),1e-3)),c3=mk(900,200,[0,Math.max(10,t)],[-3,4]);
+$('c3').innerHTML=`<svg viewBox="0 0 900 200">${ax(c3,[0,Math.max(10,t)],[-2,0,2,4])}<polyline fill="none" stroke="var(--neg)" stroke-width="2.4" points="${Js.map((v,i)=>`${c3.sx(i)},${c3.sy(Math.min(4,Math.log10(v)))}`).join(' ')}"/></svg>`}
+const to=()=>{G.h=[[0,0]];G.p=0;r2()};
+$('bPh').onclick=()=>{if(G.p==3){upd();G.p=0}else G.p++;r2()};$('bSt').onclick=()=>{upd();G.p=0;r2()};$('bBk').onclick=()=>{if(G.h.length>1)G.h.pop();G.p=0;r2()};$('bRs').onclick=()=>{clearInterval(G.tm);G.tm=null;$('bPl').textContent='▶ Tự động';to()};
+$('bPl').onclick=()=>{if(G.tm){clearInterval(G.tm);G.tm=null;$('bPl').textContent='▶ Tự động'}else{$('bPl').textContent='⏸ Dừng';G.tm=setInterval(()=>{if(G.h.length>400)return $('bPl').click();upd();G.p=0;r2()},120)}};
+$('eta').oninput=to;$('nz').onchange=()=>{$('eta').min=$('nz').checked?.05:.005;$('eta').max=$('nz').checked?.9:.06;$('eta').step=$('nz').checked?.01:.001;$('eta').value=$('nz').checked?.3:.02;to()};r2();
+// 3
+(()=>{const sx=X.reduce((a,b)=>a+b),sxx=X.reduce((a,b)=>a+b*b,0),sy=Y.reduce((a,b)=>a+b),sxy=X.reduce((a,x,i)=>a+x*Y[i],0),d=n*sxx-sx*sx,w=ls(X,Y);
+$('ne').textContent=`XᵀX = [ ${n}  ${sx} ; ${sx}  ${sxx} ]     Xᵀy = [ ${f(sy,1)} ; ${f(sxy,1)} ]\ndet(XᵀX) = ${n}·${sxx} − ${sx}² = ${d}\nw* = (1/${d}) · [ ${sxx}·${f(sy,1)} − ${sx}·${f(sxy,1)} ; −${sx}·${f(sy,1)} + ${n}·${f(sxy,1)} ] = [ ${f(w[0],2)} ; ${f(w[1],2)} ]\nJ(w*) = ${f(mse(w),3)}  (chính là đường A)\n\nGradient Descent sau chuẩn hóa cũng dẫn tới w' = (2,4; 0,7778) rồi quy về:\nw₁ = 0,7778/√2·… = 0,55 ; w₀ = 2,4 − 0,55·5 + … = −0,35 (khớp w*)`;
+$('ne').textContent=$('ne').textContent.replace(/\n\nGradient[\s\S]*$/,'\n\nGradient Descent trên z=(x−5)/σ, σ=√2, hội tụ về w′ = (2,4; 0,7778).\nQuy về thang gốc: w₁ = w₁′/σ = 0,7778/√2 = 0,55 và w₀ = w₀′ − w₁·x̄ = 2,4 − 0,55·5 = −0,35. Khớp w*.')})();
+// 4
+let sd=7;const rn=()=>(sd=(sd*1664525+1013904223)%4294967296)/4294967296,gs=()=>Math.sqrt(-2*Math.log(rn()+1e-9))*Math.cos(6.2832*rn());
+const tf=x=>1+2.4*x-2.6*x*x,mkd=k=>{const a=[];for(let i=0;i<k;i++){const x=k==10?(i+.5)/10:rn();a.push([x,tf(x)+.25*gs()])}return a},TR=mkd(10),TE=mkd(200);
+function solve(A,b){const m=b.length;for(let i=0;i<m;i++){let p=i;for(let r=i+1;r<m;r++)if(Math.abs(A[r][i])>Math.abs(A[p][i]))p=r;[A[i],A[p]]=[A[p],A[i]];[b[i],b[p]]=[b[p],b[i]];for(let r=i+1;r<m;r++){const k=A[r][i]/A[i][i];for(let c=i;c<m;c++)A[r][c]-=k*A[i][c];b[r]-=k*b[i]}}const w=Array(m).fill(0);for(let i=m-1;i>=0;i--){let s=b[i];for(let c=i+1;c<m;c++)s-=A[i][c]*w[c];w[i]=s/A[i][i]}return w}
+const LM=[0,1e-4,1e-3,1e-2,.1,1],ph=(x,d)=>Array.from({length:d+1},(_,k)=>(2*x-1)**k),pr=(w,x)=>ph(x,w.length-1).reduce((s,v,k)=>s+v*w[k],0);
+function r4(){const d=+$('dg').value,lam=LM[+$('lm').value];$('dgo').textContent=d;$('lmo').textContent=lam;const m=d+1,A=Array.from({length:m},()=>Array(m).fill(0)),b=Array(m).fill(0);
+TR.forEach(([x,y])=>{const p=ph(x,d);for(let i=0;i<m;i++){b[i]+=p[i]*y;for(let j=0;j<m;j++)A[i][j]+=p[i]*p[j]}});for(let i=1;i<m;i++)A[i][i]+=10*lam;const w=solve(A,b);
+const e=D=>D.reduce((s,[x,y])=>s+(pr(w,x)-y)**2,0)/D.length,c=mk(420,300,[0,1],[0,2.2]);let pts='';for(let i=0;i<=100;i++){const x=i/100;pts+=`${c.sx(x)},${c.sy(Math.max(-.5,Math.min(2.2,pr(w,x))))} `}
+$('c4').innerHTML=`<svg viewBox="0 0 420 300">${ax(c,[0,.25,.5,.75,1],[0,.5,1,1.5,2])}${TE.map(q=>dot(c,q[0],q[1],'var(--mut)',2.2,.35)).join('')}<polyline points="${pts}" fill="none" stroke="var(--neg)" stroke-width="2.5"/>${TR.map(q=>dot(c,q[0],q[1],'var(--ink)',5)).join('')}</svg>`;
+const nw=Math.hypot(...w.slice(1)),tr=e(TR),te=e(TE);$('t4').innerHTML=`<tr><th>Số tham số</th><td>${m}</td></tr><tr><th>MSE huấn luyện</th><td>${f(tr,4)}</td></tr><tr><th>MSE kiểm tra</th><td>${f(te,4)}</td></tr><tr><th>‖w₁:m‖</th><td>${nw>1e4?nw.toExponential(1):f(nw,2)}</td></tr>`;
+$('n4').textContent=d==1?'Bậc 1: thiếu khớp, sai số cao ở cả hai tập.':d<=3?'Bậc vừa phải: sai số kiểm tra gần mức nhiễu (0,25² = 0,0625).':lam==0?'Bậc cao, λ = 0: sai số huấn luyện rất thấp nhưng kiểm tra tăng, trọng số rất lớn. Đây là quá khớp. Thử tăng λ.':'Ridge phạt trọng số lớn nên đường cong mượt lại và sai số kiểm tra giảm.'}
+$('dg').oninput=$('lm').oninput=r4;r4();
+// 5
+function r5(){const oy=+$('oy').value;$('oyo').textContent=f(oy,1);const xs=[...X,8],ys=[...Y,oy],wm=ls(xs,ys),w0=ls(X,Y);let wa=wm.slice();for(let k=0;k<200;k++){const wt=xs.map((x,i)=>1/Math.max(Math.abs(wa[0]+wa[1]*x-ys[i]),1e-6));wa=ls(xs,ys,wt)}
+const c=mk(420,300,[2,9],[0,9]),mae=w=>X.reduce((s,x,i)=>s+Math.abs(w[0]+w[1]*x-Y[i]),0)/n;
+$('c5').innerHTML=`<svg viewBox="0 0 420 300">${ax(c,[2,3,4,5,6,7,8,9],[0,2,4,6,8])}${L(c,w0,2,9,'var(--mut)',1)}${L(c,wm,2,9,'var(--neg)')}${L(c,wa,2,9,'var(--ok)')}${X.map((x,i)=>dot(c,x,Y[i],'var(--ink)')).join('')}<rect x="${c.sx(8)-6}" y="${c.sy(oy)-6}" width="12" height="12" fill="var(--red)"/></svg>`;
+$('t5').innerHTML=`<tr><th></th><th>w₀</th><th>w₁</th><th>MAE 5 nhà</th></tr><tr><td>MSE, không ngoại lệ</td><td>${f(w0[0],2)}</td><td>${f(w0[1],3)}</td><td>${f(mae(w0),3)}</td></tr><tr><td>MSE, có ngoại lệ</td><td>${f(wm[0],2)}</td><td>${f(wm[1],3)}</td><td>${f(mae(wm),3)}</td></tr><tr><td>MAE, có ngoại lệ</td><td>${f(wa[0],2)}</td><td>${f(wa[1],3)}</td><td>${f(mae(wa),3)}</td></tr>`}
+$('oy').oninput=r5;r5();
+</script></body></html>
