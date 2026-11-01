@@ -44,7 +44,10 @@ Sau khi hoàn thành chương này, sinh viên có thể:
 
 ### 4.4. Tài liệu HTML
 
-- [Tài liệu HTML](html/)
+### 4. Tài liệu HTML
+
+- [Danh sách file HTML trên GitHub](html/)
+- [Xem bài giảng Linear Regression – Từng bước](https://chuminhuneti.github.io/Machine-Learning/02_Linear_Regression/html/Linear_Regression_tung_buoc.html)
 
 ### 4.5. Bài giảng trình chiếu
 
