@@ -16,3 +16,8 @@ Kho lưu trữ tài liệu học phần Học máy tại UNETI.
 - Matplotlib
 - Scikit-learn
 - Jupyter Notebook
+## Thong tin cap nhat
+
+Toi dang hoc cach su dung GitHub Desktop.
+
+Day la lan cap nhat dau tien tu may tinh.
