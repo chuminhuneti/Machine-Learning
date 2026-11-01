@@ -32,6 +32,7 @@ Sau khi hoàn thành chương này, sinh viên có thể:
 
 - [Xem Notebook trên GitHub](notebooks/Linear_Regression.ipynb)
 - [Mở Notebook trực tiếp bằng Google Colab](https://colab.research.google.com/github/chuminhuneti/Machine-Learning/blob/main/02_Linear_Regression/notebooks/Linear_Regression.ipynb)
+- [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/chuminhuneti/Machine-Learning/blob/main/02_Linear_Regression/notebooks/Linear_Regression.ipynb)
 
 ### 4.2. Mã nguồn Python
 
