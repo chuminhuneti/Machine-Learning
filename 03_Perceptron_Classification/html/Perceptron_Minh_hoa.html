@@ -1,0 +1,590 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Phòng thí nghiệm Perceptron</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Source+Serif+4:ital,wght@1,600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Bố cục: thanh điều hướng dính phía trên, ba phòng thí nghiệm xếp dọc (A huấn luyện từng bước, B dữ liệu lớn, C đánh giá), mỗi phòng là lưới hai cột gồm hình vẽ và bảng giải thích. */
+:root{
+  --bg:#F3F8FF; --surface:#FFFFFF; --ink:#172554; --muted:#4A5A7E; --line:#D3E1F6;
+  --pos:#2563EB; --pos-soft:#DCE9FF; --pos-ink:#1D4ED8;
+  --neg:#F97316; --neg-soft:#FFE6D3; --neg-ink:#C2410C;
+  --ok:#0B8F7A; --ok-soft:#D2F3EA; --ok-ink:#0B6B5B;
+  --warn:#FFC83D; --warn-soft:#FFF0BF;
+  --code:#172554; --code-ink:#E8EEFF; --code-dim:#7DD3C0;
+  --font-body:'Nunito',system-ui,'Segoe UI',Arial,sans-serif;
+  --font-math:'Source Serif 4',Georgia,'Times New Roman',serif;
+  --font-mono:'JetBrains Mono',ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0C1630; --surface:#14224A; --ink:#EAF0FF; --muted:#A9B7D8; --line:#2B3F72;
+  --pos:#6EA2FF; --pos-soft:#1F3B7C; --pos-ink:#A9C7FF;
+  --neg:#FF9A4D; --neg-soft:#5C2F14; --neg-ink:#FFB985;
+  --ok:#3DD6B5; --ok-soft:#0F4A41; --ok-ink:#7BE8CF;
+  --warn:#FFD866; --warn-soft:#5A4A12;
+  --code:#0A1226; --code-ink:#E8EEFF; --code-dim:#7DD3C0; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0C1630; --surface:#14224A; --ink:#EAF0FF; --muted:#A9B7D8; --line:#2B3F72;
+  --pos:#6EA2FF; --pos-soft:#1F3B7C; --pos-ink:#A9C7FF;
+  --neg:#FF9A4D; --neg-soft:#5C2F14; --neg-ink:#FFB985;
+  --ok:#3DD6B5; --ok-soft:#0F4A41; --ok-ink:#7BE8CF;
+  --warn:#FFD866; --warn-soft:#5A4A12;
+  --code:#0A1226; --code-ink:#E8EEFF; --code-dim:#7DD3C0; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:17px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 56px}
+.wrap{max-width:1180px;margin:0 auto}
+h1,h2,h3{text-wrap:balance;line-height:1.15;margin:0}
+p{margin:0}
+.bar-top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);border-bottom:2px solid var(--line);
+  padding:10px 0;display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--bg)}
+.nav{display:flex;gap:8px;flex-wrap:wrap}
+.nav a{color:var(--ink);text-decoration:none;font-weight:800;font-size:15px;padding:7px 14px;border-radius:999px;background:var(--surface);border:2px solid var(--line)}
+.nav a:hover{border-color:var(--pos)}
+.brand{font-weight:900;letter-spacing:.3px}
+.hero{padding:34px 0 10px;display:grid;gap:12px}
+.eyebrow{font-weight:800;font-size:14px;letter-spacing:2px;text-transform:uppercase;color:var(--pos-ink)}
+.hero h1{font-size:clamp(32px,6vw,56px);font-weight:900}
+.hero p.lead{max-width:68ch;color:var(--muted);font-size:19px}
+.legend-row{display:flex;gap:18px;flex-wrap:wrap;align-items:center;font-weight:700;font-size:15px}
+.legend-row span{display:inline-flex;align-items:center;gap:8px}
+.sq{width:16px;height:16px;background:var(--pos);display:inline-block;border-radius:3px}
+.ci{width:16px;height:16px;background:var(--neg);display:inline-block;border-radius:50%}
+section.lab{margin-top:44px;display:grid;gap:18px}
+.lab-head{display:grid;gap:6px}
+.lab-head h2{font-size:clamp(26px,4vw,38px);font-weight:900}
+.lab-head p{color:var(--muted);max-width:75ch}
+.tag{display:inline-block;background:var(--ink);color:var(--bg);font-weight:900;border-radius:8px;padding:2px 10px;margin-right:8px;font-size:.7em;vertical-align:middle}
+.card{background:var(--surface);border:2px solid var(--line);border-radius:22px;padding:18px;min-width:0}
+.grid2{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:900px){.grid2{grid-template-columns:minmax(0,1fr)}}
+.controls{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
+.controls label{font-weight:800;font-size:14px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+select,input[type=number]{font:inherit;font-weight:700;color:var(--ink);background:var(--bg);border:2px solid var(--line);border-radius:10px;padding:6px 10px}
+input[type=range]{accent-color:var(--pos);width:100%;min-width:0}
+button{font:inherit;font-weight:800;cursor:pointer;border-radius:12px;border:2px solid var(--line);background:var(--surface);color:var(--ink);padding:8px 14px}
+button:hover{border-color:var(--pos)}
+button.primary{background:var(--pos);border-color:var(--pos);color:#fff}
+:root[data-theme="dark"] button.primary{color:#0C1630}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) button.primary{color:#0C1630}}
+button:disabled{opacity:.45;cursor:default}
+button:focus-visible,select:focus-visible,input:focus-visible,a:focus-visible{outline:3px solid var(--warn);outline-offset:2px}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+svg.plot{width:100%;height:auto;display:block;background:var(--surface);border-radius:14px}
+svg text{font-family:var(--font-body);fill:var(--muted);font-size:13px}
+svg text.pl{font-weight:800;fill:#fff;font-size:13px}
+.m{font-family:var(--font-math);font-style:italic;font-weight:600}
+.mono{font-family:var(--font-mono);font-size:.92em}
+.step-box{display:grid;gap:10px}
+.step-title{font-weight:900;font-size:19px}
+.calc{background:var(--bg);border:2px solid var(--line);border-radius:14px;padding:12px 14px;display:grid;gap:6px;overflow-x:auto}
+.calc .row{font-family:var(--font-mono);font-size:14.5px;white-space:nowrap}
+.verdict{border-radius:14px;padding:10px 14px;font-weight:800}
+.verdict.good{background:var(--ok-soft);color:var(--ink)}
+.verdict.bad{background:var(--neg-soft);color:var(--ink)}
+.verdict.neutral{background:var(--warn-soft);color:var(--ink)}
+.margins{display:grid;gap:6px}
+.mrow{display:grid;grid-template-columns:64px minmax(0,1fr) 54px;gap:8px;align-items:center;font-size:14px;font-weight:700}
+.mtrack{position:relative;height:18px;background:var(--bg);border-radius:6px;border:1px solid var(--line)}
+.mtrack i{position:absolute;top:0;bottom:0;border-radius:5px}
+.mtrack b{position:absolute;left:50%;top:-2px;bottom:-2px;width:2px;background:var(--ink);opacity:.5}
+.mrow.cur{outline:2px solid var(--ok);outline-offset:3px;border-radius:6px}
+.epochs{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end}
+.ep{display:grid;gap:3px;justify-items:center;font-size:12px;font-weight:800;min-width:42px}
+.ep .col{width:30px;background:var(--line);border-radius:6px 6px 0 0;display:flex;align-items:flex-end}
+.ep .col i{display:block;width:100%;background:var(--neg);border-radius:6px 6px 0 0}
+.ep.now .col{outline:3px solid var(--ok)}
+.ep.fut{opacity:.4}
+.tablewrap{overflow-x:auto;border-radius:12px;border:2px solid var(--line);max-height:260px;overflow-y:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th{position:sticky;top:0;background:var(--ink);color:var(--bg);text-align:left;padding:6px 10px;white-space:nowrap}
+td{padding:6px 10px;border-top:1px solid var(--line);white-space:nowrap;font-variant-numeric:tabular-nums}
+tr.cur td{background:var(--warn-soft);font-weight:800}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.stat{background:var(--bg);border-radius:14px;padding:10px 12px;border:2px solid var(--line)}
+.stat small{display:block;font-weight:800;color:var(--muted);font-size:13px}
+.stat strong{font-size:26px;font-weight:900;font-variant-numeric:tabular-nums}
+.seg{display:inline-flex;border:2px solid var(--line);border-radius:12px;overflow:hidden}
+.seg button{border:0;border-radius:0;padding:7px 14px}
+.seg button[aria-pressed=true]{background:var(--pos);color:#fff}
+:root[data-theme="dark"] .seg button[aria-pressed=true]{color:#0C1630}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .seg button[aria-pressed=true]{color:#0C1630}}
+.note{font-size:15px;color:var(--muted)}
+.cm{display:grid;grid-template-columns:auto 1fr 1fr;gap:6px;align-items:stretch;font-weight:800}
+.cm .h{font-size:13px;color:var(--muted);display:flex;align-items:center;justify-content:center;text-align:center;padding:4px}
+.cm .cell{border-radius:14px;padding:12px 10px;text-align:center;border:2px solid var(--line);min-height:92px;display:grid;align-content:center;gap:2px}
+.cm .cell strong{font-size:34px;font-weight:900;font-variant-numeric:tabular-nums;line-height:1}
+.cm .cell span{font-size:13px;font-weight:800}
+.metric{display:grid;grid-template-columns:96px minmax(0,1fr) 62px;gap:10px;align-items:center;font-weight:800}
+.metric .t{height:22px;background:var(--bg);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.metric .t i{display:block;height:100%;border-radius:7px}
+.metric em{font-style:normal;font-variant-numeric:tabular-nums;text-align:right}
+.formula{font-family:var(--font-math);font-style:italic;font-weight:600;font-size:18px;overflow-x:auto;white-space:nowrap;padding:2px 0}
+.cmp td b{font-weight:900}
+.legend-mini{display:flex;gap:14px;flex-wrap:wrap;font-size:13.5px;font-weight:800;margin-top:8px}
+.legend-mini span{display:inline-flex;gap:6px;align-items:center}
+.line-s{width:26px;height:0;border-top:4px solid var(--pos);display:inline-block}
+.line-d{width:26px;height:0;border-top:4px dashed var(--neg);display:inline-block}
+.ring{width:16px;height:16px;border-radius:50%;border:3px solid var(--ok);display:inline-block}
+.ringw{width:16px;height:16px;border-radius:50%;border:3px solid var(--neg-ink);display:inline-block}
+footer{margin-top:50px;color:var(--muted);font-size:14px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+<div class="bar-top">
+  <span class="brand">Phòng thí nghiệm Perceptron</span>
+  <nav class="nav" aria-label="Các phần">
+    <a href="#phan-a">A · Huấn luyện từng bước</a>
+    <a href="#phan-b">B · Dữ liệu lớn</a>
+    <a href="#phan-c">C · Đánh giá</a>
+    <a href="#phan-d">D · Cạm bẫy accuracy</a>
+  </nav>
+</div>
+
+<header class="hero">
+  <p class="eyebrow">Học máy · Mô hình Perceptron</p>
+  <h1>Xem Perceptron học từng bước, rồi chấm điểm nó</h1>
+  <p class="lead">Phần A cho chạy thuật toán trên 6 sinh viên, từng mẫu một, với đầy đủ phép tính. Phần B huấn luyện trên 400 sinh viên mô phỏng, nơi hai lớp chồng lấn và thuật toán không dừng. Phần C đánh giá mô hình trên tập kiểm tra bằng ma trận nhầm lẫn, precision, recall và F1.</p>
+  <div class="legend-row">
+    <span><i class="sq"></i> Đậu (y = +1), dự đoán s ≥ 0</span>
+    <span><i class="ci"></i> Rớt (y = −1), dự đoán s &lt; 0</span>
+    <span>Trục ngang x₁ = giờ tự học, trục dọc x₂ = số buổi vắng</span>
+  </div>
+</header>
+
+<!-- ======================= PHẦN A ======================= -->
+<section class="lab" id="phan-a">
+  <div class="lab-head">
+    <h2><span class="tag">A</span>Huấn luyện từng bước trên 6 sinh viên</h2>
+    <p>Mỗi bước là một lần xét một sinh viên: tính điểm số s = xw, margin m = y·s. Nếu m ≤ 0 thì mô hình sai và w được sửa ngay: w ← w + η·y·xᵀ. Thuật toán dừng khi một epoch trọn vẹn không còn cập nhật nào.</p>
+  </div>
+  <div class="card controls">
+    <label for="a-order">Thứ tự duyệt
+      <select id="a-order"><option value="fixed">Cố định 1 → 6</option><option value="reverse">Ngược 6 → 1</option><option value="shuffle">Xáo trộn mỗi epoch</option></select></label>
+    <label for="a-eta">Tốc độ học η
+      <select id="a-eta"><option>0.1</option><option selected>1</option><option>10</option></select></label>
+    <label for="a-w0">Khởi tạo w
+      <select id="a-w0"><option value="0">[0; 0; 0]ᵀ</option><option value="1">[1; 1; 1]ᵀ</option><option value="2">[−2; 1; 0]ᵀ</option></select></label>
+    <button id="a-reseed" type="button">Xáo lại</button>
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <svg id="a-plot" class="plot" role="img" aria-label="Đồ thị sáu sinh viên và đường biên quyết định hiện tại"></svg>
+      <div class="legend-mini">
+        <span><i class="line-s"></i> Đường biên s = 0</span>
+        <span><i class="ring"></i> Mẫu đang xét</span>
+        <span>Mũi tên chỉ về phía dự đoán “đậu”</span>
+      </div>
+    </div>
+    <div class="card step-box">
+      <div class="btns">
+        <button id="a-prev" type="button">◀ Lùi</button>
+        <button id="a-next" type="button" class="primary">Bước tiếp ▶</button>
+        <button id="a-nextupd" type="button">Đến lần cập nhật kế</button>
+        <button id="a-play" type="button">▶ Tự chạy</button>
+        <button id="a-reset" type="button">Về đầu</button>
+      </div>
+      <label for="a-slider" class="note" style="display:grid;gap:4px">Tiến trình: <span id="a-posl"></span>
+        <input id="a-slider" type="range" min="0" max="1" value="0"></label>
+      <div class="controls"><label for="a-speed">Tốc độ tự chạy
+        <select id="a-speed"><option value="1400">Chậm</option><option value="800" selected>Vừa</option><option value="350">Nhanh</option></select></label></div>
+      <div id="a-explain" class="step-box" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="grid2">
+    <div class="card" style="display:grid;gap:10px">
+      <h3 style="font-size:19px">Margin của từng sinh viên với w hiện tại</h3>
+      <p class="note">Thanh xanh là m &gt; 0 (đúng), thanh cam là m ≤ 0 (sai, cần cập nhật). Mục tiêu: mọi thanh nằm bên phải vạch giữa.</p>
+      <div id="a-margins" class="margins"></div>
+    </div>
+    <div class="card" style="display:grid;gap:10px">
+      <h3 style="font-size:19px">Số lần cập nhật theo epoch</h3>
+      <div id="a-epochs" class="epochs"></div>
+      <p class="note" id="a-epnote"></p>
+      <h3 style="font-size:19px">Nhật ký các lần cập nhật</h3>
+      <div class="tablewrap"><table><thead><tr><th>Lần</th><th>Epoch</th><th>Mẫu</th><th>s trước</th><th>m</th><th>w sau</th></tr></thead><tbody id="a-log"></tbody></table></div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= PHẦN B ======================= -->
+<section class="lab" id="phan-b">
+  <div class="lab-head">
+    <h2><span class="tag">B</span>Dữ liệu lớn: khi hai lớp chồng lấn</h2>
+    <p>400 sinh viên mô phỏng (mỗi lớp 200), chia 70% huấn luyện và 30% kiểm tra. Dữ liệu được sinh ngay trong trang theo cùng phân phối như tài liệu, nên các con số gần với bài giảng nhưng không trùng từng số. Kéo thanh epoch để xem w dao động còn w trong “túi” chỉ tốt lên.</p>
+  </div>
+  <div class="card controls">
+    <label for="b-spread">Độ phân tán của dữ liệu
+      <input id="b-spread" type="range" min="0.2" max="1.4" step="0.05" value="1" style="width:160px"> <b id="b-spread-v"></b></label>
+    <label for="b-seed">Hạt ngẫu nhiên
+      <input id="b-seed" type="number" min="1" max="999" value="42" style="width:90px"></label>
+    <button id="b-regen" type="button" class="primary">Sinh dữ liệu và huấn luyện lại</button>
+    <span class="note" id="b-info"></span>
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <div class="controls" style="margin-bottom:10px">
+        <div class="seg" role="group" aria-label="Chọn tập dữ liệu hiển thị">
+          <button id="b-tr" type="button" aria-pressed="true">Tập huấn luyện</button>
+          <button id="b-te" type="button" aria-pressed="false">Tập kiểm tra</button>
+        </div>
+      </div>
+      <svg id="b-plot" class="plot" role="img" aria-label="Dữ liệu 400 sinh viên và hai đường biên"></svg>
+      <div class="legend-mini">
+        <span><i class="line-d"></i> w hiện tại (dao động)</span>
+        <span><i class="line-s"></i> w trong túi</span>
+        <span><i class="ringw"></i> Mẫu bị w túi dự đoán sai</span>
+      </div>
+    </div>
+    <div class="card" style="display:grid;gap:12px">
+      <h3 style="font-size:19px">Số mẫu sai trên tập huấn luyện theo epoch</h3>
+      <svg id="b-chart" class="plot" role="img" aria-label="Số mẫu sai theo epoch của w hiện tại và w túi" style="cursor:pointer"></svg>
+      <label for="b-epoch" class="note" style="display:grid;gap:4px">Epoch đang xem: <b id="b-epoch-v"></b>
+        <input id="b-epoch" type="range" min="1" max="100" value="100" data-sync="epoch"></label>
+      <div class="stats" id="b-stats"></div>
+      <p class="note" id="b-msg"></p>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= PHẦN C ======================= -->
+<section class="lab" id="phan-c">
+  <div class="lab-head">
+    <h2><span class="tag">C</span>Đánh giá mô hình trên tập kiểm tra</h2>
+    <p>Mô hình chỉ được chấm trên 120 sinh viên chưa từng dùng để học. Chọn mô hình, kéo ngưỡng quyết định và theo dõi ma trận nhầm lẫn cùng precision, recall, F1 thay đổi.</p>
+  </div>
+  <div class="card controls">
+    <label for="c-model">Mô hình cần chấm
+      <select id="c-model"><option value="pocket" selected>w túi (thuật toán túi)</option><option value="cur">w hiện tại ở epoch đang xem</option><option value="plain">w thuần túy (không xáo, không túi)</option></select></label>
+    <label for="c-epoch" style="flex:1;min-width:220px">Epoch <b id="c-epoch-v"></b>
+      <input id="c-epoch" type="range" min="1" max="100" value="100" data-sync="epoch" style="min-width:140px"></label>
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <svg id="c-plot" class="plot" role="img" aria-label="Tập kiểm tra, đường biên và các mẫu bị dự đoán sai"></svg>
+      <div class="legend-mini">
+        <span><i class="line-s"></i> Đường biên theo ngưỡng đã chọn</span>
+        <span><i class="ringw"></i> Mẫu bị dự đoán sai</span>
+      </div>
+      <label for="c-thr" style="display:grid;gap:4px;margin-top:12px;font-weight:800">Ngưỡng quyết định: dự đoán “đậu” khi khoảng cách có dấu tới đường biên ≥ <b id="c-thr-v"></b>
+        <input id="c-thr" type="range" min="-3" max="3" step="0.1" value="0"></label>
+      <p class="note" id="c-thr-note"></p>
+    </div>
+    <div class="card" style="display:grid;gap:14px">
+      <h3 style="font-size:19px">Ma trận nhầm lẫn (120 mẫu kiểm tra)</h3>
+      <div class="cm" id="c-cm"></div>
+      <div id="c-metrics" style="display:grid;gap:8px"></div>
+      <div class="formula" id="c-formula"></div>
+    </div>
+  </div>
+  <div class="card" style="display:grid;gap:10px">
+    <h3 style="font-size:19px">So sánh ba bộ tham số ở epoch đang xem</h3>
+    <div class="tablewrap" style="max-height:none"><table class="cmp"><thead><tr><th>Bộ tham số</th><th>w</th><th>Accuracy huấn luyện</th><th>Accuracy kiểm tra</th></tr></thead><tbody id="c-cmp"></tbody></table></div>
+    <p class="note">Accuracy kiểm tra thấp hơn huấn luyện một chút là bình thường. Nếu chênh rất lớn, mô hình đang học thuộc dữ liệu cũ (overfit).</p>
+  </div>
+</section>
+
+<!-- ======================= PHẦN D ======================= -->
+<section class="lab" id="phan-d">
+  <div class="lab-head">
+    <h2><span class="tag">D</span>Cạm bẫy của accuracy khi dữ liệu lệch lớp</h2>
+    <p>Một mô hình lười luôn dự đoán “rớt” cho mọi sinh viên. Kéo tỉ lệ sinh viên đậu trong dữ liệu và xem accuracy so với recall.</p>
+  </div>
+  <div class="card" style="display:grid;gap:12px">
+    <label for="d-p" style="font-weight:800;display:grid;gap:4px">Tỉ lệ sinh viên đậu trong 100 mẫu: <b id="d-pv"></b>
+      <input id="d-p" type="range" min="1" max="50" value="5"></label>
+    <div id="d-out" style="display:grid;gap:8px"></div>
+    <p class="note" id="d-note"></p>
+  </div>
+</section>
+
+<footer>Mọi tính toán chạy trong trình duyệt. Quy ước: sign(0) = +1, x là vector hàng có phần tử đầu bằng 1, w là vector cột, y ∈ {−1, +1}.</footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $=s=>document.querySelector(s);
+const NS='http://www.w3.org/2000/svg';
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function fmt(x,d){d=d||0;if(Math.abs(x)<1e-9)x=0;return x.toFixed(d).replace('.',',').replace('-','−')}
+function fs(v){const r=Math.round(v*100)/100;if(Number.isInteger(r))return fmt(r,0);return Math.round(r*10)/10===r?fmt(r,1):fmt(r,2)}
+function vec(w){return '['+w.map(fs).join('; ')+']ᵀ'}
+function par(v){return v<0?'('+fs(v)+')':fs(v)}
+const dot=(a,b)=>a.reduce((s,v,i)=>s+v*b[i],0);
+function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function shuffle(arr,rng){for(let i=arr.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]]}return arr}
+function gauss(rng){let u=0,v=0;while(!u)u=rng();while(!v)v=rng();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)}
+
+/* ---------- vẽ đồ thị phân tán dùng chung ---------- */
+function plot(svg,o){
+  const W=640,L=46,R=14,T=14,B=42,unit=(W-L-R)/o.xmax,H=Math.round(T+B+o.ymax*unit);
+  const px=x=>L+x*unit,py=y=>H-B-y*unit;
+  svg.setAttribute('viewBox','0 0 '+W+' '+H);
+  const pos=css('--pos'),neg=css('--neg'),line=css('--line'),ink=css('--ink'),ok=css('--ok'),negInk=css('--neg-ink'),posSoft=css('--pos-soft'),negSoft=css('--neg-soft'),muted=css('--muted');
+  let s='';
+  const rect=[[0,0],[o.xmax,0],[o.xmax,o.ymax],[0,o.ymax]];
+  const clip=(poly,f)=>{const out=[];for(let i=0;i<poly.length;i++){const a=poly[i],b=poly[(i+1)%poly.length],fa=f(a),fb=f(b);if(fa>=0)out.push(a);if((fa>=0)!==(fb>=0)){const t=fa/(fa-fb);out.push([a[0]+t*(b[0]-a[0]),a[1]+t*(b[1]-a[1])])}}return out};
+  const poly2s=p=>p.map(q=>px(q[0]).toFixed(1)+','+py(q[1]).toFixed(1)).join(' ');
+  const shade=o.shade;
+  if(shade){
+    const f=p=>shade[0]+shade[1]*p[0]+shade[2]*p[1];
+    const a=clip(rect,f),b=clip(rect,p=>-f(p));
+    if(a.length>2)s+='<polygon points="'+poly2s(a)+'" fill="'+posSoft+'" opacity=".75"/>';
+    if(b.length>2)s+='<polygon points="'+poly2s(b)+'" fill="'+negSoft+'" opacity=".85"/>';
+  }
+  // lưới và trục
+  for(let x=0;x<=o.xmax;x+=o.xtick){s+='<line x1="'+px(x)+'" x2="'+px(x)+'" y1="'+py(0)+'" y2="'+py(o.ymax)+'" stroke="'+line+'" stroke-width="1"/><text x="'+px(x)+'" y="'+(py(0)+17)+'" text-anchor="middle">'+x+'</text>'}
+  for(let y=0;y<=o.ymax;y+=o.ytick){s+='<line x1="'+px(0)+'" x2="'+px(o.xmax)+'" y1="'+py(y)+'" y2="'+py(y)+'" stroke="'+line+'" stroke-width="1"/><text x="'+(px(0)-8)+'" y="'+(py(y)+4)+'" text-anchor="end">'+y+'</text>'}
+  s+='<rect x="'+px(0)+'" y="'+py(o.ymax)+'" width="'+(o.xmax*unit)+'" height="'+(o.ymax*unit)+'" fill="none" stroke="'+ink+'" stroke-opacity=".35" stroke-width="1.5"/>';
+  s+='<text x="'+(px(o.xmax/2))+'" y="'+(H-8)+'" text-anchor="middle" style="font-weight:800">x₁ · số giờ tự học</text>';
+  s+='<text transform="translate(13 '+py(o.ymax/2)+') rotate(-90)" text-anchor="middle" style="font-weight:800">x₂ · số buổi vắng</text>';
+  // đường thẳng
+  const segs=[];
+  (o.lines||[]).forEach(L0=>{
+    const w=L0.w;if(Math.abs(w[1])<1e-12&&Math.abs(w[2])<1e-12)return;
+    const f=p=>w[0]+w[1]*p[0]+w[2]*p[1];const pts=[];
+    for(let i=0;i<4;i++){const a=rect[i],b=rect[(i+1)%4],fa=f(a),fb=f(b);if(fa===0)pts.push(a);else if((fa>0)!==(fb>0)){const t=fa/(fa-fb);pts.push([a[0]+t*(b[0]-a[0]),a[1]+t*(b[1]-a[1])])}}
+    if(pts.length<2)return;
+    let p1=pts[0],p2=pts[1];let best=0;for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){const d=Math.hypot(pts[i][0]-pts[j][0],pts[i][1]-pts[j][1]);if(d>best){best=d;p1=pts[i];p2=pts[j]}}
+    s+='<line x1="'+px(p1[0])+'" y1="'+py(p1[1])+'" x2="'+px(p2[0])+'" y2="'+py(p2[1])+'" stroke="'+(L0.color==='neg'?neg:ink)+'" stroke-width="'+(L0.thin?3:4.5)+'"'+(L0.dash?' stroke-dasharray="9 7"':'')+' stroke-linecap="round"/>';
+    if(L0.arrow){
+      const mx=(p1[0]+p2[0])/2,my=(p1[1]+p2[1])/2,n=Math.hypot(w[1],w[2]),ux=w[1]/n,uy=w[2]/n,len=34/unit;
+      const x0=px(mx),y0=py(my),x1=px(mx+ux*len),y1=py(my+uy*len);
+      s+='<line x1="'+x0+'" y1="'+y0+'" x2="'+x1+'" y2="'+y1+'" stroke="'+pos+'" stroke-width="4" stroke-linecap="round"/>';
+      const ang=Math.atan2(y1-y0,x1-x0),hs=9;
+      s+='<polygon points="'+x1+','+y1+' '+(x1-hs*Math.cos(ang-.5))+','+(y1-hs*Math.sin(ang-.5))+' '+(x1-hs*Math.cos(ang+.5))+','+(y1-hs*Math.sin(ang+.5))+'" fill="'+pos+'"/>';
+    }
+  });
+  // đoạn vuông góc từ mẫu đang xét tới đường biên
+  if(o.drop){const d=o.drop,w=d.w,n2=w[1]*w[1]+w[2]*w[2];if(n2>1e-12){const f=w[0]+w[1]*d.x+w[2]*d.y,fx=d.x-f/n2*w[1],fy=d.y-f/n2*w[2];
+    s+='<line x1="'+px(d.x)+'" y1="'+py(d.y)+'" x2="'+px(fx)+'" y2="'+py(fy)+'" stroke="'+ok+'" stroke-width="3" stroke-dasharray="4 4"/><circle cx="'+px(fx)+'" cy="'+py(fy)+'" r="4" fill="'+ok+'"/>'}}
+  // điểm
+  const r=o.r||12;
+  (o.pts||[]).forEach(p=>{
+    const cx=px(p.x),cy=py(p.y),col=p.y1>0?pos:neg;
+    if(p.wrong)s+='<circle cx="'+cx+'" cy="'+cy+'" r="'+(r+6)+'" fill="none" stroke="'+negInk+'" stroke-width="3"/>';
+    if(p.ring)s+='<circle cx="'+cx+'" cy="'+cy+'" r="'+(r+8)+'" fill="none" stroke="'+ok+'" stroke-width="5"/>';
+    if(p.y1>0)s+='<rect x="'+(cx-r)+'" y="'+(cy-r)+'" width="'+2*r+'" height="'+2*r+'" rx="3" fill="'+col+'" fill-opacity="'+(o.op||1)+'"/>';
+    else s+='<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="'+col+'" fill-opacity="'+(o.op||1)+'"/>';
+    if(p.lab)s+='<text class="pl" x="'+cx+'" y="'+(cy+4.5)+'" text-anchor="middle">'+p.lab+'</text>';
+  });
+  svg.innerHTML=s;
+}
+
+/* ====================== PHẦN A ====================== */
+const S6={X:[[2,4],[3,3],[4,5],[6,1],[8,2],[9,0]],y:[-1,-1,-1,1,1,1]};
+const A={pos:0,tl:null,seed:7,timer:null};
+const W0={'0':[0,0,0],'1':[1,1,1],'2':[-2,1,0]};
+function buildTL(){
+  const order=$('#a-order').value,eta=+$('#a-eta').value,w0=W0[$('#a-w0').value].slice();
+  const rng=mulberry(A.seed),ev=[],ep=[];let w=w0.slice();
+  for(let e=1;e<=60;e++){
+    let idx=[0,1,2,3,4,5];
+    if(order==='reverse')idx.reverse();else if(order==='shuffle')shuffle(idx,rng);
+    let c=0;
+    for(const i of idx){
+      const x=[1,S6.X[i][0],S6.X[i][1]];
+      const s=Math.round(dot(x,w)*1e9)/1e9,m=Math.round(S6.y[i]*s*1e9)/1e9,upd=m<=0,wb=w.slice();
+      if(upd){w=w.map((v,j)=>Math.round((v+eta*S6.y[i]*x[j])*1e9)/1e9);c++}
+      ev.push({e,i,x,s,m,upd,wb,wa:w.slice(),c,eta});
+    }
+    ep.push(c);if(c===0)break;
+  }
+  A.tl={ev,ep,w0,eta,order};
+}
+function aWState(){const t=A.tl;return A.pos===0?t.w0:t.ev[A.pos-1].wa}
+function aRender(){
+  const t=A.tl,n=t.ev.length,pos=A.pos,w=aWState(),cur=pos>0?t.ev[pos-1]:null;
+  // đồ thị
+  const pts=S6.X.map((p,i)=>({x:p[0],y:p[1],y1:S6.y[i],lab:String(i+1),ring:cur&&cur.i===i}));
+  plot($('#a-plot'),{xmax:10,ymax:6,xtick:1,ytick:1,pts,shade:w,lines:[{w,arrow:true}],drop:cur?{w,x:S6.X[cur.i][0],y:S6.X[cur.i][1]}:null,r:13});
+  // thanh tiến trình
+  const sl=$('#a-slider');sl.max=n;sl.value=pos;
+  $('#a-posl').textContent=pos+' / '+n+' bước';
+  $('#a-prev').disabled=pos===0;$('#a-next').disabled=pos===n;$('#a-nextupd').disabled=pos===n;
+  // giải thích
+  let h='';
+  if(!cur){
+    const allz=w.every(v=>v===0);
+    h='<p class="step-title">Trạng thái ban đầu</p><div class="calc"><div class="row">w = '+vec(w)+'   η = '+fs(t.eta)+'</div><div class="row">Thứ tự epoch 1: '+(t.order==='fixed'?'1, 2, 3, 4, 5, 6':t.order==='reverse'?'6, 5, 4, 3, 2, 1':'ngẫu nhiên')+'</div></div><div class="verdict neutral">'+(allz?'Với w = 0, mọi điểm số s = 0 nên mọi margin m = 0. Vì m ≤ 0 được tính là sai, mẫu đầu tiên chắc chắn bị cập nhật. Toàn mặt phẳng đang bị dự đoán “đậu” (sign(0) = +1).':'Bấm “Bước tiếp” để xét mẫu đầu tiên của epoch 1.')+'</div>';
+  }else{
+    const i=cur.i,yv=S6.y[i];
+    const terms=cur.x.map((v,j)=>fs(v)+'·'+par(cur.wb[j])).join(' + ');
+    h='<p class="step-title">Epoch '+cur.e+' · Sinh viên '+(i+1)+' <span class="mono" style="font-weight:600">x = '+'['+cur.x.join(', ')+']</span>, y = '+(yv>0?'+1 (đậu)':'−1 (rớt)')+'</p>';
+    h+='<div class="calc"><div class="row">w trước = '+vec(cur.wb)+'</div><div class="row">s = xw = '+terms+' = '+fs(cur.s)+'</div><div class="row">m = y·s = '+par(yv)+'·'+par(cur.s)+' = '+fs(cur.m)+'</div></div>';
+    if(cur.upd){
+      h+='<div class="verdict bad">m ≤ 0: mô hình đang sai ('+(yv>0?'bỏ sót, thực tế đậu mà đoán rớt':'báo nhầm, thực tế rớt mà đoán đậu')+'). Sửa w ngay: '+(yv>0?'cộng':'trừ')+' η·xᵀ.</div>';
+      h+='<div class="calc"><div class="row">w ← '+vec(cur.wb)+' + ('+fs(cur.eta*yv)+')·['+cur.x.join('; ')+']ᵀ</div><div class="row">w sau = '+vec(cur.wa)+'</div><div class="row">m mới = m + η‖x‖² = '+fs(cur.m)+' + '+fs(cur.eta)+'·'+fs(dot(cur.x,cur.x))+' = '+fs(cur.m+cur.eta*dot(cur.x,cur.x))+'</div></div>';
+    }else{
+      h+='<div class="verdict good">m &gt; 0: mô hình đúng với sinh viên này. Giữ nguyên w.</div>';
+    }
+    if(pos===n){h+='<div class="verdict good">Epoch '+cur.e+' không có lần cập nhật nào (c = 0): thuật toán dừng. Tổng cộng '+t.ev.filter(v=>v.upd).length+' lần cập nhật, w cuối = '+vec(cur.wa)+'.</div>'}
+  }
+  $('#a-explain').innerHTML=h;
+  // margin
+  const ms=S6.X.map((p,i)=>S6.y[i]*dot([1,p[0],p[1]],w));
+  const mx=Math.max(1,...ms.map(Math.abs));
+  $('#a-margins').innerHTML=ms.map((m,i)=>{const wd=Math.abs(m)/mx*50,good=m>1e-9;
+    return '<div class="mrow'+(cur&&cur.i===i?' cur':'')+'"><span>SV '+(i+1)+'</span><div class="mtrack"><b></b><i style="'+(good?'left:50%;':'right:50%;')+'width:'+Math.max(wd,m===0?0:1)+'%;background:'+(good?css('--pos'):css('--neg'))+'"></i></div><span style="text-align:right;font-variant-numeric:tabular-nums">'+fmt(m,Math.abs(m)<100&&!Number.isInteger(Math.round(m*1000)/1000)?1:0)+'</span></div>'}).join('');
+  // epochs
+  const curE=cur?cur.e:0,maxc=Math.max(1,...t.ep);
+  $('#a-epochs').innerHTML=t.ep.map((c,k)=>{const e=k+1;const seen=e<=curE;
+    const done=cur?t.ev.filter(v=>v.e===e&&t.ev.indexOf(v)<pos).filter(v=>v.upd).length:0;
+    const shown=e<curE?c:(e===curE?done:0);
+    return '<div class="ep'+(e===curE?' now':'')+(e>curE?' fut':'')+'"><span>'+(e>curE?'':shown)+'</span><div class="col" style="height:'+Math.max(6,c/maxc*70)+'px"><i style="height:'+(seen?shown/Math.max(c,1)*100:0)+'%"></i></div><span>E'+e+'</span></div>'}).join('');
+  $('#a-epnote').textContent='Cột cam là số lần cập nhật đã xảy ra trong epoch (cột xám là tổng của epoch). Epoch cuối c = 0 chỉ để xác nhận.';
+  // nhật ký
+  let lg='',k=0;t.ev.forEach((v,idx)=>{if(!v.upd)return;k++;if(idx>=pos)return;lg+='<tr'+(idx===pos-1?' class="cur"':'')+'><td>'+k+'</td><td>'+v.e+'</td><td>'+(v.i+1)+'</td><td>'+fs(v.s)+'</td><td>'+fs(v.m)+'</td><td class="mono">'+vec(v.wa)+'</td></tr>'});
+  $('#a-log').innerHTML=lg||'<tr><td colspan="6" style="color:var(--muted)">Chưa có lần cập nhật nào.</td></tr>';
+}
+function aStop(){if(A.timer){clearInterval(A.timer);A.timer=null}$('#a-play').textContent='▶ Tự chạy'}
+function aGo(p){A.pos=Math.max(0,Math.min(A.tl.ev.length,p));aRender()}
+function aInit(){
+  buildTL();A.pos=0;aRender();
+  $('#a-next').onclick=()=>{aStop();aGo(A.pos+1)};
+  $('#a-prev').onclick=()=>{aStop();aGo(A.pos-1)};
+  $('#a-nextupd').onclick=()=>{aStop();let p=A.pos;while(p<A.tl.ev.length){p++;if(A.tl.ev[p-1].upd)break}aGo(p)};
+  $('#a-reset').onclick=()=>{aStop();aGo(0)};
+  $('#a-slider').oninput=e=>{aStop();aGo(+e.target.value)};
+  $('#a-play').onclick=()=>{if(A.timer){aStop();return}if(A.pos>=A.tl.ev.length)A.pos=0;$('#a-play').textContent='❚❚ Dừng';
+    A.timer=setInterval(()=>{if(A.pos>=A.tl.ev.length){aStop();return}aGo(A.pos+1)},+$('#a-speed').value)};
+  $('#a-speed').onchange=()=>{if(A.timer){aStop();$('#a-play').click()}};
+  ['#a-order','#a-eta','#a-w0'].forEach(id=>$(id).onchange=()=>{aStop();buildTL();A.pos=0;aRender()});
+  $('#a-reseed').onclick=()=>{aStop();A.seed=Math.floor(Math.random()*9000)+1;$('#a-order').value='shuffle';buildTL();A.pos=0;aRender()};
+}
+
+/* ====================== PHẦN B ====================== */
+const B={T:100,epoch:100,set:'tr',D:null,runs:null};
+function genData(seed,k){
+  const rng=mulberry(seed),n=200,X=[],y=[];
+  const mk=(mx,sx,my,sy,lab)=>{for(let i=0;i<n;i++){X.push([Math.max(0,mx+sx*k*gauss(rng)),Math.max(0,my+sy*k*gauss(rng))]);y.push(lab)}};
+  mk(8,2.2,1.5,1.2,1);mk(4,2.2,3.5,1.5,-1);
+  const idx=shuffle([...Array(2*n).keys()],mulberry(seed+1)),nt=Math.floor(2*n*0.3);
+  const te=idx.slice(0,nt),tr=idx.slice(nt);
+  return{Xtr:tr.map(i=>X[i]),ytr:tr.map(i=>y[i]),Xte:te.map(i=>X[i]),yte:te.map(i=>y[i])};
+}
+const score=(w,p)=>w[0]+w[1]*p[0]+w[2]*p[1];
+function countErr(X,y,w){let e=0;for(let i=0;i<X.length;i++){if((score(w,X[i])>=0?1:-1)!==y[i])e++}return e}
+function runTrain(X,y,T,seed,shuf,pocket){
+  const rng=mulberry(seed),n=X.length,hist=[];let w=[0,0,0],wp=[0,0,0],lp=countErr(X,y,w),conv=null;
+  for(let e=1;e<=T;e++){
+    const idx=[...Array(n).keys()];if(shuf)shuffle(idx,rng);
+    let c=0;
+    for(const i of idx){
+      if(y[i]*score(w,X[i])<=0){w=[w[0]+y[i],w[1]+y[i]*X[i][0],w[2]+y[i]*X[i][1]];c++;
+        if(pocket){const l=countErr(X,y,w);if(l<lp){lp=l;wp=w.slice()}}}
+    }
+    hist.push({w:w.slice(),wp:wp.slice(),c,errCur:countErr(X,y,w),errPocket:pocket?lp:countErr(X,y,w)});
+    if(c===0){conv=e;for(let k=e+1;k<=T;k++)hist.push(hist[hist.length-1]);break}
+  }
+  return{hist,conv};
+}
+function bTrain(){
+  const seed=+$('#b-seed').value||42,k=+$('#b-spread').value;
+  $('#b-spread-v').textContent='×'+fmt(k,2);
+  B.D=genData(seed,k);
+  const D=B.D;
+  B.runs={shuf:runTrain(D.Xtr,D.ytr,B.T,seed,true,true),plain:runTrain(D.Xtr,D.ytr,B.T,seed,false,false)};
+  const np=D.ytr.filter(v=>v>0).length,nq=D.yte.filter(v=>v>0).length;
+  $('#b-info').textContent=D.ytr.length+' mẫu huấn luyện ('+np+' đậu), '+D.yte.length+' mẫu kiểm tra ('+nq+' đậu)';
+  bRender();cRender();
+}
+function modelW(kind,e){const h=B.runs.shuf.hist[e-1],p=B.runs.plain.hist[e-1];return kind==='pocket'?h.wp:kind==='cur'?h.w:p.w}
+function bRender(){
+  const D=B.D,e=B.epoch,h=B.runs.shuf.hist[e-1],tr=B.set==='tr';
+  const X=tr?D.Xtr:D.Xte,y=tr?D.ytr:D.yte;
+  const pts=X.map((p,i)=>({x:p[0],y:p[1],y1:y[i],wrong:(score(h.wp,p)>=0?1:-1)!==y[i]}));
+  plot($('#b-plot'),{xmax:14,ymax:8,xtick:2,ytick:2,pts,r:5.5,op:.8,shade:h.wp,lines:[{w:h.w,dash:true,color:'neg',thin:true},{w:h.wp}]});
+  $('#b-tr').setAttribute('aria-pressed',tr);$('#b-te').setAttribute('aria-pressed',!tr);
+  // biểu đồ lỗi
+  const svg=$('#b-chart'),W=520,Ht=260,L=44,R=12,T=12,Bm=34,hist=B.runs.shuf.hist,n=hist.length;
+  const maxE=Math.max(10,Math.ceil(Math.max(...hist.map(v=>v.errCur))/20)*20);
+  const px=k=>L+(k-1)/(n-1)*(W-L-R),py=v=>Ht-Bm-v/maxE*(Ht-T-Bm);
+  const line=css('--line'),pos=css('--pos'),neg=css('--neg'),ok=css('--ok');
+  let s='';
+  for(let v=0;v<=maxE;v+=maxE/4){s+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+py(v)+'" y2="'+py(v)+'" stroke="'+line+'"/><text x="'+(L-6)+'" y="'+(py(v)+4)+'" text-anchor="end">'+v+'</text>'}
+  [1,25,50,75,100].forEach(k=>{s+='<text x="'+px(k)+'" y="'+(Ht-Bm+17)+'" text-anchor="middle">'+k+'</text>'});
+  s+='<text x="'+(W/2)+'" y="'+(Ht-4)+'" text-anchor="middle" style="font-weight:800">epoch</text>';
+  const path=f=>hist.map((v,i)=>(i?'L':'M')+px(i+1).toFixed(1)+' '+py(f(v)).toFixed(1)).join(' ');
+  s+='<path d="'+path(v=>v.errCur)+'" fill="none" stroke="'+neg+'" stroke-width="2.5" stroke-linejoin="round"/>';
+  s+='<path d="'+path(v=>v.errPocket)+'" fill="none" stroke="'+pos+'" stroke-width="4" stroke-linejoin="round"/>';
+  s+='<line x1="'+px(e)+'" x2="'+px(e)+'" y1="'+T+'" y2="'+(Ht-Bm)+'" stroke="'+ok+'" stroke-width="3"/>';
+  s+='<circle cx="'+px(e)+'" cy="'+py(h.errCur)+'" r="6" fill="'+neg+'"/><circle cx="'+px(e)+'" cy="'+py(h.errPocket)+'" r="6" fill="'+pos+'"/>';
+  s+='<text x="'+(W-R)+'" y="'+(T+12)+'" text-anchor="end" style="fill:'+neg+';font-weight:800">w hiện tại</text><text x="'+(W-R)+'" y="'+(T+30)+'" text-anchor="end" style="fill:'+pos+';font-weight:800">w túi</text>';
+  svg.setAttribute('viewBox','0 0 '+W+' '+Ht);svg.innerHTML=s;
+  svg.onclick=ev=>{const r=svg.getBoundingClientRect(),x=(ev.clientX-r.left)/r.width*W;const k=Math.round(1+(x-L)/(W-L-R)*(n-1));setEpoch(Math.max(1,Math.min(n,k)))};
+  $('#b-epoch-v').textContent=e+' / '+B.T;
+  const nTr=D.ytr.length;
+  $('#b-stats').innerHTML=
+    '<div class="stat"><small>Cập nhật ở epoch này</small><strong>'+h.c+'</strong></div>'+
+    '<div class="stat"><small>Sai (w hiện tại)</small><strong style="color:var(--neg-ink)">'+h.errCur+'/'+nTr+'</strong></div>'+
+    '<div class="stat"><small>Sai (w túi)</small><strong style="color:var(--pos-ink)">'+h.errPocket+'/'+nTr+'</strong></div>';
+  const cv=B.runs.shuf.conv;
+  $('#b-msg').textContent=cv?'Dữ liệu tách tuyến tính được: thuật toán hội tụ ở epoch '+cv+' (c = 0). Khi đó w hiện tại và w túi trùng nhau.':'Hai lớp chồng lấn nên mọi epoch đều còn mẫu sai và c không bao giờ bằng 0. w hiện tại dao động mạnh, w túi chỉ giảm. Kéo thanh “Độ phân tán” xuống để thấy thuật toán hội tụ.';
+}
+function setEpoch(e){B.epoch=e;document.querySelectorAll('[data-sync=epoch]').forEach(i=>i.value=e);bRender();cRender()}
+
+/* ====================== PHẦN C ====================== */
+const C={model:'pocket',thr:0};
+function evalSet(X,y,w,t){
+  const nr=Math.hypot(w[1],w[2])||1;let tp=0,tn=0,fp=0,fn=0;const wrong=[];
+  for(let i=0;i<X.length;i++){const yh=score(w,X[i])/nr>=t?1:-1;
+    if(y[i]>0){if(yh>0)tp++;else{fn++;wrong.push(i)}}else{if(yh<0)tn++;else{fp++;wrong.push(i)}}}
+  const n=X.length;
+  return{tp,tn,fp,fn,n,wrong,acc:(tp+tn)/n,prec:tp+fp?tp/(tp+fp):0,rec:tp+fn?tp/(tp+fn):0,f1:(2*tp+fp+fn)?2*tp/(2*tp+fp+fn):0};
+}
+function cRender(){
+  if(!B.D)return;
+  const D=B.D,e=B.epoch,t=C.thr,w=modelW(C.model,e),r=evalSet(D.Xte,D.yte,w,t),nr=Math.hypot(w[1],w[2])||1;
+  $('#c-epoch-v').textContent=e+' / '+B.T;
+  $('#c-thr-v').textContent=fmt(t,1)+' (đơn vị khoảng cách)';
+  const ws=[w[0]-t*nr,w[1],w[2]];
+  const pts=D.Xte.map((p,i)=>({x:p[0],y:p[1],y1:D.yte[i],wrong:r.wrong.includes(i)}));
+  plot($('#c-plot'),{xmax:14,ymax:8,xtick:2,ytick:2,pts,r:6.5,op:.85,shade:ws,lines:[{w:ws,arrow:true}]});
+  $('#c-thr-note').textContent=t<-0.05?'Ngưỡng thấp: mô hình dễ nói “đậu” hơn. Recall thường tăng, precision thường giảm (nhiều báo nhầm hơn).':t>0.05?'Ngưỡng cao: mô hình khó tính hơn khi nói “đậu”. Precision thường tăng, recall thường giảm (nhiều bỏ sót hơn).':'Ngưỡng 0 là quy tắc Perceptron gốc: ŷ = sign(s).';
+  const cell=(bg,v,lab,sub)=>'<div class="cell" style="background:'+bg+'"><strong>'+v+'</strong><span>'+lab+'</span><span style="font-weight:600">'+sub+'</span></div>';
+  const mix=(c,v,mx)=>'color-mix(in srgb,'+c+' '+Math.round(18+55*v/Math.max(1,mx))+'%,var(--surface))';
+  const mx=Math.max(r.tp,r.tn,r.fp,r.fn);
+  $('#c-cm').innerHTML='<div></div><div class="h">Dự đoán rớt (−1)</div><div class="h">Dự đoán đậu (+1)</div>'+
+    '<div class="h">Thực tế rớt</div>'+cell(mix('var(--ok)',r.tn,mx),r.tn,'TN','đoán rớt, đúng')+cell(mix('var(--neg)',r.fp,mx),r.fp,'FP','báo nhầm')+
+    '<div class="h">Thực tế đậu</div>'+cell(mix('var(--neg)',r.fn,mx),r.fn,'FN','bỏ sót')+cell(mix('var(--ok)',r.tp,mx),r.tp,'TP','đoán đậu, đúng');
+  const mrow=(lab,v,col,tip)=>'<div class="metric" title="'+tip+'"><span>'+lab+'</span><div class="t"><i style="width:'+(v*100)+'%;background:'+col+'"></i></div><em>'+fmt(v*100,1)+'%</em></div>';
+  $('#c-metrics').innerHTML=mrow('Accuracy',r.acc,'var(--ok)','Tỉ lệ dự đoán đúng')+mrow('Precision',r.prec,'var(--pos)','Trong số dự đoán đậu, bao nhiêu thật sự đậu')+mrow('Recall',r.rec,'var(--neg)','Trong số thật sự đậu, phát hiện được bao nhiêu')+mrow('F1',r.f1,'var(--warn)','Trung bình điều hòa của precision và recall');
+  $('#c-formula').innerHTML='Acc = ('+r.tp+' + '+r.tn+')/'+r.n+' = '+fmt(r.acc,3)+'  ·  P = '+r.tp+'/'+(r.tp+r.fp)+' = '+fmt(r.prec,3)+'  ·  R = '+r.tp+'/'+(r.tp+r.fn)+' = '+fmt(r.rec,3)+'  ·  F1 = '+fmt(r.f1,3);
+  // bảng so sánh
+  const rows=[['pocket','w túi (thuật toán túi)'],['cur','w hiện tại (có xáo trộn)'],['plain','w thuần túy (không xáo, không túi)']];
+  $('#c-cmp').innerHTML=rows.map(([k,lab])=>{const ww=modelW(k,e),a=1-countErr(D.Xtr,D.ytr,ww)/D.Xtr.length,b=1-countErr(D.Xte,D.yte,ww)/D.Xte.length;
+    return '<tr'+(k===C.model?' class="cur"':'')+'><td>'+lab+'</td><td class="mono">'+vec(ww.map(v=>Math.round(v*10)/10))+'</td><td>'+fmt(a*100,1)+'%</td><td><b>'+fmt(b*100,1)+'%</b></td></tr>'}).join('');
+}
+
+/* ====================== PHẦN D ====================== */
+function dRender(){
+  const p=+$('#d-p').value;$('#d-pv').textContent=p+' đậu, '+(100-p)+' rớt';
+  const tn=100-p,fn=p,acc=tn/100;
+  const row=(lab,v,col)=>'<div class="metric"><span>'+lab+'</span><div class="t"><i style="width:'+v+'%;background:'+col+'"></i></div><em>'+fmt(v,0)+'%</em></div>';
+  $('#d-out').innerHTML=row('Accuracy',acc*100,'var(--ok)')+row('Recall',0,'var(--neg)');
+  $('#d-note').textContent='Mô hình đoán “rớt” cho tất cả: TN = '+tn+', FN = '+fn+', TP = 0, FP = 0. Accuracy = '+tn+'/100 = '+tn+'%, nhưng recall = 0/'+fn+' = 0 vì không phát hiện được sinh viên đậu nào.';
+}
+
+/* ====================== KHỞI TẠO ====================== */
+document.querySelectorAll('[data-sync=epoch]').forEach(i=>i.oninput=e=>setEpoch(+e.target.value));
+$('#b-tr').onclick=()=>{B.set='tr';bRender()};
+$('#b-te').onclick=()=>{B.set='te';bRender()};
+$('#c-model').onchange=e=>{C.model=e.target.value;cRender()};
+$('#c-thr').oninput=e=>{C.thr=+e.target.value;cRender()};
+$('#d-p').oninput=dRender;
+let deb=null;
+$('#b-spread').oninput=()=>{$('#b-spread-v').textContent='×'+fmt(+$('#b-spread').value,2);clearTimeout(deb);deb=setTimeout(bTrain,150)};
+$('#b-regen').onclick=bTrain;
+aInit();bTrain();dRender();
+// vẽ lại khi đổi giao diện sáng/tối
+const rerender=()=>{aRender();if(B.D){bRender();cRender()}};
+try{window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',rerender)}catch(e){}
+new MutationObserver(rerender).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+})();
+</script>
+
+</body></html>
