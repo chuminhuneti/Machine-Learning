@@ -15,7 +15,8 @@ Chương này tập trung vào quá trình huấn luyện mô hình hồi quy tu
 
 ### 1. Notebook thực hành
 - [Linear Regression Notebook](notebooks/)
-
+- [Xem Notebook trên GitHub](notebooks/Linear_Regression.ipynb)
+- [Mở trực tiếp bằng Google Colab](https://colab.research.google.com/github/chuminhuneti/Machine-Learning/blob/main/02_Linear_Regression/notebooks/Linear_Regression.ipynb)
 ### 2. Mã nguồn Python
 - [Python Code](code/)
 
