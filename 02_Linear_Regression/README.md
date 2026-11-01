@@ -28,30 +28,32 @@ Sau khi hoàn thành chương này, sinh viên có thể:
 
 ## 4. Tài liệu học tập
 
+
 ### 4.1. Notebook thực hành
 
 - [Xem Notebook trên GitHub](notebooks/Linear_Regression.ipynb)
-- [Mở Notebook trực tiếp bằng Google Colab](https://colab.research.google.com/github/chuminhuneti/Machine-Learning/blob/main/02_Linear_Regression/notebooks/Linear_Regression.ipynb)
-- [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/chuminhuneti/Machine-Learning/blob/main/02_Linear_Regression/notebooks/Linear_Regression.ipynb)
+- [Mở Notebook bằng Google Colab](https://colab.research.google.com/github/chuminhuneti/Machine-Learning/blob/main/02_Linear_Regression/notebooks/Linear_Regression.ipynb)
 
-### 4.2. Mã nguồn Python
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/chuminhuneti/Machine-Learning/blob/main/02_Linear_Regression/notebooks/Linear_Regression.ipynb)
 
-- [Mã nguồn Python](code/)
+### .42. Bài giảng HTML
 
-### 4.3. Tài liệu tham khảo
-
-- [Tài liệu PDF và Word](documents/)
-
-### 4.4. Tài liệu HTML
-
-### 4. Tài liệu HTML
-
-- [Danh sách file HTML trên GitHub](html/)
 - [Xem bài giảng Linear Regression – Từng bước](https://chuminhuneti.github.io/Machine-Learning/02_Linear_Regression/html/Linear_Regression_tung_buoc.html)
+- [Danh sách tài liệu HTML](html/)
+
+### 4.3. Mã nguồn Python
+
+- [Xem và tải mã nguồn Python](code/)
+
+### 4.4. Tài liệu học tập (Word và PDF)
+
+- [Danh sách tài liệu](documents/)
 
 ### 4.5. Bài giảng trình chiếu
 
-- [Slide bài giảng PowerPoint](slides/)
+- [Danh sách bài giảng PowerPoint](slides/)
+
+
 
 ## 5. Công cụ thực hành
 
