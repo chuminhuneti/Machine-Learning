@@ -29,9 +29,9 @@ Sau khi hoàn thành chương này, sinh viên có thể:
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)]()
 
-### 4.2. Bài giảng HTML
+### 4.2. Minh họa HTML
 
-- [Xem bài giảng Linear Regression – Từng bước](https://chuminhuneti.github.io/Machine-Learning/03_Perceptron_Classification/html/Perceptron_Minh_hoa.html)
+- [Xem minh họa Perceptron Classification – Từng bước](https://chuminhuneti.github.io/Machine-Learning/03_Perceptron_Classification/html/Perceptron_Minh_hoa.html)
 
 ### 4.3. Mã nguồn Python
 
