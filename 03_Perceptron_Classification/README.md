@@ -25,9 +25,10 @@ Sau khi hoàn thành chương này, sinh viên có thể:
 
 ### 4.1. Notebook thực hành
 
-- [Xem Notebook trên GitHub](notebooksb)
+- [Xem Notebook trên GitHub](notebooks/perceptron_minh_hoa.ipynb)
+- [Mở Notebook bằng Google Colab](https://colab.research.google.com/github/chuminhuneti/Machine-Learning/blob/main/03_Perceptron_Classification/notebooks/perceptron_minh_hoa.ipynb)
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)]()
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/chuminhuneti/Machine-Learning/blob/main/03_Perceptron_Classification/notebooks/perceptron_minh_hoa.ipynb)
 
 ### 4.2. Minh họa HTML
 
