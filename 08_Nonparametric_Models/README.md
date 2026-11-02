@@ -20,13 +20,14 @@ Bài học giới thiệu các phương pháp phi tham số tiêu biểu, tập 
 
 ## 3. Học liệu
 
+
 | Thư mục | Nội dung |
 |---|---|
-| `notebooks/` | Notebook thực hành các mô hình phi tham số |
-| `code/` | Mã nguồn Python |
-| `documents/` | Tài liệu bài giảng |
-| `html/` | Bài giảng trực tuyến |
-| `slides/` | Slide trình chiếu |
+| `notebooks/` | Notebook thực hành: [Xem trên GitHub](notebooks/phi_tham_so_notebook.ipynb) · [Mở bằng Google Colab](https://colab.research.google.com/github/chuminhuneti/Machine-Learning/blob/main/08_Nonparametric_Models/notebooks/phi_tham_so_notebook.ipynb) · [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/chuminhuneti/Machine-Learning/blob/main/08_Nonparametric_Models/notebooks/phi_tham_so_notebook.ipynb) |
+| `code/` | Mã nguồn Python: [Xem và tải mã nguồn](code/phi_tham_so_demo.py) |
+| `documents/` | Tài liệu học tập: [Đọc tài liệu PDF](documents/Non-Parametric.pdf) |
+| `html/` | Bài giảng trực tuyến: [SVM-SVR](https://chuminhuneti.github.io/Machine-Learning/08_Nonparametric_Models/html/phi_tham_so_minh_hoa.html) |
+| `slides/` | Bài giảng trình chiếu: [Xem slide PDF](slides/) |
 
 ## 4. Công cụ sử dụng
 
