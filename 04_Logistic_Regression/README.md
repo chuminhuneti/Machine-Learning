@@ -26,7 +26,7 @@ Sau khi hoàn thành chương này, sinh viên có thể:
 
 | Thư mục | Nội dung |
 |---|---|
-| `notebooks/` | Notebook thực hành: [Xem trên GitHub](notebooks/perceptron_minh_hoa.ipynb) · [Mở bằng Google Colab](https://colab.research.google.com/github/chuminhuneti/Machine-Learning/blob/main/04_Logistic_Regression/notebooks/Logistic_Regression_từng_bước.ipynb) · [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/chuminhuneti/Machine-Learning/blob/main/04_Logistic_Regression/notebooks/Logistic_Regression_từng_bước.ipynb) |
+| `notebooks/` | Notebook thực hành: [Xem trên GitHub](notebooks/perceptron_minh_hoa.ipynb) · [Mở bằng Google Colab](https://colab.research.google.com/github/chuminhuneti/Machine-Learning/blob/main/04_Logistic_Regression/notebooks/Softmax_Minh_Hoa.ipynb) · [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/chuminhuneti/Machine-Learning/blob/main/04_Logistic_Regression/notebooks/Softmax_Minh_Hoa.ipynb) |
 | `code/` | Mã nguồn Python: [Xem và tải mã nguồn](code/Logistic_Minh_Hoa.py) |
 | `documents/` | Tài liệu học tập: [Đọc tài liệu PDF](documents/Logistic_Regression.pdf) |
 | `html/` | Bài giảng trực tuyến: [Xem minh họa Logistic Regression – Từng bước](https://chuminhuneti.github.io/Machine-Learning/04_Logistic_Regression/html/Logistic_Regression_từng_bước.html) |
