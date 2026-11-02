@@ -23,7 +23,7 @@ Sau khi hoàn thành chương này, sinh viên có thể:
 - Sử dụng Python để huấn luyện và đánh giá mô hình hồi quy tuyến tính.
 - Hiểu vai trò của các phương pháp điều chuẩn trong việc kiểm soát độ phức tạp của mô hình.
 
-## 3. Nội dung chương học
+## 3. Nội dung
 
 
 
