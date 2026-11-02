@@ -1,33 +1,27 @@
-# **10. Clustering Models – Các mô hình gom cụm**
+# **06. Artificial Neural Networks – Mạng nơ ron nhân tạo**
 
 ## 1. Giới thiệu
 
-Gom cụm (Clustering) là bài toán học máy không giám sát (Unsupervised Learning), trong đó dữ liệu được phân chia thành các nhóm dựa trên mức độ tương đồng. Các đối tượng trong cùng một cụm có đặc điểm gần nhau, trong khi các đối tượng thuộc những cụm khác nhau có sự khác biệt nhất định.
+Mạng nơ ron nhân tạo (Artificial Neural Networks – ANN) là nhóm mô hình học máy lấy cảm hứng từ cấu trúc và nguyên lý hoạt động của hệ thần kinh sinh học. ANN có khả năng học các mối quan hệ phức tạp, phi tuyến giữa đầu vào và đầu ra thông qua quá trình điều chỉnh các trọng số và độ lệch.
 
-Bài học giới thiệu các thuật toán gom cụm phổ biến, nguyên lý hoạt động và các phương pháp đánh giá chất lượng kết quả gom cụm.
+Bài học giới thiệu cấu trúc mạng nơ ron nhân tạo, nguyên lý hoạt động và quy trình huấn luyện mạng nhiều lớp (Multilayer Perceptron – MLP).
 
 ## 2. Nội dung
 
-- Bài toán gom cụm và các ứng dụng thực tế.
-- Khoảng cách và độ tương đồng giữa các đối tượng.
-- K-Means Clustering.
-- Lựa chọn số cụm K.
-- Phương pháp Elbow.
-- Hierarchical Clustering.
-- Agglomerative và Divisive Clustering.
-- Dendrogram.
-- DBSCAN.
-- Gaussian Mixture Models (GMM).
-- Đánh giá chất lượng gom cụm:
-  - Silhouette Score.
-  - Davies-Bouldin Index.
-  - Calinski-Harabasz Index.
+- Cấu trúc và nguyên lý hoạt động của neuron nhân tạo.
+- Các lớp trong mạng nơ ron: Input Layer, Hidden Layer, Output Layer.
+- Các hàm kích hoạt (Activation Functions).
+- Lan truyền thuận (Forward Propagation).
+- Hàm mất mát (Loss Function).
+- Lan truyền ngược (Backpropagation).
+- Các thuật toán tối ưu: Gradient Descent, SGD, Momentum, Adam.
+- Huấn luyện và đánh giá mạng nơ ron nhân tạo.
 
 ## 3. Học liệu
 
 | Thư mục | Nội dung |
 |---|---|
-| `notebooks/` | Notebook thực hành các thuật toán gom cụm |
+| `notebooks/` | Notebook thực hành mạng nơ ron nhân tạo |
 | `code/` | Mã nguồn Python |
 | `documents/` | Tài liệu bài giảng |
 | `html/` | Bài giảng trực tuyến |
@@ -38,8 +32,8 @@ Bài học giới thiệu các thuật toán gom cụm phổ biến, nguyên lý
 - Python
 - NumPy, Pandas, Matplotlib
 - Scikit-learn
-- SciPy
+- PyTorch hoặc TensorFlow/Keras
 
 ## 5. Mục tiêu học tập
 
-Sau khi hoàn thành bài học, người học có thể giải thích nguyên lý hoạt động của các thuật toán gom cụm, lựa chọn thuật toán phù hợp với đặc điểm dữ liệu, thực hiện phân cụm và đánh giá kết quả bằng các chỉ số thích hợp.
+Sau khi hoàn thành bài học, người học có thể giải thích cấu trúc mạng nơ ron nhân tạo, hiểu cơ chế lan truyền thuận và lan truyền ngược, đồng thời xây dựng và huấn luyện mô hình MLP cho các bài toán phân loại và hồi quy.
