@@ -52,6 +52,16 @@ Sau khi hoàn thành chương này, sinh viên có thể:
 
 - [Xem slide PDF](slides/Linear_Regressiom_Slides.pdf)
 
+## 3. Học liệu
+
+| Thư mục | Nội dung |
+|---|---|
+| `notebooks/` | Notebook thực hành: [Xem trên GitHub](notebooks/Linear_Regression.ipynb) · [Mở bằng Google Colab](https://colab.research.google.com/github/chuminhuneti/Machine-Learning/blob/main/02_Linear_Regression/notebooks/Linear_Regression.ipynb) · [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/chuminhuneti/Machine-Learning/blob/main/02_Linear_Regression/notebooks/Linear_Regression.ipynb) |
+| `code/` | Mã nguồn Python: [Xem và tải mã nguồn](code/hoi_quy_tuyen_tinh_minh_hoa.py) |
+| `documents/` | Tài liệu học tập: [Đọc tài liệu PDF](documents/Linear_Regression.pdf) |
+| `html/` | Bài giảng trực tuyến: [Xem minh họa Linear Regression – Từng bước](https://chuminhuneti.github.io/Machine-Learning/02_Linear_Regression/html/Linear_Regression_tung_buoc.html) |
+| `slides/` | Bài giảng trình chiếu: [Xem slide PDF](slides/Linear_Regressiom_Slides.pdf) |
+
 
 ## 5. Công cụ thực hành
 
