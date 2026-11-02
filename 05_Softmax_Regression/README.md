@@ -19,36 +19,18 @@ Sau khi hoàn thành chương này, sinh viên có thể:
 - Sử dụng Python để huấn luyện và đánh giá mô hình Softmax Regression.
 ...
 
-## 3. Nội dung chương học
+## 3. Nội dung
 
 
-## 4. Tài liệu học tập
+## 4. Học liệu
 
-
-### 4.1. Notebook thực hành
-
-- [Xem Notebook trên GitHub](notebooks/Softmax_Minh_Hoa.ipynb)
-- [Mở Notebook bằng Google Colab](https://colab.research.google.com/github/chuminhuneti/Machine-Learning/blob/main/05_Softmax_Regression/notebooks/Softmax_Minh_Hoa.ipynb)
-- 
-
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/chuminhuneti/Machine-Learning/blob/main/05_Softmax_Regression/notebooks/Softmax_Minh_Hoa.ipynb)
-
-### 4.2. Minh họa HTML
-
-- [Xem minh họa Softmax Regression – Từng bước](https://chuminhuneti.github.io/Machine-Learning/05_Softmax_Regression/html/Softmax_Regression_minh_họa.html)
-
-### 4.3. Mã nguồn Python
-
-- [Xem và tải mã nguồn Python](code/Softmax_Minh_Hoa.py)
-
-### 4.4. Tài liệu học tập (Word và PDF)
-
-- [Đọc tài liệu PDF](documents/Softmax_Regression.pdf)
-
-### 4.5. Bài giảng trình chiếu
-
-- [Xem slide PDF](slides/Softmax_Regression_Slides.pdf)
-
+| Thư mục | Nội dung |
+|---|---|
+| `notebooks/` | Notebook thực hành: [Xem trên GitHub](notebooks/Softmax_Minh_Hoa.ipynb) · [Mở bằng Google Colab](https://colab.research.google.com/github/chuminhuneti/Machine-Learning/blob/main/05_Softmax_Regression/notebooks/Softmax_Minh_Hoa.ipynb) · [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/chuminhuneti/Machine-Learning/blob/main/05_Softmax_Regression/notebooks/Softmax_Minh_Hoa.ipynb) |
+| `code/` | Mã nguồn Python: [Xem và tải mã nguồn](code/Softmax_Minh_Hoa.py) |
+| `documents/` | Tài liệu học tập: [Đọc tài liệu PDF](documents/Softmax_Regression.pdf) |
+| `html/` | Bài giảng trực tuyến: [Xem minh họa Softmax Regression – Từng bước](https://chuminhuneti.github.io/Machine-Learning/05_Softmax_Regression/html/Softmax_Regression_minh_họa.html) |
+| `slides/` | Bài giảng trình chiếu: [Xem slide PDF](slides/Softmax_Regression_Slides.pdf) |
 
 ## 5. Công cụ thực hành
 

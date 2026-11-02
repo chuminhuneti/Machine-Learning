@@ -19,35 +19,18 @@ Sau khi hoàn thành chương này, sinh viên có thể:
 - Sử dụng Python để huấn luyện và đánh giá mô hình Logistic Regression.
 ...
 
-## 3. Nội dung chương học
+## 3. Nội dung
 
 
-## 4. Tài liệu học tập
+## 4. Học liệu
 
-
-### 4.1. Notebook thực hành
-
-- [Xem Notebook trên GitHub](notebooks/perceptron_minh_hoa.ipynb)
-- [Mở Notebook bằng Google Colab](https://colab.research.google.com/github/chuminhuneti/Machine-Learning/blob/main/03_Perceptron_Classification/notebooks/perceptron_minh_hoa.ipynb)
-
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/chuminhuneti/Machine-Learning/blob/main/03_Perceptron_Classification/notebooks/perceptron_minh_hoa.ipynb)
-
-### 4.2. Minh họa HTML
-
-- [Xem minh họa Logistic Regression – Từng bước](https://chuminhuneti.github.io/Machine-Learning/04_Logistic_Regression/html/Logistic_Regression_từng_bước.html)
-
-### 4.3. Mã nguồn Python
-
-- [Xem và tải mã nguồn Python](code/)
-
-### 4.4. Tài liệu học tập (Word và PDF)
-
-- [Đọc tài liệu PDF](documents/Logistic_Regression.pdf)
-
-### 4.5. Bài giảng trình chiếu
-
-- [Xem slide PDF](slides/Logistic_Regression_Slides.pdf)
-
+| Thư mục | Nội dung |
+|---|---|
+| `notebooks/` | Notebook thực hành: [Xem trên GitHub](notebooks/perceptron_minh_hoa.ipynb) · [Mở bằng Google Colab](https://colab.research.google.com/github/chuminhuneti/Machine-Learning/blob/main/03_Perceptron_Classification/notebooks/perceptron_minh_hoa.ipynb) · [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/chuminhuneti/Machine-Learning/blob/main/03_Perceptron_Classification/notebooks/perceptron_minh_hoa.ipynb) |
+| `code/` | Mã nguồn Python: [Xem và tải mã nguồn](code/) |
+| `documents/` | Tài liệu học tập: [Đọc tài liệu PDF](documents/Logistic_Regression.pdf) |
+| `html/` | Bài giảng trực tuyến: [Xem minh họa Logistic Regression – Từng bước](https://chuminhuneti.github.io/Machine-Learning/04_Logistic_Regression/html/Logistic_Regression_từng_bước.html) |
+| `slides/` | Bài giảng trình chiếu: [Xem slide PDF](slides/Logistic_Regression_Slides.pdf) |
 
 ## 5. Công cụ thực hành
 
