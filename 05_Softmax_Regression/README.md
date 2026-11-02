@@ -30,7 +30,8 @@ Sau khi hoàn thành chương này, sinh viên có thể:
 - [Xem Notebook trên GitHub](notebooks/Softmax_Minh_Hoa.ipynb)
 - [Mở Notebook bằng Google Colab](https://colab.research.google.com/github/chuminhuneti/Machine-Learning/blob/main/05_Softmax_Regression/notebooks/Softmax_Minh_Hoa.ipynb)
 - 
-[![Open In Colab](https://colab.research.google.com/github/chuminhuneti/Machine-Learning/blob/main/05_Softmax_Regression/notebooks/Softmax_Minh_Hoa.ipynb)
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/chuminhuneti/Machine-Learning/blob/main/05_Softmax_Regression/notebooks/Softmax_Minh_Hoa.ipynb)
 
 ### 4.2. Minh họa HTML
 
