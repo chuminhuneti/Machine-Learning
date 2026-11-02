@@ -20,34 +20,8 @@ Sau khi hoàn thành chương này, sinh viên có thể:
 ## 3. Nội dung
 
 
-## 4. Tài liệu học tập
 
-
-### 4.1. Notebook thực hành
-
-- [Xem Notebook trên GitHub](notebooks/perceptron_minh_hoa.ipynb)
-- [Mở Notebook bằng Google Colab](https://colab.research.google.com/github/chuminhuneti/Machine-Learning/blob/main/03_Perceptron_Classification/notebooks/perceptron_minh_hoa.ipynb)
-
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/chuminhuneti/Machine-Learning/blob/main/03_Perceptron_Classification/notebooks/perceptron_minh_hoa.ipynb)
-
-### 4.2. Minh họa HTML
-
-- [Xem minh họa Perceptron Classification – Từng bước](https://chuminhuneti.github.io/Machine-Learning/03_Perceptron_Classification/html/Perceptron_Minh_hoa.html)
-
-### 4.3. Mã nguồn Python
-
-- [Xem và tải mã nguồn Python](code/perceptron_minh_hoa.py)
-
-### 4.4. Tài liệu học tập (Word và PDF)
-
-- [Đọc tài liệu PDF](documents/Perceptron_Classification.pdf)
-
-### 4.5. Bài giảng trình chiếu
-
-- [Xem slide PDF](slides/Perceptron_Classificasion_Slides.pdf)
-
-
-## 3. Học liệu
+## 4. Học liệu
 
 | Thư mục | Nội dung |
 |---|---|
