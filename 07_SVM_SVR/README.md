@@ -23,11 +23,12 @@ Support Vector Regression (SVR) mở rộng ý tưởng của SVM sang bài toá
 
 | Thư mục | Nội dung |
 |---|---|
-| `notebooks/` | Notebook thực hành SVM và SVR |
-| `code/` | Mã nguồn Python |
-| `documents/` | Tài liệu bài giảng |
-| `html/` | Bài giảng trực tuyến |
-| `slides/` | Slide trình chiếu |
+| `notebooks/` | Notebook thực hành: [Xem trên GitHub](notebooks/svm_svr_minh_hoa.ipynb) · [Mở bằng Google Colab](https://colab.research.google.com/github/chuminhuneti/Machine-Learning/blob/main/07_SVM_SVR/notebooks/svm_svr_minh_hoa.ipynb) · [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/chuminhuneti/Machine-Learning/blob/main/07_SVM_SVR/notebooks/svm_svr_minh_hoa.ipynb) |
+| `code/` | Mã nguồn Python: [Xem và tải mã nguồn](code/svm_demo.py) |
+| `documents/` | Tài liệu học tập: [Đọc tài liệu PDF](documents/SVM.pdf) |
+| `html/` | Bài giảng trực tuyến: [Xem minh họa Softmax Regression – Từng bước](https://chuminhuneti.github.io/Machine-Learning/07_SVM_SVR/html/svm_svr_minh_hoa.html) |
+| `slides/` | Bài giảng trình chiếu: [Xem slide PDF](slides/) |
+
 
 ## 4. Công cụ sử dụng
 
