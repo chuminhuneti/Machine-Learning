@@ -21,11 +21,12 @@ Bài học giới thiệu cấu trúc mạng nơ ron nhân tạo, nguyên lý ho
 
 | Thư mục | Nội dung |
 |---|---|
-| `notebooks/` | Notebook thực hành mạng nơ ron nhân tạo |
-| `code/` | Mã nguồn Python |
-| `documents/` | Tài liệu bài giảng |
-| `html/` | Bài giảng trực tuyến |
-| `slides/` | Slide trình chiếu |
+| `notebooks/` | Notebook thực hành: [Xem trên GitHub](notebooks/Softmax_Minh_Hoa.ipynb) · [Mở bằng Google Colab](https://colab.research.google.com/github/chuminhuneti/Machine-Learning/blob/main/06_Neural_Networks/notebooks/mang_no_ron_demo.ipynb) · [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/chuminhuneti/Machine-Learning/blob/main/06_Neural_Networks/notebooks/mang_no_ron_demo.ipynb) |
+| `code/` | Mã nguồn Python: [Xem và tải mã nguồn](code/mang_no_ron_demo.py) |
+| `documents/` | Tài liệu học tập: [Đọc tài liệu PDF](documents/Neural_Networks.pdf) |
+| `html/` | Bài giảng trực tuyến: [Xem minh họa Softmax Regression – Từng bước](https://chuminhuneti.github.io/Machine-Learning/06_Neural_Networks/html/lan_truyen_thuan_nguoc_truc_quan.html) |
+| `slides/` | Bài giảng trình chiếu: [Xem slide PDF](slides/) |
+
 
 ## 4. Công cụ sử dụng
 
