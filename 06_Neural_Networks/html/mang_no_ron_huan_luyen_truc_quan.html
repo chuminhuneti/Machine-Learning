@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Xem mạng nơ-ron học: minh họa trực quan quá trình huấn luyện</title>
+<style>
+:root{--ink:#17284B;--mut:#5B6784;--bg:#FFFCF5;--card:#FFFFFF;--line:#D7E1F3;--c0:#1F6AC8;--c1:#F0702A;--c2:#0E8660;--accent:#6B3FC9}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Nunito Sans","Segoe UI",Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5}
+header{background:linear-gradient(135deg,#0E8660,#1F6AC8);color:#fff;padding:28px 20px}
+header h1{margin:0 0 6px;font-size:30px}
+header p{margin:0;max-width:900px;font-size:17px;opacity:.95}
+main{max-width:1180px;margin:0 auto;padding:18px 16px 60px}
+.card{background:var(--card);border:2px solid var(--line);border-radius:18px;padding:16px 18px;margin:14px 0}
+.card h2{margin:0 0 8px;font-size:21px;color:var(--accent)}
+.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px 18px;align-items:end}
+.controls label{font-size:14px;font-weight:700;color:var(--mut);display:flex;flex-direction:column;gap:4px}
+.controls select,.controls input[type=range]{width:100%;font-size:15px}
+.controls select{padding:6px;border-radius:8px;border:2px solid var(--line);background:#fff}
+.val{color:var(--ink);font-weight:800}
+.btns{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+button{font:inherit;font-weight:800;border:0;border-radius:12px;padding:10px 18px;cursor:pointer;color:#fff;background:var(--c0)}
+button.go{background:var(--c2)} button.stop{background:var(--c1)} button.alt{background:var(--accent)}
+button:hover{filter:brightness(1.08)}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+@media(max-width:860px){.grid{grid-template-columns:1fr}}
+canvas{width:100%;height:auto;display:block;border-radius:12px;background:#fff}
+.cap{font-size:14px;color:var(--mut);margin:6px 0 0}
+.stat{display:flex;flex-wrap:wrap;gap:10px;margin:10px 0}
+.pill{background:#EEF4FF;border-radius:999px;padding:6px 14px;font-weight:700;font-size:15px}
+.diag{background:#FFF1C2;border-radius:12px;padding:10px 14px;font-weight:700}
+.legend span{display:inline-flex;align-items:center;gap:6px;margin-right:14px;font-size:14px}
+.dot{width:12px;height:12px;border-radius:50%;display:inline-block}
+details{background:#F5F8FF;border-radius:12px;padding:10px 14px;margin:10px 0}
+summary{cursor:pointer;font-weight:800}
+pre{background:#17284B;color:#EAF1FF;border-radius:12px;padding:12px 14px;overflow:auto;font-size:14px;line-height:1.5}
+code{font-family:"JetBrains Mono",Consolas,monospace}
+.bars div{display:flex;align-items:center;gap:8px;font-size:14px;margin:3px 0}
+.bars i{display:block;height:14px;border-radius:7px;background:var(--c2)}
+ul.tips li{margin:4px 0}
+</style>
+</head>
+<body>
+<header>
+<h1>Xem mạng nơ-ron học</h1>
+<p>Bấm <b>Huấn luyện</b> và quan sát: vùng quyết định thay đổi, đường cong mất mát đi xuống, các trọng số đổi màu. Mọi thứ chạy ngay trong trình duyệt, không cần cài gì.</p>
+</header>
+<main>
+
+<div class="card">
+<h2>1. Chọn bài toán và mạng</h2>
+<div class="controls">
+<label>Dữ liệu
+<select id="data"><option value="xor">XOR có nhiễu (2 lớp)</option><option value="clusters">Ba cụm tách được</option><option value="circles">Ba vòng tròn nhòe</option><option value="spiral" selected>Ba nhánh xoắn ốc</option></select></label>
+<label>Số lớp ẩn: <span class="val" id="vL">1</span>
+<input type="range" id="L" min="0" max="3" step="1" value="1"></label>
+<label>Số nơ-ron mỗi lớp ẩn: <span class="val" id="vH">8</span>
+<input type="range" id="H" min="2" max="16" step="1" value="8"></label>
+<label>Hàm kích hoạt
+<select id="act"><option value="tanh">tanh</option><option value="relu">ReLU</option><option value="sigmoid">sigmoid</option></select></label>
+<label>Thuật toán
+<select id="opt"><option value="adam">Adam</option><option value="sgd">SGD (mini-batch)</option></select></label>
+<label>Tốc độ học η: <span class="val" id="vE">0,01</span>
+<input type="range" id="eta" min="-4" max="0" step="0.25" value="-2"></label>
+<label>Điều chuẩn hóa L2 (λ)
+<select id="lam"><option value="0">0 (không)</option><option value="0.001">0,001</option><option value="0.01">0,01</option><option value="0.05">0,05</option></select></label>
+<label>Tốc độ chạy: <span class="val" id="vS">2</span> epoch/khung
+<input type="range" id="spd" min="1" max="10" step="1" value="2"></label>
+</div>
+<div class="btns">
+<button class="go" id="run">Huấn luyện</button>
+<button id="step">1 epoch</button>
+<button class="alt" id="reset">Khởi tạo lại mạng</button>
+<button class="alt" id="newdata">Sinh dữ liệu mới</button>
+</div>
+<p class="cap">Gợi ý: đặt <b>số lớp ẩn = 0</b> trên XOR hoặc xoắn ốc để thấy Softmax Regression (mô hình tuyến tính) thất bại; rồi tăng lên 1 và 2 lớp ẩn. Đổi sang <b>sigmoid</b> với 3 lớp ẩn để thấy gradient biến mất.</p>
+</div>
+
+<div class="grid">
+<div class="card">
+<h2>2. Vùng quyết định</h2>
+<canvas id="cv" width="520" height="520"></canvas>
+<p class="cap legend"><span><i class="dot" style="background:#1F6AC8"></i>lớp 0</span><span><i class="dot" style="background:#F0702A"></i>lớp 1</span><span><i class="dot" style="background:#0E8660"></i>lớp 2</span> Chấm đặc: tập huấn luyện. Vòng rỗng: tập kiểm định (mạng không được học trên các điểm này). Màu nền càng đậm thì mạng càng tự tin.</p>
+</div>
+<div class="card">
+<h2>3. Đường cong học</h2>
+<canvas id="cc" width="520" height="520"></canvas>
+<p class="cap">Trên: mất mát J (cross-entropy). Dưới: độ chính xác. Nét liền là huấn luyện, nét đứt là kiểm định.</p>
+</div>
+</div>
+
+<div class="card">
+<h2>4. Mạng đang nghĩ gì</h2>
+<div class="stat"><span class="pill" id="sEp">epoch 0</span><span class="pill" id="sJt">J huấn luyện: –</span><span class="pill" id="sJv">J kiểm định: –</span><span class="pill" id="sAt">đúng (huấn luyện): –</span><span class="pill" id="sAv">đúng (kiểm định): –</span><span class="pill" id="sP">tham số: –</span></div>
+<div class="diag" id="diag">Bấm “Huấn luyện” để bắt đầu.</div>
+<div class="grid" style="margin-top:12px">
+<div><canvas id="cn" width="560" height="360"></canvas>
+<p class="cap">Sơ đồ mạng. Đường <b style="color:#1F6AC8">xanh</b>: trọng số dương; đường <b style="color:#F0702A">cam</b>: trọng số âm; càng dày thì |trọng số| càng lớn. Xem chúng đổi màu khi học.</p></div>
+<div><h3 style="margin:0 0 6px">Chuẩn gradient theo lớp (mini-batch gần nhất)</h3>
+<div class="bars" id="gbars"></div>
+<p class="cap">Nếu thanh của các lớp đầu ngắn hơn rất nhiều so với lớp cuối, đó là <b>gradient biến mất</b> (mục 4.3). Thử sigmoid với 3 lớp ẩn, rồi đổi sang ReLU.</p></div>
+</div>
+</div>
+
+<div class="card">
+<h2>5. Đọc những gì bạn thấy</h2>
+<ul class="tips">
+<li><b>Vùng quyết định thẳng, J đứng yên cao</b> (ví dụ 0 lớp ẩn trên XOR): mô hình quá đơn giản, thiên lệch cao. Thêm lớp ẩn.</li>
+<li><b>Giai đoạn phẳng rồi đột ngột giảm:</b> mạng đang rời cao nguyên (điểm yên ngựa) gần khởi tạo, như Hình 14 của giáo trình.</li>
+<li><b>J huấn luyện giảm nhưng J kiểm định tăng lại:</b> quá khớp. Thử tăng λ, giảm số nơ-ron, hoặc dừng sớm.</li>
+<li><b>Chạy lại nhiều lần với cùng cấu hình</b> sẽ cho kết quả hơi khác: hàm mất mát không lồi nên kết quả phụ thuộc khởi tạo.</li>
+<li><b>η quá lớn (gần 1) với SGD</b> làm J dao động; <b>η quá nhỏ</b> làm J giảm rất chậm.</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>6. Giải thích những đoạn mã khó</h2>
+<p>Toàn bộ mạng nằm trong phần <code>&lt;script&gt;</code> ở cuối file này (khoảng 250 dòng). Bốn đoạn dễ gây khó khăn nhất:</p>
+
+<details open><summary>a) Softmax ổn định số học</summary>
+<pre><code>function softmaxRow(z){
+  const m = Math.max(...z);              // trừ giá trị lớn nhất của hàng
+  const e = z.map(v => Math.exp(v - m)); // số mũ lớn nhất bằng e^0 = 1, không tràn
+  const s = e.reduce((a,b) => a+b, 0);
+  return e.map(v => v / s);
+}</code></pre>
+<p>Công thức p<sub>k</sub> = e<sup>z<sub>k</sub></sup> / Σ e<sup>z<sub>j</sub></sup> sẽ tràn số nếu z lớn (e<sup>1000</sup>). Softmax không đổi khi trừ cùng một hằng số khỏi mọi z<sub>k</sub> (tử và mẫu cùng nhân e<sup>−m</sup>), nên ta trừ giá trị lớn nhất.</p></details>
+
+<details><summary>b) Trọng số có hàng bias ở đầu</summary>
+<pre><code>// W[l] có (vào + 1) hàng × (ra) cột. Hàng 0 là bias.
+let s = W[0][j];                        // bias của nơ-ron j
+for (let i = 0; i &lt; vao; i++) s += a[i] * W[i+1][j];  // tổng có trọng số</code></pre>
+<p>Cách này tương đương việc thêm một đầu vào luôn bằng 1 (ký hiệu <b>Ã</b> trong giáo trình), nhờ đó bias được cập nhật bằng cùng công thức gradient như mọi trọng số khác.</p></details>
+
+<details><summary>c) Lan truyền ngược: đi lùi từng lớp</summary>
+<pre><code>// D là sai số tại lớp ra: D = (P − Y) / n  (softmax + cross-entropy)
+for (let l = L-1; l &gt;= 0; l--) {
+  G[l] = Ã[l]ᵀ · D            // gradient của W[l]: (vào+1) × (ra)
+  if (l &gt; 0) {
+    // chuyển lỗi về lớp trước: nhân với W bỏ hàng bias, rồi nhân từng phần tử với φ′
+    D = (D · W[l] bỏ hàng 0 ᵀ) ⊙ φ′(Z[l-1])
+  }
+}</code></pre>
+<p>Ý nghĩa: lỗi ở lớp sau được <b>phân bổ</b> về từng nơ-ron lớp trước theo trọng số nối (phép nhân ma trận), rồi bị <b>cổng φ′</b> chặn lại nếu nơ-ron bão hòa (φ′ ≈ 0). Chính phép nhân φ′ lặp lại qua nhiều lớp gây ra gradient biến mất với sigmoid.</p></details>
+
+<details><summary>d) Adam: vì sao có hai “bộ nhớ” m và v</summary>
+<pre><code>m = b1*m + (1-b1)*g;          // trung bình trượt của gradient (hướng đi, như momentum)
+v = b2*v + (1-b2)*g*g;        // trung bình trượt của g² (độ lớn điển hình)
+mh = m/(1-b1^t); vh = v/(1-b2^t);  // hiệu chỉnh độ chệch những bước đầu (m, v bắt đầu từ 0)
+w -= eta * mh / (Math.sqrt(vh) + 1e-8);</code></pre>
+<p>Mỗi trọng số tự có “tốc độ học riêng”: gradient luôn nhỏ thì chia cho căn v nhỏ nên bước đi được phóng to; gradient dao động mạnh thì bước đi được thu nhỏ.</p></details>
+</div>
+
+</main>
+
+<script>
+(function(){
+"use strict";
+const $ = id => document.getElementById(id);
+const COLORS = [[31,106,200],[240,112,42],[14,134,96]];
+
+// ---------- Bộ sinh số ngẫu nhiên có hạt giống (để có thể lặp lại) ----------
+function rngMaker(seed){let a=seed>>>0;return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function randn(r){let u=0;while(u===0)u=r();const v=r();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+
+// ---------- Dữ liệu ----------
+function makeData(name, r){
+  const pts=[]; let K=3;
+  if(name==="xor"){K=2;for(let i=0;i<300;i++){const x=r()*2-1,y=r()*2-1;let lab=(x*y>0)?0:1;if(r()<0.04)lab=1-lab;pts.push([x*0.95,y*0.95,lab]);}}
+  else if(name==="clusters"){const C=[[-0.55,-0.45],[0.6,-0.4],[0,0.6]];for(let k=0;k<3;k++)for(let i=0;i<90;i++)pts.push([C[k][0]+0.17*randn(r),C[k][1]+0.17*randn(r),k]);}
+  else if(name==="circles"){const R=[0.22,0.58,0.9],N=[110,90,70];for(let k=0;k<3;k++)for(let i=0;i<N[k];i++){const a=r()*2*Math.PI,rad=R[k]+0.1*randn(r);pts.push([rad*Math.cos(a),rad*Math.sin(a),k]);}}
+  else{for(let k=0;k<3;k++)for(let i=0;i<90;i++){const t=i/90,rad=0.05+t*0.9,ang=k*2*Math.PI/3+t*3.4+0.12*randn(r);pts.push([rad*Math.cos(ang),rad*Math.sin(ang),k]);}}
+  for(let i=pts.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[pts[i],pts[j]]=[pts[j],pts[i]];}
+  const nTr=Math.floor(pts.length*0.7);
+  return {K, train:pts.slice(0,nTr), val:pts.slice(nTr)};
+}
+
+// ---------- Hàm kích hoạt ----------
+const ACT={
+  tanh:{f:z=>Math.tanh(z), d:(z,a)=>1-a*a},
+  relu:{f:z=>z>0?z:0, d:(z,a)=>z>0?1:0},
+  sigmoid:{f:z=>1/(1+Math.exp(-z)), d:(z,a)=>a*(1-a)}
+};
+function softmaxRow(z){let m=-Infinity;for(const v of z)if(v>m)m=v;const e=z.map(v=>Math.exp(v-m));let s=0;for(const v of e)s+=v;return e.map(v=>v/s);}
+
+// ---------- Mạng ----------
+let S={}; // trạng thái toàn cục
+function initNet(){
+  const L=+$("L").value,H=+$("H").value,act=$("act").value,K=S.data.K;
+  const sizes=[2];for(let i=0;i<L;i++)sizes.push(H);sizes.push(K);
+  const r=rngMaker((Math.random()*1e9)|0);
+  S.sizes=sizes;S.act=act;
+  S.W=[];S.m=[];S.v=[];
+  for(let l=0;l<sizes.length-1;l++){
+    const fi=sizes[l],fo=sizes[l+1];
+    const sc=Math.sqrt((act==="relu"?2:1)/fi);  // He cho ReLU, Xavier cho tanh/sigmoid
+    const W=[],M=[],V=[];
+    for(let i=0;i<=fi;i++){const row=new Float64Array(fo),mr=new Float64Array(fo),vr=new Float64Array(fo);if(i>0)for(let j=0;j<fo;j++)row[j]=sc*randn(r);W.push(row);M.push(mr);V.push(vr);}
+    S.W.push(W);S.m.push(M);S.v.push(V);
+  }
+  S.t=0;S.epoch=0;S.hist={jt:[],jv:[],at:[],av:[]};S.gn=new Array(sizes.length-1).fill(0);
+  let np=0;for(let l=0;l<sizes.length-1;l++)np+=(sizes[l]+1)*sizes[l+1];S.np=np;
+  S.order=[...Array(S.data.train.length).keys()];S.rng=rngMaker((Math.random()*1e9)|0);
+  record();
+}
+function forward(X){ // X: mảng các [x1,x2]; trả về {As, Zs, P}
+  const act=ACT[S.act],L=S.W.length;let A=X;const As=[A],Zs=[];
+  for(let l=0;l<L;l++){
+    const W=S.W[l],fi=S.sizes[l],fo=S.sizes[l+1],Z=[],An=[];
+    for(const a of A){
+      const z=new Float64Array(fo);
+      for(let j=0;j<fo;j++){let s=W[0][j];for(let i=0;i<fi;i++)s+=a[i]*W[i+1][j];z[j]=s;}
+      Z.push(z);
+      if(l<L-1){const o=new Float64Array(fo);for(let j=0;j<fo;j++)o[j]=act.f(z[j]);An.push(o);}
+    }
+    Zs.push(Z);
+    if(l<L-1){A=An;As.push(A);}
+  }
+  const P=Zs[L-1].map(z=>softmaxRow(Array.from(z)));
+  return {As,Zs,P};
+}
+function backward(As,Zs,P,Y){ // trả về gradient G[l] cùng cỡ W[l]
+  const L=S.W.length,n=P.length,act=ACT[S.act],lam=+$("lam").value,G=new Array(L);
+  let D=P.map((p,i)=>{const d=new Float64Array(p.length);for(let k=0;k<p.length;k++)d[k]=(p[k]-(Y[i]===k?1:0))/n;return d;});
+  for(let l=L-1;l>=0;l--){
+    const fi=S.sizes[l],fo=S.sizes[l+1],A=As[l],g=[];
+    for(let i=0;i<=fi;i++)g.push(new Float64Array(fo));
+    for(let s=0;s<n;s++){const d=D[s],a=A[s];for(let j=0;j<fo;j++){g[0][j]+=d[j];for(let i=0;i<fi;i++)g[i+1][j]+=a[i]*d[j];}}
+    for(let i=1;i<=fi;i++)for(let j=0;j<fo;j++)g[i][j]+=lam*S.W[l][i][j]; // L2 không áp dụng cho bias
+    G[l]=g;
+    if(l>0){
+      const Dn=[],Z=Zs[l-1],Ap=As[l];
+      for(let s=0;s<n;s++){const d=D[s],dn=new Float64Array(fi);
+        for(let i=0;i<fi;i++){let t=0;for(let j=0;j<fo;j++)t+=d[j]*S.W[l][i+1][j];dn[i]=t*act.d(Z[s][i],Ap[s][i]);}
+        Dn.push(dn);}
+      D=Dn;
+    }
+  }
+  return G;
+}
+function update(G){
+  const eta=Math.pow(10,+$("eta").value),adam=$("opt").value==="adam";S.t++;
+  const b1=0.9,b2=0.999,c1=1-Math.pow(b1,S.t),c2=1-Math.pow(b2,S.t);
+  for(let l=0;l<G.length;l++){let nn=0;
+    for(let i=0;i<G[l].length;i++)for(let j=0;j<G[l][i].length;j++){
+      const g=G[l][i][j];nn+=g*g;
+      if(adam){S.m[l][i][j]=b1*S.m[l][i][j]+(1-b1)*g;S.v[l][i][j]=b2*S.v[l][i][j]+(1-b2)*g*g;
+        S.W[l][i][j]-=eta*(S.m[l][i][j]/c1)/(Math.sqrt(S.v[l][i][j]/c2)+1e-8);}
+      else S.W[l][i][j]-=eta*g;
+    }
+    S.gn[l]=Math.sqrt(nn);
+  }
+}
+function trainEpoch(){
+  const tr=S.data.train,b=32;
+  for(let i=tr.length-1;i>0;i--){const j=Math.floor(S.rng()*(i+1));[S.order[i],S.order[j]]=[S.order[j],S.order[i]];}
+  for(let k=0;k<tr.length;k+=b){
+    const idx=S.order.slice(k,k+b),X=idx.map(i=>[tr[i][0],tr[i][1]]),Y=idx.map(i=>tr[i][2]);
+    const f=forward(X);update(backward(f.As,f.Zs,f.P,Y));
+  }
+  S.epoch++;record();
+}
+function evalSet(pts){
+  const f=forward(pts.map(p=>[p[0],p[1]]));let J=0,ok=0;
+  for(let i=0;i<pts.length;i++){const p=f.P[i],y=pts[i][2];J-=Math.log(Math.max(p[y],1e-12));let am=0;for(let k=1;k<p.length;k++)if(p[k]>p[am])am=k;if(am===y)ok++;}
+  return {J:J/pts.length,acc:ok/pts.length};
+}
+function record(){
+  const a=evalSet(S.data.train),b=evalSet(S.data.val);
+  S.hist.jt.push(a.J);S.hist.jv.push(b.J);S.hist.at.push(a.acc);S.hist.av.push(b.acc);
+}
+
+// ---------- Vẽ ----------
+const cv=$("cv"),cx=cv.getContext("2d"),cc=$("cc"),cg=cc.getContext("2d"),cn=$("cn"),cnx=cn.getContext("2d");
+const off=document.createElement("canvas");const G0=56;off.width=G0;off.height=G0;const ox=off.getContext("2d");
+function toPx(x,y){return [(x+1.1)/2.2*cv.width,(1.1-y)/2.2*cv.height];}
+function drawBoundary(){
+  const img=ox.createImageData(G0,G0),X=[];
+  for(let j=0;j<G0;j++)for(let i=0;i<G0;i++)X.push([-1.1+2.2*(i+0.5)/G0,1.1-2.2*(j+0.5)/G0]);
+  const P=forward(X).P;
+  for(let q=0;q<P.length;q++){let r=0,g=0,b=0;for(let k=0;k<P[q].length;k++){r+=P[q][k]*COLORS[k][0];g+=P[q][k]*COLORS[k][1];b+=P[q][k]*COLORS[k][2];}
+    img.data[4*q]=255-0.5*(255-r);img.data[4*q+1]=255-0.5*(255-g);img.data[4*q+2]=255-0.5*(255-b);img.data[4*q+3]=255;}
+  ox.putImageData(img,0,0);
+  cx.imageSmoothingEnabled=true;cx.drawImage(off,0,0,cv.width,cv.height);
+  cx.strokeStyle="#C9D6EE";cx.lineWidth=1;cx.beginPath();const [x0,y0]=toPx(0,0);cx.moveTo(x0,0);cx.lineTo(x0,cv.height);cx.moveTo(0,y0);cx.lineTo(cv.width,y0);cx.stroke();
+  for(const p of S.data.train){const [px,py]=toPx(p[0],p[1]);cx.beginPath();cx.arc(px,py,5,0,7);cx.fillStyle="rgb("+COLORS[p[2]].join(",")+")";cx.fill();cx.strokeStyle="#fff";cx.lineWidth=1.5;cx.stroke();}
+  for(const p of S.data.val){const [px,py]=toPx(p[0],p[1]);cx.beginPath();cx.arc(px,py,6,0,7);cx.strokeStyle="rgb("+COLORS[p[2]].join(",")+")";cx.lineWidth=2.5;cx.stroke();}
+}
+function plot(ctx,box,series,ymin,ymax,title,fmt){
+  const [x,y,w,h]=box;ctx.fillStyle="#F5F8FF";ctx.fillRect(x,y,w,h);
+  ctx.strokeStyle="#D7E1F3";ctx.lineWidth=1;ctx.fillStyle="#5B6784";ctx.font="15px sans-serif";
+  for(let i=0;i<=4;i++){const yy=y+h-h*i/4;ctx.beginPath();ctx.moveTo(x,yy);ctx.lineTo(x+w,yy);ctx.stroke();ctx.fillText(fmt(ymin+(ymax-ymin)*i/4),x-44,yy+5);}
+  ctx.font="bold 16px sans-serif";ctx.fillStyle="#17284B";ctx.fillText(title,x,y-8);
+  const n=Math.max(series[0].d.length,2);
+  for(const s of series){ctx.beginPath();ctx.strokeStyle=s.c;ctx.lineWidth=3;ctx.setLineDash(s.dash||[]);
+    s.d.forEach((v,i)=>{const px=x+w*i/(n-1),py=y+h-h*Math.min(1,Math.max(0,(v-ymin)/(ymax-ymin)));if(i===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);});ctx.stroke();ctx.setLineDash([]);}
+  ctx.fillStyle="#5B6784";ctx.font="14px sans-serif";ctx.fillText("epoch 0",x,y+h+18);ctx.fillText("epoch "+(S.epoch),x+w-70,y+h+18);
+}
+function drawCurves(){
+  cg.clearRect(0,0,cc.width,cc.height);const H=S.hist;
+  const jmax=Math.max(1.2,H.jt[0]*1.05,Math.max(...H.jv.slice(0,5)));
+  plot(cg,[56,34,440,190],[{d:H.jt,c:"#1F6AC8"},{d:H.jv,c:"#F0702A",dash:[8,6]}],0,Math.min(jmax,3),"Mất mát J (cross-entropy)",v=>v.toFixed(2));
+  plot(cg,[56,290,440,180],[{d:H.at,c:"#1F6AC8"},{d:H.av,c:"#F0702A",dash:[8,6]}],0,1,"Độ chính xác",v=>Math.round(v*100)+"%");
+}
+function drawNet(){
+  const W=cn.width,Hh=cn.height;cnx.clearRect(0,0,W,Hh);const sz=S.sizes,Lc=sz.length,xs=sz.map((_,i)=>50+i*(W-100)/(Lc-1));
+  const show=sz.map(n=>Math.min(n,10)),pos=(l,i)=>[xs[l],Hh/2+(i-(show[l]-1)/2)*Math.min(34,(Hh-60)/Math.max(show[l],1))];
+  for(let l=0;l<Lc-1;l++)for(let i=0;i<show[l];i++)for(let j=0;j<show[l+1];j++){
+    const w=S.W[l][i+1][j],[a,b]=pos(l,i),[c,d]=pos(l+1,j);cnx.beginPath();cnx.moveTo(a,b);cnx.lineTo(c,d);
+    cnx.strokeStyle=w>=0?"rgba(31,106,200,"+Math.min(0.9,0.15+Math.abs(w)*0.35)+")":"rgba(240,112,42,"+Math.min(0.9,0.15+Math.abs(w)*0.35)+")";cnx.lineWidth=Math.min(5,0.4+Math.abs(w)*1.2);cnx.stroke();}
+  for(let l=0;l<Lc;l++)for(let i=0;i<show[l];i++){const [a,b]=pos(l,i);cnx.beginPath();cnx.arc(a,b,11,0,7);
+    cnx.fillStyle=l===Lc-1?"rgb("+COLORS[i].join(",")+")":(l===0?"#FFC93C":"#fff");cnx.fill();cnx.strokeStyle="#17284B";cnx.lineWidth=2;cnx.stroke();}
+  cnx.fillStyle="#17284B";cnx.font="bold 15px sans-serif";cnx.textAlign="center";
+  cnx.fillText("đầu vào",xs[0],22);for(let l=1;l<Lc-1;l++)cnx.fillText("ẩn "+l+" ("+sz[l]+")",xs[l],22);cnx.fillText("đầu ra (softmax)",xs[Lc-1],22);cnx.textAlign="start";
+}
+function drawStats(){
+  const H=S.hist,n=H.jt.length-1;$("sEp").textContent="epoch "+S.epoch;
+  $("sJt").textContent="J huấn luyện: "+H.jt[n].toFixed(3);$("sJv").textContent="J kiểm định: "+H.jv[n].toFixed(3);
+  $("sAt").textContent="đúng (huấn luyện): "+(H.at[n]*100).toFixed(1)+"%";$("sAv").textContent="đúng (kiểm định): "+(H.av[n]*100).toFixed(1)+"%";
+  $("sP").textContent="tham số: "+S.np;
+  let msg="Bấm “Huấn luyện” để bắt đầu.";
+  if(S.epoch>0){
+    const gap=H.jv[n]-H.jt[n],minV=Math.min(...H.jv),K=S.data.K;
+    if(!isFinite(H.jt[n]))msg="J không xác định: η quá lớn, gradient bùng nổ. Giảm η và khởi tạo lại.";
+    else if(H.at[n]<1/K+0.12&&S.epoch>40)msg="Mạng gần như đoán ngẫu nhiên. Có thể mô hình quá đơn giản (thiếu khớp), η quá nhỏ, hoặc đang kẹt ở cao nguyên.";
+    else if(S.epoch>30&&H.jv[n]>minV+0.08&&gap>0.1)msg="Dấu hiệu quá khớp: J kiểm định đã tăng lại so với mức thấp nhất ("+minV.toFixed(2)+"). Thử tăng λ hoặc giảm số nơ-ron.";
+    else if(S.epoch>40&&Math.abs(H.jt[n]-H.jt[n-10])<0.002)msg="J gần như không đổi: mạng đã hội tụ (hoặc đang ở vùng phẳng).";
+    else msg="Đang học: J huấn luyện giảm. Quan sát vùng quyết định uốn theo dữ liệu.";
+  }
+  $("diag").textContent=msg;
+  const bars=$("gbars");bars.innerHTML="";
+  S.gn.forEach((g,l)=>{const w=Math.max(2,Math.min(100,(Math.log10(g+1e-12)+6)/6*100));const d=document.createElement("div");
+    d.innerHTML="<span style='width:92px'>lớp "+(l+1)+(l===S.gn.length-1?" (ra)":"")+"</span><i style='width:"+w*0.55+"%'></i><span>"+(g?g.toExponential(1):"–")+"</span>";bars.appendChild(d);});
+}
+function redraw(){drawBoundary();drawCurves();drawNet();drawStats();}
+
+// ---------- Điều khiển ----------
+let running=false;
+function loop(){if(!running)return;const sp=+$("spd").value;for(let i=0;i<sp;i++)trainEpoch();redraw();if(S.epoch>=3000){toggle(false);return;}requestAnimationFrame(loop);}
+function toggle(on){running=on;$("run").textContent=on?"Tạm dừng":"Huấn luyện";$("run").className=on?"stop":"go";if(on)requestAnimationFrame(loop);}
+function newData(){S.data=makeData($("data").value,rngMaker((Math.random()*1e9)|0));initNet();redraw();}
+function labels(){$("vL").textContent=$("L").value;$("vH").textContent=$("H").value;$("vE").textContent=Math.pow(10,+$("eta").value).toPrecision(2).replace(".",",");$("vS").textContent=$("spd").value;}
+["L","H","eta","spd"].forEach(id=>$(id).addEventListener("input",labels));
+["L","H","act"].forEach(id=>$(id).addEventListener("change",()=>{toggle(false);initNet();redraw();}));
+["data"].forEach(id=>$(id).addEventListener("change",()=>{toggle(false);newData();}));
+$("run").onclick=()=>toggle(!running);
+$("step").onclick=()=>{toggle(false);trainEpoch();redraw();};
+$("reset").onclick=()=>{toggle(false);initNet();redraw();};
+$("newdata").onclick=()=>{toggle(false);newData();};
+labels();newData();
+window.__demo=S; // để kiểm tra từ bảng điều khiển trình duyệt
+})();
+</script>
+</body>
+</html>
