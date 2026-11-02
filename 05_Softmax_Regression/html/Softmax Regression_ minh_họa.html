@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="vi"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Softmax Regression: minh họa huấn luyện và đánh giá</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f6f6f2;--cd:#fff;--tx:#1d2327;--mu:#667078;--bd:#dcdcd2;--ac:#3b5bdb;--c0:#d9534f;--c1:#d99a00;--c2:#2e9e6b}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#16181b;--cd:#1f2226;--tx:#e8e8e4;--mu:#9aa3aa;--bd:#363a40;--ac:#8aa0ff;--c0:#ef7773;--c1:#f0b92e;--c2:#4cc08c}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#16181b;--cd:#1f2226;--tx:#e8e8e4;--mu:#9aa3aa;--bd:#363a40;--ac:#8aa0ff;--c0:#ef7773;--c1:#f0b92e;--c2:#4cc08c}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.55 system-ui,"Segoe UI",Roboto,sans-serif}
+main{max-width:1500px;margin:0 auto;padding:16px}.pipe{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:12px 0}.pipe .card{margin:0}@media(max-width:1000px){.pipe{grid-template-columns:1fr}}
+h1{font-size:22px;margin:4px 0}h2{font-size:17px;margin:0 0 8px}p{margin:6px 0}.mu{color:var(--mu);font-size:13px}
+.tabs{display:flex;gap:6px;margin:12px 0}.tabs button,.ctl button,select,input{font:inherit;color:var(--tx);background:var(--cd);border:1px solid var(--bd);border-radius:8px;padding:6px 12px;cursor:pointer}
+.tabs button.on,.ctl button.pri{background:var(--ac);color:#fff;border-color:var(--ac)}
+.card{background:var(--cd);border:1px solid var(--bd);border-radius:12px;padding:14px;margin:12px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}.grid .card{margin:0}
+.ctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.ctl input[type=range]{flex:1;min-width:140px;padding:0}
+.sc{overflow-x:auto}table{border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:13px}
+td,th{border:1px solid var(--bd);padding:3px 8px;text-align:right;white-space:nowrap}th{background:var(--bg);font-weight:600}
+.n{display:inline-block;width:22px;height:22px;border-radius:50%;background:var(--ac);color:#fff;text-align:center;line-height:22px;font-size:12px;margin-right:6px}
+.f{font-family:ui-monospace,Menlo,monospace;background:var(--bg);padding:6px 10px;border-radius:8px;font-size:13px;overflow-x:auto;margin:6px 0}
+.big{font-size:26px;font-weight:700}.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.tile{border:1px solid var(--bd);border-radius:10px;padding:10px;background:var(--bg)}.tile b{display:block;font-size:22px}
+.ok{color:var(--c2);font-weight:600}.bad{color:var(--c0);font-weight:600}svg text{fill:var(--tx);font-size:11px}
+canvas{max-width:100%;border:1px solid var(--bd);border-radius:8px}.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin:0 4px 0 8px}
+.hl{outline:2px solid var(--ac);outline-offset:-2px}
+</style></head><body><main>
+<h1>Softmax Regression: huấn luyện và đánh giá, từng bước</h1>
+<p class="mu">Minh họa cho tài liệu «Mô hình Softmax Regression» (mục 3 và mục 5). Tab 1 chạy thật Gradient Descent trên 9 sinh viên (mục 3.6); tab 2 huấn luyện trên 600 sinh viên; tab 3 đánh giá chính mô hình đó (ma trận nhầm lẫn, ROC, AUC, hiệu chuẩn).</p>
+<div class="tabs"><button class="on" data-t="a">1. Huấn luyện</button><button data-t="c">2. Huấn luyện 600 mẫu</button><button data-t="b">3. Đánh giá</button></div>
+
+<section id="a">
+<div class="card"><h2>Bộ điều khiển</h2>
+<div class="ctl"><button id="pv">◀ Lùi</button><button id="nx" class="pri">Bước tiếp ▶</button><button id="pl">▶▶ Tự chạy</button><button id="rs">⟲ Về W₀=0</button>
+<label>η = <select id="eta"><option>0.01</option><option>0.05</option><option selected>0.1</option><option>0.3</option><option>0.5</option></select></label></div>
+<div class="ctl" style="margin-top:8px"><span>Bước t = <b id="tv">0</b></span><input type="range" id="sl" min="0" max="60" value="0"></div>
+<p class="mu">Mỗi bước: tính điểm số, softmax, mất mát, gradient rồi cập nhật W. Dữ liệu: x₁ giờ tự học, x₂ số buổi vắng; lớp 0 rớt, 1 đạt, 2 giỏi; đặc trưng gốc, W₀=0.</p></div>
+<div class="grid"><div class="card"><h2>Mặt phẳng đặc trưng và vùng quyết định</h2><canvas id="cv" width="360" height="220"></canvas>
+<p class="mu"><span class="dot" style="background:var(--c0)"></span>rớt<span class="dot" style="background:var(--c1)"></span>đạt<span class="dot" style="background:var(--c2)"></span>giỏi. Nền là lớp thắng argmax; chấm có viền đen đậm là mẫu bị đoán sai.</p></div>
+<div class="card"><h2>Hàm mất mát J và số mẫu đúng theo bước</h2><svg id="lc" viewBox="0 0 360 220" width="100%"></svg><p class="mu" id="lcn"></p></div><div class="card sc"><h2>Soi một sinh viên</h2><div class="ctl">Sinh viên <select id="sv"></select></div><div id="s7"></div></div></div>
+<div class="pipe"><div class="card sc"><h2><span class="n">1</span>Ma trận tham số Wₜ (3×3, mỗi cột là một lớp)</h2><div id="s1"></div></div>
+<div class="card sc"><h2><span class="n">2</span>Điểm số S = XW (9×3)</h2><div id="s2"></div></div>
+<div class="card sc"><h2><span class="n">3</span>Xác suất P = softmax(S) theo từng hàng</h2><div id="s3"></div><p class="mu">Thanh nền = độ lớn xác suất. <b class="ok">Xanh</b> = đoán đúng, <b class="bad">đỏ</b> = đoán sai.</p></div>
+<div class="card"><h2><span class="n">4</span>Mất mát cross-entropy</h2><div class="f">J(W) = −(1/n) Σᵢ ln qᵢ, qᵢ = xác suất gán cho lớp thật</div><div id="s4"></div></div>
+<div class="card sc"><h2><span class="n">5</span>Gradient ∇J = (1/n)·Xᵀ(P − Y)</h2><div id="s5"></div><p class="mu">Mỗi hàng của gradient cộng lại bằng 0 (tính chất ở mục 3.3). Cả 9 mẫu đều đóng góp, với trọng số pᵢ−yᵢ.</p></div>
+<div class="card sc"><h2><span class="n">6</span>Cập nhật W<sub>t+1</sub> = Wₜ − η·∇J</h2><div id="s6"></div></div></div>
+</section>
+
+<section id="c" hidden>
+<div class="card"><h2>Huấn luyện trên bộ dữ liệu lớn: 600 sinh viên (200 mỗi lớp)</h2>
+<p class="mu">Dữ liệu mô phỏng theo mục 3.7 (ba cụm chồng lấn vừa phải), chia 70% huấn luyện (420) và 30% kiểm tra (180), chuẩn hóa theo trung bình và độ lệch chuẩn của tập huấn luyện. Batch Gradient Descent, η=0,5, W₀=0. Dữ liệu được sinh ngẫu nhiên ngay trên trình duyệt nên số liệu xấp xỉ, không trùng từng con số với tài liệu.</p>
+<div class="ctl"><button id="cp" class="pri">▶▶ Tự chạy</button><button id="cr">⟲ Về epoch 0</button><span>Epoch = <b id="ev">0</b></span><input type="range" id="es" min="0" max="500" value="0"></div>
+<div class="tiles" id="cst" style="margin-top:8px"></div></div>
+<div class="pipe"><div class="card"><h2>Vùng quyết định trên 600 mẫu</h2><canvas id="cv3" width="420" height="270"></canvas><p class="mu">Chấm nhỏ mờ = tập huấn luyện, chấm lớn = tập kiểm tra, viền đen = mẫu kiểm tra bị đoán sai.</p></div>
+<div class="card"><h2>Loss và accuracy theo epoch</h2><svg id="lc3" viewBox="0 0 420 250" width="100%"></svg><p class="mu">Đường liền: huấn luyện; nét đứt: kiểm tra.</p></div>
+<div class="card sc"><h2>Ma trận W (đặc trưng chuẩn hóa)</h2><div id="cw"></div><p class="mu">Mỗi cột là một lớp; dấu của hệ số giờ học và buổi vắng cho thấy lớp rớt bị kéo về phía ít học, nhiều vắng.</p></div></div>
+</section>
+<section id="b" hidden>
+<div class="card"><h2>Mô hình sau 2000 epoch, đánh giá trên 180 mẫu kiểm tra</h2><div class="tiles" id="tl"></div></div>
+<div class="pipe"><div class="card"><h2>Bản đồ lỗi trên tập kiểm tra</h2><canvas id="cv2" width="420" height="270"></canvas><p class="mu">Chỉ vẽ mẫu kiểm tra. Viền đen = đoán sai; lỗi nằm sát ranh giới giữa các lớp kề nhau.</p></div>
+<div class="card sc"><h2>Ma trận nhầm lẫn 3×3</h2><div class="ctl">Chọn lớp: <span id="cb"></span></div><div id="cm" style="margin-top:8px"></div><div id="cf"></div></div>
+<div class="card"><h2>Precision / Recall / F1 theo lớp</h2><svg id="pb" viewBox="0 0 360 230" width="100%"></svg><div class="sc" id="pm"></div></div></div>
+<div class="card"><h2>Đường ROC và AUC (one-vs-rest)</h2>
+<p class="mu">Với lớp k, coi pₖ là điểm số của bài toán «lớp k hay không». Mỗi ngưỡng τ cho một điểm (FPR, TPR); quét τ từ 1 xuống 0 vẽ ra đường ROC. Kéo thanh τ để thấy điểm chạy trên đường cong và histogram bên cạnh.</p>
+<div class="ctl">Lớp: <select id="rk"></select><span>τ = <b id="rtv">0,50</b></span><input type="range" id="rt" min="0" max="100" value="50"></div>
+<div class="pipe" style="margin-top:10px"><div><svg id="roc" viewBox="0 0 360 340" width="100%"></svg></div><div><svg id="hs" viewBox="0 0 360 340" width="100%"></svg></div><div id="rn"></div></div></div>
+<div class="grid"><div class="card"><h2>Độ tin cậy maxₖ pₖ: đúng và sai</h2><svg id="ch" viewBox="0 0 360 240" width="100%"></svg><p class="mu">Mẫu đoán sai dồn về vùng tin cậy thấp: mô hình «biết mình không chắc».</p></div>
+<div class="card"><h2>Biểu đồ hiệu chuẩn</h2><svg id="rl" viewBox="0 0 330 270" width="100%"></svg><p class="mu" id="ecen"></p></div></div>
+</section>
+</main>
+<script>
+const $=i=>document.getElementById(i),f=(v,d=3)=>v.toFixed(d).replace('.',',').replace('-','−');
+const X=[[2,4],[3,3],[4,5],[6,3],[7,2],[6,4],[9,1],[10,0],[8,0]],y=[0,0,0,1,1,1,2,2,2],N=9,nm=['rớt','đạt','giỏi'],CL=['var(--c0)','var(--c1)','var(--c2)'],Xb=X.map(r=>[1,...r]);
+const sm=s=>{const m=Math.max(...s),e=s.map(v=>Math.exp(v-m)),t=e.reduce((a,b)=>a+b);return e.map(v=>v/t)};
+const mm=(A,B)=>A.map(r=>B[0].map((_,j)=>r.reduce((a,v,k)=>a+v*B[k][j],0)));
+const am=p=>p.indexOf(Math.max(...p));
+function fwd(W){const S=mm(Xb,W),P=S.map(sm),J=-P.reduce((a,p,i)=>a+Math.log(p[y[i]]),0)/N,acc=P.filter((p,i)=>am(p)==y[i]).length,
+D=P.map((p,i)=>p.map((v,k)=>v-(y[i]==k?1:0))),G=[0,1,2].map(j=>[0,1,2].map(k=>D.reduce((a,d,i)=>a+Xb[i][j]*d[k],0)/N));return{S,P,J,acc,D,G}}
+function tb(M,rl,cl,o={}){return '<table><tr><th></th>'+cl.map(c=>'<th>'+c+'</th>').join('')+'</tr>'+M.map((r,i)=>'<tr><th>'+rl[i]+'</th>'+r.map((v,j)=>'<td'+(o.cell?o.cell(i,j,v):'')+'>'+(o.fm?o.fm(v):f(v))+'</td>').join('')+'</tr>').join('')+'</table>'}
+let hist=[],t=0,timer=null,eta=0.1;
+function build(){hist=[[[0,0,0],[0,0,0],[0,0,0]]];for(let i=0;i<60;i++){const W=hist[i],g=fwd(W).G;hist.push(W.map((r,j)=>r.map((v,k)=>v-eta*g[j][k])))}}
+const stN=['lớp rớt','lớp đạt','lớp giỏi'],cn=nm.map((n,k)=>'w'+k+' ('+n+')'),rn=['1 (chệch)','x₁','x₂'],sl=hist,svn=[...Array(9)].map((_,i)=>'SV'+(i+1)+' (y='+y[i]+')');
+function draw(W){const c=$('cv'),g=c.getContext('2d'),w=c.width,h=c.height,cs=getComputedStyle(document.documentElement),col=[cs.getPropertyValue('--c0'),cs.getPropertyValue('--c1'),cs.getPropertyValue('--c2')].map(s=>s.trim()),X1=12,X2=6,m=24;
+g.clearRect(0,0,w,h);g.globalAlpha=.28;for(let px=0;px<w-m;px+=4)for(let py=0;py<h-m;py+=4){const a=px/(w-m)*X1,b=(1-py/(h-m))*X2,s=[0,1,2].map(k=>W[0][k]+W[1][k]*a+W[2][k]*b);g.fillStyle=col[am(s)];g.fillRect(m+px,py,4,4)}
+g.globalAlpha=1;g.fillStyle=cs.getPropertyValue('--mu');g.font='11px sans-serif';g.fillText('x₁ giờ học (0–12)',w/2-40,h-4);g.save();g.translate(11,h/2+30);g.rotate(-Math.PI/2);g.fillText('x₂ vắng (0–6)',0,0);g.restore();
+const F=fwd(W);X.forEach((p,i)=>{const px=m+p[0]/X1*(w-m),py=(1-p[1]/X2)*(h-m),bad=am(F.P[i])!=y[i];g.beginPath();g.arc(px,py,6,0,7);g.fillStyle=col[y[i]];g.fill();g.lineWidth=bad?3:1;g.strokeStyle=bad?'#000':'#fff';g.stroke()})}
+function lineSvg(el,lab,ser,ymin,ymax,W,H,mark){const L=40,R=10,T=14,B=26,xs=i=>L+(lab.length>1?i/(lab.length-1):0)*(W-L-R),ys=v=>T+(1-(v-ymin)/(ymax-ymin))*(H-T-B);let s='';
+for(let k=0;k<=4;k++){const v=ymin+(ymax-ymin)*k/4;s+=`<line x1="${L}" x2="${W-R}" y1="${ys(v)}" y2="${ys(v)}" stroke="var(--bd)"/><text x="4" y="${ys(v)+4}">${f(v,2)}</text>`}
+lab.forEach((l,i)=>{if(lab.length<12||i%10==0)s+=`<text x="${xs(i)-8}" y="${H-8}">${l}</text>`});
+ser.forEach(q=>{s+=`<polyline fill="none" stroke="${q.c}" stroke-width="2" ${q.d?'stroke-dasharray="5 3"':''} points="${q.v.map((v,i)=>xs(i)+','+ys(v)).join(' ')}"/>`+q.v.map((v,i)=>lab.length<12?`<circle cx="${xs(i)}" cy="${ys(v)}" r="3" fill="${q.c}"/>`:'').join('')+`<text x="${W-R-110}" y="${T+12+ser.indexOf(q)*13}" style="fill:${q.c}">▬ ${q.n}</text>`});
+if(mark!=null)s+=`<line x1="${xs(mark)}" x2="${xs(mark)}" y1="${T}" y2="${H-B}" stroke="var(--ac)" stroke-dasharray="3 3"/>`;el.innerHTML=s}
+function render(){const W=hist[t],F=fwd(W),Wn=hist[Math.min(t+1,60)];$('tv').textContent=t;$('sl').value=t;
+$('s1').innerHTML=tb(W,rn,cn,{fm:v=>f(v,4)});
+$('s2').innerHTML=tb(F.S,svn,['s₀ (rớt)','s₁ (đạt)','s₂ (giỏi)']);
+$('s3').innerHTML=tb(F.P,svn,nm,{fm:v=>f(v),cell:(i,j,v)=>{const p=am(F.P[i]),ok=p==y[i];return ` style="background:linear-gradient(90deg,${CL[j]}55 ${v*100}%,transparent ${v*100}%)${j==p?';font-weight:700;color:'+(ok?'var(--c2)':'var(--c0)'):''}"`}});
+const q=F.P.map((p,i)=>p[y[i]]);
+$('s4').innerHTML=`<div class="big">J = ${f(F.J,4)}</div><p>Dự đoán đúng: <b>${F.acc} / 9</b>. Mốc xuất phát J₀ = ln 3 = 1,0986.</p><div class="f">qᵢ = ${q.map(v=>f(v,2)).join(' · ')}<br>−ln qᵢ = ${q.map(v=>f(-Math.log(v),2)).join(' · ')}</div>`;
+$('s5').innerHTML=tb(F.G,rn,cn,{fm:v=>f(v,4)})+`<p class="mu">Tổng mỗi hàng: ${F.G.map(r=>f(r.reduce((a,b)=>a+b),4)).join(' ; ')}</p>`;
+$('s6').innerHTML=`<div class="f">η = ${f(eta,2)} → W<sub>${t+1}</sub> = W<sub>${t}</sub> − ${f(eta,2)}·∇J</div>`+tb(Wn,rn,cn,{fm:v=>f(v,4),cell:(i,j)=>Math.abs(Wn[i][j]-W[i][j])>1e-9?' class="hl"':''});
+draw(W);const Js=hist.map(h=>fwd(h).J),Ac=hist.map(h=>fwd(h).acc/9*Js[0]);lineSvg($('lc'),hist.map((_,i)=>i),[{n:'J(Wₜ)',c:'var(--c0)',v:Js},{n:'số mẫu đúng/9 (×ln3)',c:'var(--c2)',v:Ac,d:1}],0,1.2,360,220,t);$('lcn').textContent='Bước '+t+': J='+f(F.J,4)+', đúng '+F.acc+'/9. Mẫu phân tách hoàn toàn nên J còn giảm mãi (mục 4.4).';
+sv()}
+function sv(){const i=+$('sv').value,F=fwd(hist[t]),e=F.S[i].map(Math.exp),Z=e.reduce((a,b)=>a+b);
+$('s7').innerHTML=`<p>x = (1; ${X[i][0]}; ${X[i][1]}), nhãn thật y=${y[i]} (${nm[y[i]]}), one-hot = (${[0,1,2].map(k=>+(y[i]==k)).join(', ')})</p>`+tb([F.S[i],e,F.P[i],F.D[i]],['s = xW','eˢ','p = eˢ/Σ','p − y'],nm,{fm:v=>f(v,4)})+`<div class="f">Σeˢ = ${f(Z,4)} ; qᵢ = p<sub>y</sub> = ${f(F.P[i][y[i]],4)} ; −ln qᵢ = ${f(-Math.log(F.P[i][y[i]]),4)} ; dự đoán = ${nm[am(F.P[i])]}</div>`}
+function go(n){t=Math.max(0,Math.min(60,n));render()}
+$('nx').onclick=()=>go(t+1);$('pv').onclick=()=>go(t-1);$('sl').oninput=e=>go(+e.target.value);$('rs').onclick=()=>go(0);$('sv').onchange=sv;
+$('pl').onclick=()=>{if(timer){clearInterval(timer);timer=null;$('pl').textContent='▶▶ Tự chạy'}else{$('pl').textContent='⏸ Dừng';timer=setInterval(()=>{if(t>=60){$('pl').onclick();return}go(t+1)},350)}};
+$('eta').onchange=e=>{eta=+e.target.value;build();render()};
+svn.forEach((s,i)=>$('sv').innerHTML+=`<option value="${i}">${s}</option>`);
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x==b));['a','b','c'].forEach(i=>$(i).hidden=b.dataset.t!=i);if(b.dataset.t=='b')evalAll();if(b.dataset.t=='c')rc()});
+/* ---- Dữ liệu 600 mẫu và mô hình ---- */
+function rng(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let q=Math.imul(a^a>>>15,1|a);q=q+Math.imul(q^q>>>7,61|q)^q;return((q^q>>>14)>>>0)/4294967296}}
+const R0=rng(42),gs=()=>Math.sqrt(-2*Math.log(1-R0()))*Math.cos(2*Math.PI*R0()),D=[];
+[[3,3.75,1.55,1.55],[6.25,2,1.55,1.395],[9.75,1.3,1.55,1.24]].forEach((c,k)=>{for(let i=0;i<200;i++)D.push({x:[Math.max(0,c[0]+c[2]*gs()),Math.max(0,c[1]+c[3]*gs())],y:k})});
+for(let i=599;i>0;i--){const j=Math.floor(R0()*(i+1));[D[i],D[j]]=[D[j],D[i]]}
+const TE=D.slice(0,180),TR=D.slice(180),mean=a=>a.reduce((u,v)=>u+v,0)/a.length,mu=[0,1].map(j=>mean(TR.map(d=>d.x[j]))),sd=[0,1].map(j=>Math.sqrt(mean(TR.map(d=>(d.x[j]-mu[j])**2))));
+const zf=d=>[1,(d.x[0]-mu[0])/sd[0],(d.x[1]-mu[1])/sd[1]],Ztr=TR.map(zf),Zte=TE.map(zf),ytr=TR.map(d=>d.y),yte=TE.map(d=>d.y);
+const pr=(Z,W)=>Z.map(z=>sm([0,1,2].map(k=>z[0]*W[0][k]+z[1]*W[1][k]+z[2]*W[2][k])));
+function ev(Z,yy,W){const P=pr(Z,W);return{P,J:-mean(P.map((p,i)=>Math.log(p[yy[i]]))),acc:mean(P.map((p,i)=>+(am(p)==yy[i])))}}
+const gr=(Z,yy,W)=>{const P=pr(Z,W);return[0,1,2].map(j=>[0,1,2].map(k=>mean(Z.map((z,i)=>z[j]*(P[i][k]-(yy[i]==k))))))};
+const WS=[[[0,0,0],[0,0,0],[0,0,0]]];for(let e=0;e<2000;e++){const W=WS[e],g=gr(Ztr,ytr,W);WS.push(W.map((r,j)=>r.map((v,k)=>v-0.5*g[j][k])))}
+const cur=[...Array(501)].map((_,e)=>{const a=ev(Ztr,ytr,WS[e]),b=ev(Zte,yte,WS[e]);return{Jtr:a.J,Jte:b.J,Atr:a.acc,Ate:b.acc}});
+function drawReg(c,W,mode){const g=c.getContext('2d'),w=c.width,h=c.height,cs=getComputedStyle(document.documentElement),col=['--c0','--c1','--c2'].map(v=>cs.getPropertyValue(v).trim()),X1=14,X2=8,m=26,bw=w-m,bh=h-m;g.clearRect(0,0,w,h);g.globalAlpha=.25;
+for(let px=0;px<bw;px+=5)for(let py=0;py<bh;py+=5){const a=(px+2)/bw*X1,b=(1-(py+2)/bh)*X2,z=[1,(a-mu[0])/sd[0],(b-mu[1])/sd[1]],s2=[0,1,2].map(k=>z[0]*W[0][k]+z[1]*W[1][k]+z[2]*W[2][k]);g.fillStyle=col[am(s2)];g.fillRect(m+px,py,5,5)}
+g.globalAlpha=1;g.fillStyle=cs.getPropertyValue('--mu');g.font='11px sans-serif';g.fillText('x₁ giờ tự học (0–14)',w/2-50,h-6);g.save();g.translate(12,h/2+40);g.rotate(-Math.PI/2);g.fillText('x₂ buổi vắng (0–8)',0,0);g.restore();
+const pt=(d,bad,T)=>{g.beginPath();g.arc(m+d.x[0]/X1*bw,(1-d.x[1]/X2)*bh,T?4.5:3,0,7);g.globalAlpha=T?1:.45;g.fillStyle=col[d.y];g.fill();g.lineWidth=bad?2.5:1;g.strokeStyle=bad?'#000':'#fff';g.stroke();g.globalAlpha=1};
+if(mode!=1)TR.forEach(d=>pt(d,0,0));const Pt=pr(Zte,W);TE.forEach((d,i)=>pt(d,am(Pt[i])!=d.y,1))}
+/* ---- Tab huấn luyện 600 mẫu ---- */
+let ep=0,tm2=null;const labs=[...Array(501)].map((_,i)=>i%100==0?i:'');
+function rc(){$('ev').textContent=ep;$('es').value=ep;const c=cur[ep];
+$('cst').innerHTML=[['J huấn luyện',f(c.Jtr,4)],['J kiểm tra',f(c.Jte,4)],['Acc huấn luyện',f(c.Atr*100,1)+'%'],['Acc kiểm tra',f(c.Ate*100,1)+'%']].map(a=>`<div class="tile">${a[0]}<b>${a[1]}</b></div>`).join('');
+drawReg($('cv3'),WS[ep]);lineSvg($('lc3'),labs,[{n:'J huấn luyện',c:'var(--c0)',v:cur.map(x=>x.Jtr)},{n:'J kiểm tra',c:'var(--c0)',v:cur.map(x=>x.Jte),d:1},{n:'acc huấn luyện',c:'var(--c2)',v:cur.map(x=>x.Atr)},{n:'acc kiểm tra',c:'var(--c2)',v:cur.map(x=>x.Ate),d:1}],0,1.2,420,250,ep);
+$('cw').innerHTML=tb(WS[ep],rn,cn,{fm:v=>f(v,3)})}
+$('es').oninput=e=>{ep=+e.target.value;rc()};$('cr').onclick=()=>{ep=0;rc()};
+$('cp').onclick=()=>{if(tm2){clearInterval(tm2);tm2=null;$('cp').textContent='▶▶ Tự chạy'}else{$('cp').textContent='⏸ Dừng';tm2=setInterval(()=>{ep=Math.min(500,ep+(ep<40?2:6));rc();if(ep>=500)$('cp').onclick()},120)}};
+/* ---- Tab đánh giá ---- */
+let C,PE,RC,done=false,sel=1;
+function roc(k){const s2=PE.map((p,i)=>[p[k],yte[i]==k]).sort((a,b)=>b[0]-a[0]),n=s2.length,np=s2.filter(v=>v[1]).length,nn=n-np;let tp=0,fp=0,i=0,pts=[[0,0]];while(i<n){let j=i;while(j<n&&s2[j][0]==s2[i][0]){s2[j][1]?tp++:fp++;j++}pts.push([fp/nn,tp/np]);i=j}let a=0;for(let q=1;q<pts.length;q++)a+=(pts[q][0]-pts[q-1][0])*(pts[q][1]+pts[q-1][1])/2;return{pts,auc:a}}
+function evalAll(){if(done)return;done=true;const W=WS[2000],r=ev(Zte,yte,W),n=180;PE=r.P;const yh=PE.map(am);C=[[0,0,0],[0,0,0],[0,0,0]];yh.forEach((p,i)=>C[yte[i]][p]++);RC=[0,1,2].map(roc);
+const brier=mean(PE.map((p,i)=>p.reduce((a,v,k)=>a+(v-(yte[i]==k))**2,0))),top2=mean(PE.map((p,i)=>+(p.filter(v=>v>p[yte[i]]).length<2)));
+const bins=[];for(let b=0;b<7;b++){const lo=.3+b*.1,hi=b==6?1.01:lo+.1,ix=[];PE.forEach((p,i)=>{const c=Math.max(...p);if(c>=lo&&c<hi)ix.push(i)});if(ix.length)bins.push({n:ix.length,conf:mean(ix.map(i=>Math.max(...PE[i]))),acc:mean(ix.map(i=>+(yh[i]==yte[i])))})}
+const ece=bins.reduce((a,b)=>a+b.n/n*Math.abs(b.acc-b.conf),0),am2=mean(RC.map(x=>x.auc));
+$('tl').innerHTML=[['Accuracy',f(r.acc*100,1)+'%','tr(C)/n'],['Top-2',f(top2*100,1)+'%','lớp thật trong 2 lớp đầu'],['Log-loss',f(r.J,4),'mô hình hằng: 1,0986'],['Brier',f(brier,4),'mô hình hằng: 0,6667'],['ECE',f(ece,3),'tin cậy lệch thực tế'],['AUC macro',f(am2,3),'trung bình 3 lớp OvR']].map(a=>`<div class="tile">${a[0]}<b>${a[1]}</b><span class="mu">${a[2]}</span></div>`).join('');
+drawReg($('cv2'),W,1);$('cb').innerHTML=nm.map((x,k)=>`<button data-k="${k}">${x}</button>`).join(' ');$('cb').onclick=e=>{if(e.target.dataset.k!=null){sel=+e.target.dataset.k;cm()}};
+const tr2=C.map(r=>r[0]+r[1]+r[2]),pc=[0,1,2].map(j=>C[0][j]+C[1][j]+C[2][j]),tp=[0,1,2].map(i=>C[i][i]),P=tp.map((v,i)=>v/pc[i]),R=tp.map((v,i)=>v/tr2[i]),F=P.map((p,i)=>2*p*R[i]/(p+R[i])),acc=r.acc;
+let s2='';const bc=['var(--ac)','var(--c1)','var(--c2)'];[P,R,F].forEach((a,m)=>a.forEach((v,k)=>{const x=30+k*105+m*30,h=v*170;s2+=`<rect x="${x}" y="${190-h}" width="26" height="${h}" fill="${bc[m]}" rx="3"/><text x="${x-2}" y="${185-h}" style="font-size:10px">${f(v,2)}</text>`}));
+s2+=nm.map((x,k)=>`<text x="${50+k*105}" y="208">${x}</text>`).join('')+'<text x="30" y="224" style="fill:var(--ac)">■ precision</text><text x="120" y="224" style="fill:var(--c1)">■ recall</text><text x="200" y="224" style="fill:var(--c2)">■ F1</text>';$('pb').innerHTML=s2;
+const rows=[...nm.map((_,i)=>[tp[i],pc[i]-tp[i],tr2[i]-tp[i],P[i],R[i],F[i]]),['','','',mean(P),mean(R),mean(F)],['','','',acc,acc,acc]];
+$('pm').innerHTML=tb(rows,[...nm,'macro','micro'],['TP','FP','FN','Prec','Rec','F1'],{fm:v=>v===''?'':Number.isInteger(v)?v:f(v)});
+let o='';nm.forEach((x,k)=>o+=`<option value="${k}">${x}</option>`);$('rk').innerHTML=o;$('rk').value=1;$('rk').onchange=$('rt').oninput=dr;
+const hist2=Array.from({length:14},(_,b)=>[0,0]);PE.forEach((p,i)=>{const c=Math.max(...p),b=Math.min(13,Math.floor((c-.3)/.05));if(b>=0)hist2[b][+(am(p)!=yte[i])]++});const mx=Math.max(...hist2.map(h=>h[0]+h[1]));let h2='<line x1="30" x2="350" y1="200" y2="200" stroke="var(--bd)"/>';
+hist2.forEach((h,b)=>{const x=34+b*22.5,a=h[0]/mx*170,c=h[1]/mx*170;h2+=`<rect x="${x}" y="${200-a}" width="20" height="${a}" fill="var(--c2)"/><rect x="${x}" y="${200-a-c}" width="20" height="${c}" fill="var(--c0)"/>`+(b%2==0?`<text x="${x-2}" y="216">${f(.3+b*.05,2)}</text>`:'')});$('ch').innerHTML=h2+'<text x="34" y="236">xanh = đoán đúng, đỏ = đoán sai (số mẫu theo độ tin cậy)</text>';
+let r2='<rect x="40" y="10" width="250" height="230" fill="none" stroke="var(--bd)"/><line x1="40" y1="240" x2="290" y2="10" stroke="var(--mu)" stroke-dasharray="4 3"/><text x="90" y="262">độ tin cậy trung bình</text><text x="2" y="20">tỉ lệ đúng</text><polyline fill="none" stroke="var(--ac)" stroke-width="2" points="'+bins.map(b=>(40+(b.conf-.3)/.7*250*0+40+b.conf*250-40)+','+(240-b.acc*230)).join(' ')+'"/>';
+bins.forEach(b=>r2+=`<circle cx="${40+b.conf*250}" cy="${240-b.acc*230}" r="${3+b.n/8}" fill="var(--ac)" fill-opacity=".7"/>`);$('rl').innerHTML=r2;$('ecen').textContent='ECE = Σ (nᵦ/n)·|acc − conf| = '+f(ece,3)+'. Chấm càng sát đường chéo càng chuẩn; chấm lớn = nhóm đông mẫu.';
+cm();dr()}
+function cm(){document.querySelectorAll('#cb button').forEach(b=>b.classList.toggle('pri',+b.dataset.k==sel));
+$('cm').innerHTML='<p class="mu">Hàng = lớp thật, cột = lớp đoán</p>'+tb(C,nm.map(x=>'thật: '+x),nm.map(x=>'đoán: '+x),{fm:v=>v,cell:(i,j,v)=>` style="background:color-mix(in srgb,${i==j?'var(--c2)':'var(--c0)'} ${Math.round(v/60*85)}%,transparent);${i==sel||j==sel?'outline:2px solid var(--ac);outline-offset:-2px':''}"`});
+const k=sel,tp=C[k][k],fn=C[k][0]+C[k][1]+C[k][2]-tp,fp=C[0][k]+C[1][k]+C[2][k]-tp;
+$('cf').innerHTML=`<div class="f">Lớp ${nm[k]}: TP=${tp}, FN=${fn} (phần còn lại của hàng), FP=${fp} (phần còn lại của cột)<br>Precision=${tp}/${tp+fp}=${f(tp/(tp+fp))} · Recall=${tp}/${tp+fn}=${f(tp/(tp+fn))}</div>`}
+function dr(){const k=+$('rk').value,tau=$('rt').value/100,pts=RC[k].pts,S=260,ox=44,oy=300;$('rtv').textContent=f(tau,2);
+let tp=0,fp=0,fn=0,tn=0;PE.forEach((p,i)=>{const pos=yte[i]==k,hit=p[k]>=tau;pos?(hit?tp++:fn++):(hit?fp++:tn++)});const tpr=tp/(tp+fn),fpr=fp/(fp+tn);
+let s2=`<rect x="${ox}" y="${oy-S}" width="${S}" height="${S}" fill="none" stroke="var(--bd)"/><line x1="${ox}" y1="${oy}" x2="${ox+S}" y2="${oy-S}" stroke="var(--mu)" stroke-dasharray="4 3"/>`;
+for(let q=0;q<=4;q++)s2+=`<text x="${ox+q*S/4-8}" y="${oy+14}">${f(q/4,2)}</text><text x="4" y="${oy-q*S/4+4}">${f(q/4,2)}</text>`;
+s2+=`<text x="${ox+60}" y="${oy+30}">FPR = FP/(FP+TN)</text><text x="2" y="${oy-S-6}">TPR = Recall</text>`;
+RC.forEach((r,j)=>{const sel2=j==k;s2+=(sel2?`<polygon fill="${CL[j]}" fill-opacity=".15" points="${ox},${oy} ${r.pts.map(q=>(ox+q[0]*S)+','+(oy-q[1]*S)).join(' ')} ${ox+S},${oy}"/>`:'')+`<polyline fill="none" stroke="${CL[j]}" stroke-width="${sel2?3:1.5}" points="${r.pts.map(q=>(ox+q[0]*S)+','+(oy-q[1]*S)).join(' ')}"/><text x="${ox+S-120}" y="${oy-62+j*14}" style="fill:${CL[j]}">▬ ${nm[j]}: AUC=${f(r.auc)}</text>`});
+s2+=`<circle cx="${ox+fpr*S}" cy="${oy-tpr*S}" r="6" fill="#fff" stroke="var(--ac)" stroke-width="3"/><text x="${ox+fpr*S+9}" y="${oy-tpr*S-6}" style="font-weight:700">τ=${f(tau,2)}</text>`;$('roc').innerHTML=s2;
+const B=20,hp=Array(B).fill(0),hn=Array(B).fill(0),np=tp+fn,nn=fp+tn;PE.forEach((p,i)=>{const b=Math.min(B-1,Math.floor(p[k]*B));yte[i]==k?hp[b]++:hn[b]++});const m=Math.max(...hp.map(v=>v/np),...hn.map(v=>v/nn));
+let h2=`<line x1="30" x2="350" y1="300" y2="300" stroke="var(--bd)"/>`;for(let b=0;b<B;b++){const x=32+b*15.9,a=hn[b]/nn/m*250,c=hp[b]/np/m*250;h2+=`<rect x="${x}" y="${300-a}" width="14" height="${a}" fill="var(--mu)" fill-opacity=".55"/><rect x="${x+2}" y="${300-c}" width="10" height="${c}" fill="${CL[k]}" fill-opacity=".85"/>`}
+h2+=`<line x1="${32+tau*318}" x2="${32+tau*318}" y1="20" y2="300" stroke="var(--ac)" stroke-width="2" stroke-dasharray="4 3"/><text x="30" y="318">pₖ (xác suất lớp ${nm[k]}) từ 0 đến 1</text><text x="30" y="14" style="fill:${CL[k]}">■ thuộc lớp ${nm[k]}</text><text x="170" y="14" style="fill:var(--mu)">■ lớp khác</text>`;$('hs').innerHTML=h2;
+$('rn').innerHTML=`<h2>Đọc điểm τ = ${f(tau,2)}</h2><p>Đoán «lớp ${nm[k]}» nếu pₖ ≥ τ.</p>`+tb([[tp,fn],[fp,tn]],['thật: '+nm[k],'thật: khác'],['đoán có','đoán không'],{fm:v=>v})+`<div class="f">TPR = ${tp}/${np} = ${f(tpr)}<br>FPR = ${fp}/${nn} = ${f(fpr)}<br>Precision = ${tp}/${tp+fp||1} = ${f(tp/(tp+fp||1))}</div><p class="mu">τ cao: ít báo nhầm (FPR thấp) nhưng bỏ sót nhiều (TPR thấp). τ thấp thì ngược lại. AUC=${f(RC[k].auc)} là xác suất một mẫu thuộc lớp ${nm[k]} có pₖ cao hơn một mẫu không thuộc lớp đó. Lớp «đạt» ở giữa nên có AUC thấp nhất.</p>`}
+build();render();
+</script></body></html>
