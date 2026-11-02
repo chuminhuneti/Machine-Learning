@@ -34,7 +34,7 @@ Sau khi hoàn thành chương này, sinh viên có thể:
 
 ### 4.2. Minh họa HTML
 
-- [Xem minh họa Softmax Regression – Từng bước](https://chuminhuneti.github.io/Machine-Learning/05_Softmax_Regression/html/Softmax_Regression_ minh_họa.html)
+- [Xem minh họa Softmax Regression – Từng bước](https://chuminhuneti.github.io/Machine-Learning/05_Softmax_Regression/html/Softmax_Regression_minh_họa.html)
 
 ### 4.3. Mã nguồn Python
 
