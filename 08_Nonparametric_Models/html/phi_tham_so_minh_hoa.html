@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Các mô hình phi tham số — minh họa tương tác</title>
+<style>
+:root{
+  --bg:#ffffff; --fg:#1f2430; --muted:#5b6475; --card:#f6f7fb; --line:#dfe3ee; --accent:#1b9e77;
+  --c0:#d95f02; --c1:#1b9e77; --c2:#7570b3; --link:#2457c5;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#14161c; --fg:#e8eaf0; --muted:#a2a9b8; --card:#1d2029; --line:#323746; --link:#8db0ff; }
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth; scroll-padding-top:56px}
+body{margin:0; background:var(--bg); color:var(--fg); font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+header.top{padding:34px 20px 18px; max-width:1040px; margin:0 auto}
+header.top h1{margin:0 0 6px; font-size:1.9rem; line-height:1.25}
+header.top p{margin:4px 0; color:var(--muted)}
+nav{position:sticky; top:0; z-index:20; background:var(--bg); border-bottom:1px solid var(--line)}
+nav .in{max-width:1040px; margin:0 auto; padding:8px 20px; display:flex; flex-wrap:wrap; gap:6px 14px; font-size:.92rem}
+nav a{color:var(--link); text-decoration:none; white-space:nowrap}
+nav a:hover{text-decoration:underline}
+main{max-width:1040px; margin:0 auto; padding:0 20px 60px}
+section{margin:36px 0}
+h2{font-size:1.45rem; margin:0 0 8px; padding-top:6px; border-top:2px solid var(--line)}
+h3{font-size:1.1rem; margin:20px 0 6px}
+p{margin:8px 0}
+.small{font-size:.9rem; color:var(--muted)}
+.card{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px 16px; margin:12px 0}
+.lab{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px; margin:14px 0}
+.lab h3{margin-top:0}
+.row{display:flex; flex-wrap:wrap; gap:14px 22px; align-items:flex-start}
+.row>*{min-width:0; max-width:100%}
+.ctrl{display:flex; flex-direction:column; gap:10px; min-width:240px; flex:1 1 260px}
+.ctrl label{display:block; font-size:.92rem}
+.ctrl label>input[type=range],.ctrl label>select,.ctrl label>input[type=number]{display:block; width:100%; margin-top:3px}
+.ctrl label.inline{flex-direction:row; align-items:center; gap:8px}
+.ctrl select,.ctrl input[type=number]{padding:5px 6px; border:1px solid var(--line); border-radius:6px; background:var(--bg); color:var(--fg); font:inherit}
+.ctrl input[type=range]{width:100%}
+.val{font-variant-numeric:tabular-nums; font-weight:600}
+button{padding:6px 12px; border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--fg); cursor:pointer; font:inherit}
+button:hover{border-color:var(--accent)}
+canvas{max-width:100%; border:1px solid var(--line); border-radius:8px; background:#fff; touch-action:none}
+.stats{font-size:.92rem; margin-top:8px; font-variant-numeric:tabular-nums}
+.stats div{margin:2px 0}
+table{border-collapse:collapse; width:100%; font-size:.93rem; margin:10px 0}
+th,td{border:1px solid var(--line); padding:5px 8px; text-align:left; vertical-align:top}
+th{background:var(--card)}
+td.num,th.num{text-align:right; font-variant-numeric:tabular-nums}
+.tablewrap{overflow-x:auto; max-width:100%}
+math{font-family:"Cambria Math","STIX Two Math","Latin Modern Math","Noto Sans Math",serif; font-size:1.08em}
+.mw{overflow-x:auto; max-width:100%; margin:6px 0}
+math[display="block"]{margin:6px 0}
+.legend{display:flex; gap:14px; flex-wrap:wrap; font-size:.88rem; margin-top:6px}
+.legend i{display:inline-block; width:11px; height:11px; border-radius:50%; margin-right:5px; vertical-align:-1px}
+.bar{display:flex; align-items:center; gap:8px; margin:3px 0; font-size:.9rem}
+.bar .b{height:12px; border-radius:3px; min-width:1px}
+.warn{border-left:4px solid var(--c0); padding:6px 12px; background:var(--card); border-radius:6px; margin:10px 0}
+.tip{border-left:4px solid var(--accent); padding:6px 12px; background:var(--card); border-radius:6px; margin:10px 0}
+code{background:var(--card); padding:1px 5px; border-radius:4px; font-size:.92em}
+footer{max-width:1040px; margin:0 auto; padding:0 20px 40px; color:var(--muted); font-size:.9rem}
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>Các mô hình phi tham số — minh họa tương tác</h1>
+  <p>Một trang duy nhất, chạy hoàn toàn trong trình duyệt (không cần mạng, không cần cài đặt). Mỗi “phòng thí nghiệm” bên dưới ứng với một mục của tài liệu (mục 1–8): kéo thanh trượt để thấy sự đánh đổi <b>thiên lệch – phương sai</b> bằng mắt.</p>
+  <p class="small">Đi kèm: <code>phi_tham_so_notebook.ipynb</code> (sổ tay gọn, không kèm hình) và <code>phi_tham_so_demo.py</code> (mã numpy viết từ đầu có giải thích). Dữ liệu trên trang là dữ liệu mô phỏng sinh ngẫu nhiên trong trình duyệt (có hạt giống cố định, nút “Sinh lại” đổi hạt giống), nên số liệu có thể khác chút so với các bảng trong tài liệu.</p>
+</header>
+
+<nav><div class="in">
+  <a href="#m1">1–2. Tham số vs phi tham số, k-NN</a>
+  <a href="#m3">3. Hồi quy địa phương</a>
+  <a href="#m4">4. Ước lượng mật độ</a>
+  <a href="#m5">5. Bayes ngây thơ</a>
+  <a href="#m6">6. Thiên lệch–phương sai, chiều cao</a>
+  <a href="#m7">7. Đánh giá</a>
+  <a href="#m8">8. Tổng kết, mở rộng</a>
+</div></nav>
+
+<main>
+
+<!-- ============================ MỤC 1-2 ============================ -->
+<section id="m1">
+  <h2>Mục 1–2. Từ mô hình tham số đến mô hình phi tham số; k láng giềng gần nhất</h2>
+  <p><b>Tham số</b>: chọn trước dạng hàm rồi tìm các con số trong đó, ví dụ Softmax <math><mrow><mi>𝐏</mi><mo>=</mo><mi>softmax</mi><mo>(</mo><mover><mi>𝐗</mi><mo>~</mo></mover><mi>𝐖</mi><mo>)</mo></mrow></math> có số tham số cố định <math><mrow><mo>(</mo><mi>d</mi><mo>+</mo><mn>1</mn><mo>)</mo><mi>K</mi></mrow></math>. <b>Phi tham số</b> (k-NN): không chọn dạng hàm, dự đoán bằng cách nhìn các mẫu lân cận:</p>
+  <div class="mw"><math display="block"><mrow><mover><mi>𝐏</mi><mo>^</mo></mover><mo>=</mo><mfrac><mn>1</mn><mi>k</mi></mfrac><mi>𝐍</mi><mi>𝐘</mi></mrow></math></div>
+  <p class="small">trong đó <i>N<sub>ji</sub></i> = 1 nếu mẫu <i>i</i> thuộc <i>k</i> láng giềng của điểm truy vấn <i>j</i>, ngược lại bằng 0 (mỗi hàng của <b>N</b> có đúng <i>k</i> số 1), và <b>Y</b> là ma trận one-hot của nhãn huấn luyện.</p>
+
+  <div class="lab" id="lab-cls">
+    <h3>Phòng thí nghiệm 1 — Vùng quyết định: k-NN, Bayes ngây thơ, Softmax</h3>
+    <div class="row">
+      <div class="ctrl">
+        <label>Dữ liệu
+          <select id="c-data">
+            <option value="rings">Ba vòng tròn đồng tâm (dạng hàm tuyến tính sai)</option>
+            <option value="stu">Sinh viên rớt / đạt / giỏi (đám Gauss chồng lấn)</option>
+          </select></label>
+        <label>Mô hình
+          <select id="c-model">
+            <option value="knn">k-NN (phi tham số)</option>
+            <option value="nb">Bayes ngây thơ Gauss (tham số)</option>
+            <option value="sm">Softmax Regression (tham số)</option>
+          </select></label>
+        <div id="c-knn-ctl">
+          <label>k = <span class="val" id="c-k-v">15</span>
+            <input type="range" id="c-k" min="1" max="60" value="15"></label>
+          <label class="inline"><input type="checkbox" id="c-w"> bỏ phiếu theo trọng số 1/d²</label>
+          <label class="inline"><input type="checkbox" id="c-std" checked> chuẩn hóa z-score (học từ tập huấn luyện)</label>
+        </div>
+        <div><button id="c-reseed">Sinh lại dữ liệu</button></div>
+        <div class="stats" id="c-stats"></div>
+        <p class="small"><b>Thử:</b> trên “ba vòng tròn”, Softmax chỉ đạt khoảng 35–40% (biên là đường thẳng: thiên lệch cao) còn k-NN gần 100%; Bayes ngây thơ Gauss cũng gần 100% vì phương sai khác nhau theo lớp tạo biên bậc hai (mục 5.6). Rồi đổi sang “sinh viên”: Softmax và Bayes ngây thơ ngang hoặc hơn k-NN vì dạng hàm khớp dữ liệu. Với k-NN, kéo k từ 1 (vùng vỡ vụn, quá khớp) đến 60 (quá mượt). Tắt chuẩn hóa chỉ ảnh hưởng đáng kể khi hai đặc trưng khác thang đo. <b>Bấm vào hình</b> để đặt một điểm truy vấn và xem xác suất lớp.</p>
+      </div>
+      <div>
+        <canvas id="c-canvas" width="520" height="520"></canvas>
+        <div class="legend" id="c-legend"></div>
+        <div id="c-query" class="stats"></div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Cách tính khoảng cách cho cả lô điểm truy vấn (mục 2.1)</h3>
+  <p>Với khoảng cách Euclid, thay vòng lặp bằng một biểu thức ma trận:</p>
+  <div class="mw"><math display="block"><mrow><msup><mi>𝐃</mi><mrow><mo>(</mo><mn>2</mn><mo>)</mo></mrow></msup><mo>=</mo><mi>𝐚</mi><msubsup><mi>𝟏</mi><mi>n</mi><mo>⊤</mo></msubsup><mo>−</mo><mn>2</mn><msub><mi>𝐗</mi><mn>0</mn></msub><msup><mi>𝐗</mi><mo>⊤</mo></msup><mo>+</mo><msub><mi>𝟏</mi><mi>m</mi></msub><msup><mi>𝐛</mi><mo>⊤</mo></msup><mo>,</mo><mspace width="1.5em"/><msub><mi>a</mi><mi>j</mi></msub><mo>=</mo><msup><mrow><mo>‖</mo><msub><mi>𝐱</mi><mrow><mn>0</mn><mo>,</mo><mi>j</mi></mrow></msub><mo>‖</mo></mrow><mn>2</mn></msup><mo>,</mo><mspace width="1em"/><msub><mi>b</mi><mi>i</mi></msub><mo>=</mo><msup><mrow><mo>‖</mo><msub><mi>𝐱</mi><mi>i</mi></msub><mo>‖</mo></mrow><mn>2</mn></msup></mrow></math></div>
+  <div class="tip">Chọn <b>k</b> bằng kiểm định chéo (không dùng độ chính xác trên tập huấn luyện: với k = 1 nó luôn gần 100%); mọi bước chuẩn hóa phải học lại <i>trong</i> từng phần của kiểm định chéo để không rò thông tin.</div>
+</section>
+
+<!-- ============================ MỤC 3 ============================ -->
+<section id="m3">
+  <h2>Mục 3. k-NN hồi quy, Nadaraya–Watson và LOESS</h2>
+  <p>Tất cả đều có dạng <i>trung bình có trọng số</i> của các giá trị đã biết:</p>
+  <div class="mw"><math display="block"><mrow><msub><mover><mi>y</mi><mo>^</mo></mover><mn>0</mn></msub><mo>=</mo><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><msub><mi>s</mi><mi>i</mi></msub><mo>(</mo><msub><mi>𝐱</mi><mn>0</mn></msub><mo>)</mo><msub><mi>y</mi><mi>i</mi></msub><mo>,</mo><mspace width="1.5em"/><msub><mi>s</mi><mi>i</mi></msub><mo>=</mo><mfrac><mn>1</mn><mi>k</mi></mfrac><mtext>&#160;(k-NN)</mtext><mo>,</mo><mspace width="1em"/><msub><mi>s</mi><mi>i</mi></msub><mo>=</mo><mfrac><mrow><mi>κ</mi><mo>(</mo><msub><mi>d</mi><mi>i</mi></msub><mo>/</mo><mi>h</mi><mo>)</mo></mrow><mrow><msub><mo>∑</mo><mi>l</mi></msub><mi>κ</mi><mo>(</mo><msub><mi>d</mi><mi>l</mi></msub><mo>/</mo><mi>h</mi><mo>)</mo></mrow></mfrac><mtext>&#160;(Nadaraya–Watson)</mtext></mrow></math></div>
+  <p>LOESS thay phép “lấy trung bình” bằng khớp một <b>đường thẳng cục bộ</b>:</p>
+  <div class="mw"><math display="block"><mrow><mi>𝐰</mi><mo>(</mo><msub><mi>𝐱</mi><mn>0</mn></msub><mo>)</mo><mo>=</mo><msup><mrow><mo>(</mo><msup><mover><mi>𝐗</mi><mo>~</mo></mover><mo>⊤</mo></msup><mi>𝐕</mi><mover><mi>𝐗</mi><mo>~</mo></mover><mo>)</mo></mrow><mrow><mo>−</mo><mn>1</mn></mrow></msup><msup><mover><mi>𝐗</mi><mo>~</mo></mover><mo>⊤</mo></msup><mi>𝐕</mi><mi>𝐲</mi><mo>,</mo><mspace width="1.5em"/><msub><mover><mi>y</mi><mo>^</mo></mover><mn>0</mn></msub><mo>=</mo><msub><mover><mi>𝐱</mi><mo>~</mo></mover><mn>0</mn></msub><mi>𝐰</mi><mo>(</mo><msub><mi>𝐱</mi><mn>0</mn></msub><mo>)</mo></mrow></math></div>
+
+  <div class="lab" id="lab-reg">
+    <h3>Phòng thí nghiệm 2 — Hồi quy một chiều: dữ liệu sin có nhiễu</h3>
+    <div class="row">
+      <div class="ctrl">
+        <label>Phương pháp
+          <select id="r-method">
+            <option value="nw">Nadaraya–Watson (nhân Gauss)</option>
+            <option value="loess">LOESS (đường thẳng cục bộ)</option>
+            <option value="knn">k-NN hồi quy</option>
+            <option value="poly">Đa thức bậc p (tham số)</option>
+            <option value="lin">Hồi quy tuyến tính (tham số)</option>
+          </select></label>
+        <label><span id="r-pname">Băng thông h</span> = <span class="val" id="r-p-v">0.30</span>
+          <input type="range" id="r-p" min="0.05" max="2" step="0.01" value="0.3"></label>
+        <label>Số mẫu huấn luyện n = <span class="val" id="r-n-v">100</span>
+          <input type="range" id="r-n" min="20" max="300" step="10" value="100"></label>
+        <label>Độ lệch chuẩn nhiễu σ = <span class="val" id="r-s-v">0.30</span>
+          <input type="range" id="r-s" min="0.05" max="0.8" step="0.05" value="0.3"></label>
+        <div><button id="r-cv">Chọn tham số bằng bỏ-một-ra</button> <button id="r-reseed">Sinh lại dữ liệu</button></div>
+        <div class="stats" id="r-stats"></div>
+        <p class="small"><b>Thử:</b> h nhỏ → đường gợn theo nhiễu (phương sai cao); h lớn → phẳng (thiên lệch cao). Nhìn kỹ hai <b>biên</b> (x gần 0 và 10): Nadaraya–Watson bị lệch vì lân cận chỉ có mẫu một phía, LOESS ít lệch hơn. Hồi quy tuyến tính không bắt được dao động (thiên lệch). Nút “bỏ-một-ra” dùng công thức đóng <math><mrow><mfrac><mrow><msub><mi>y</mi><mi>i</mi></msub><mo>−</mo><msub><mover><mi>y</mi><mo>^</mo></mover><mi>i</mi></msub></mrow><mrow><mn>1</mn><mo>−</mo><msub><mi>S</mi><mrow><mi>i</mi><mi>i</mi></mrow></msub></mrow></mfrac></mrow></math> cho bộ làm trơn tuyến tính.</p>
+      </div>
+      <div>
+        <canvas id="r-canvas" width="560" height="360"></canvas>
+        <div class="legend"><span><i style="background:#999"></i>mẫu huấn luyện</span><span><i style="background:#222"></i>hàm thật</span><span><i style="background:var(--c1)"></i>mô hình</span></div>
+        <canvas id="r-cvcanvas" width="560" height="140" style="margin-top:8px"></canvas>
+        <div class="small">Đường dưới: sai số bỏ-một-ra theo tham số (khi bấm nút).</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ MỤC 4 ============================ -->
+<section id="m4">
+  <h2>Mục 4. Ước lượng mật độ xác suất phi tham số</h2>
+  <p>Mọi cách ước lượng mật độ phi tham số đều xuất phát từ nguyên lý <math><mrow><mover><mi>f</mi><mo>^</mo></mover><mo>(</mo><mi>𝐱</mi><mo>)</mo><mo>=</mo><mfrac><mi>k</mi><mrow><mi>n</mi><mi>V</mi></mrow></mfrac></mrow></math>: <b>cố định V, đếm k</b> (histogram, KDE) hoặc <b>cố định k, đo V</b> (k láng giềng). KDE đặt một “gò” Gauss trên mỗi mẫu:</p>
+  <div class="mw"><math display="block"><mrow><mover><mi>f</mi><mo>^</mo></mover><mo>(</mo><mi>x</mi><mo>)</mo><mo>=</mo><mfrac><mn>1</mn><mrow><mi>n</mi><mi>h</mi></mrow></mfrac><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><mi>κ</mi><mrow><mo>(</mo><mfrac><mrow><mi>x</mi><mo>−</mo><msub><mi>x</mi><mi>i</mi></msub></mrow><mi>h</mi></mfrac><mo>)</mo></mrow></mrow></math></div>
+
+  <div class="lab" id="lab-den">
+    <h3>Phòng thí nghiệm 3 — Mật độ của hỗn hợp hai đỉnh</h3>
+    <div class="row">
+      <div class="ctrl">
+        <label>Phương pháp
+          <select id="d-method">
+            <option value="kde">KDE nhân Gauss</option>
+            <option value="hist">Histogram</option>
+            <option value="knn">Ước lượng k láng giềng</option>
+            <option value="gauss">Gauss hợp lý cực đại (tham số)</option>
+          </select></label>
+        <label><span id="d-pname">Băng thông h</span> = <span class="val" id="d-p-v">0.30</span>
+          <input type="range" id="d-p" min="0.05" max="2" step="0.01" value="0.3"></label>
+        <label id="d-orig-wrap" style="display:none">Điểm bắt đầu của lưới = <span class="val" id="d-o-v">0.00</span>
+          <input type="range" id="d-o" min="0" max="1" step="0.05" value="0"></label>
+        <label>Số mẫu n = <span class="val" id="d-n-v">300</span>
+          <input type="range" id="d-n" min="30" max="1000" step="10" value="300"></label>
+        <div><button id="d-sil">Quy tắc Silverman</button> <button id="d-lcv">Hợp lý cực đại có kiểm định chéo</button> <button id="d-reseed">Sinh lại dữ liệu</button></div>
+        <div class="stats" id="d-stats"></div>
+        <p class="small"><b>Thử:</b> với histogram, kéo “điểm bắt đầu” để thấy hình dạng thay đổi dù dữ liệu không đổi. Với KDE, so hai nút chọn băng thông (Silverman thường làm mờ quá khi có hai đỉnh). Với Gauss, thấy đỉnh duy nhất nằm trong thung lũng (thiên lệch). Với k láng giềng, chú ý “tích phân” vượt 1: đó không phải mật độ hợp lệ.</p>
+      </div>
+      <div>
+        <canvas id="d-canvas" width="560" height="360"></canvas>
+        <div class="legend"><span><i style="background:#222"></i>mật độ thật</span><span><i style="background:var(--c0)"></i>ước lượng</span></div>
+        <canvas id="d-lcvcanvas" width="560" height="130" style="margin-top:8px"></canvas>
+        <div class="small">Đường dưới: log-hợp lý bỏ-một-ra theo h (khi bấm nút LCV).</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ MỤC 5 ============================ -->
+<section id="m5">
+  <h2>Mục 5. Bayes ngây thơ: từ mật độ đến phân loại</h2>
+  <p>Định lý Bayes cho phân loại, cộng giả định “ngây thơ” (độc lập có điều kiện theo lớp):</p>
+  <div class="mw"><math display="block"><mrow><mi>P</mi><mo>(</mo><mi>y</mi><mo>=</mo><mi>c</mi><mo>∣</mo><mi>𝐱</mi><mo>)</mo><mo>∝</mo><msub><mi>π</mi><mi>c</mi></msub><munderover><mo>∏</mo><mrow><mi>j</mi><mo>=</mo><mn>1</mn></mrow><mi>d</mi></munderover><mi>p</mi><mo>(</mo><msub><mi>x</mi><mi>j</mi></msub><mo>∣</mo><mi>c</mi><mo>)</mo><mo>,</mo><mspace width="1.5em"/><msub><mi>s</mi><mi>c</mi></msub><mo>=</mo><mi>ln</mi><msub><mi>π</mi><mi>c</mi></msub><mo>+</mo><munderover><mo>∑</mo><mrow><mi>j</mi><mo>=</mo><mn>1</mn></mrow><mi>d</mi></munderover><mi>ln</mi><mi>p</mi><mo>(</mo><msub><mi>x</mi><mi>j</mi></msub><mo>∣</mo><mi>c</mi><mo>)</mo><mo>,</mo><mspace width="1.5em"/><mover><mi>P</mi><mo>^</mo></mover><mo>=</mo><mi>softmax</mi><mo>(</mo><mi>𝐒</mi><mo>)</mo></mrow></math></div>
+  <p>Với Multinomial, <math><mrow><mi>𝐒</mi><mo>=</mo><msub><mi>𝟏</mi><mi>m</mi></msub><mi>ln</mi><msup><mover><mi>𝛑</mi><mo>^</mo></mover><mo>⊤</mo></msup><mo>+</mo><msub><mi>𝐗</mi><mn>0</mn></msub><msup><mrow><mo>(</mo><mi>ln</mi><mover><mi>𝚯</mi><mo>^</mo></mover><mo>)</mo></mrow><mo>⊤</mo></msup></mrow></math> — cùng dạng <math><mrow><mover><mi>𝐗</mi><mo>~</mo></mover><mi>𝐖</mi></mrow></math> của Softmax Regression, chỉ khác <b>cách có W</b>: đếm thay vì Gradient Descent.</p>
+
+  <div class="lab" id="lab-nb">
+    <h3>Phòng thí nghiệm 4 — Bayes ngây thơ Multinomial và làm trơn Laplace</h3>
+    <p class="small">Năm bình luận huấn luyện (đếm từ theo thứ tự <i>thưởng, miễn_phí, họp, bài</i>): rác: [2,1,0,0], [1,2,0,1]; bình thường: [0,0,1,2], [1,0,1,1], [0,0,2,1]. Hãy nhập bình luận mới và chỉnh hệ số làm trơn α.</p>
+    <div class="row">
+      <div class="ctrl">
+        <label>Đếm từ của bình luận mới</label>
+        <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:6px">
+          <label>thưởng<input type="number" id="n-x0" min="0" max="9" value="1"></label>
+          <label>miễn_phí<input type="number" id="n-x1" min="0" max="9" value="1"></label>
+          <label>họp<input type="number" id="n-x2" min="0" max="9" value="1"></label>
+          <label>bài<input type="number" id="n-x3" min="0" max="9" value="0"></label>
+        </div>
+        <label>Làm trơn α = <span class="val" id="n-a-v">1.0</span>
+          <input type="range" id="n-a" min="0" max="5" step="0.1" value="1"></label>
+        <p class="small"><b>Thử:</b> kéo α về 0 với bình luận [1,1,1,0]: lớp “bình thường” có xác suất 0 cho “miễn_phí” và lớp “rác” có xác suất 0 cho “họp”, nên <b>cả hai</b> điểm số là −∞ và mô hình không kết luận được. Làm trơn Laplace chặn điều đó.</p>
+      </div>
+      <div style="flex:2 1 300px">
+        <div class="tablewrap"><table id="n-table"></table></div>
+        <div id="n-result" class="stats"></div>
+      </div>
+    </div>
+  </div>
+  <div class="warn"><b>Lưu ý (mục 5.6):</b> khi đặc trưng tương quan hoặc bị sao chép, Bayes ngây thơ “đếm cùng một bằng chứng nhiều lần” nên xác suất quá tự tin; nó vẫn chịu đặc trưng nhiễu tốt hơn k-NN. Hãy chạy các đoạn tương ứng trong notebook hoặc file .py để thấy số liệu (log-loss tăng khi sao chép một đặc trưng 10 lần: từ 0,41 lên 2,61 trong tài liệu; từ khoảng 0,40 lên khoảng 2,1 với dữ liệu sinh lại trong notebook/.py).</div>
+</section>
+
+<!-- ============================ MỤC 6 ============================ -->
+<section id="m6">
+  <h2>Mục 6. Thiên lệch – phương sai, lời nguyền chiều</h2>
+  <p>Sai số kỳ vọng phân rã thành nhiễu, thiên lệch² và phương sai. Với bộ làm trơn tuyến tính <math><mrow><mover><mi>f</mi><mo>^</mo></mover><mo>(</mo><mi>x</mi><mo>)</mo><mo>=</mo><msub><mo>∑</mo><mi>i</mi></msub><msub><mi>s</mi><mi>i</mi></msub><mo>(</mo><mi>x</mi><mo>)</mo><msub><mi>y</mi><mi>i</mi></msub></mrow></math> có công thức đóng:</p>
+  <div class="mw"><math display="block"><mrow><mtext>Thiên lệch</mtext><mo>=</mo><munder><mo>∑</mo><mi>i</mi></munder><msub><mi>s</mi><mi>i</mi></msub><mi>f</mi><mo>(</mo><msub><mi>x</mi><mi>i</mi></msub><mo>)</mo><mo>−</mo><mi>f</mi><mo>(</mo><mi>x</mi><mo>)</mo><mo>,</mo><mspace width="1.5em"/><mtext>Phương sai</mtext><mo>=</mo><msup><mi>σ</mi><mn>2</mn></msup><munder><mo>∑</mo><mi>i</mi></munder><msubsup><mi>s</mi><mi>i</mi><mn>2</mn></msubsup><mo>=</mo><mfrac><msup><mi>σ</mi><mn>2</mn></msup><mi>k</mi></mfrac><mtext>&#160;(k-NN)</mtext></mrow></math></div>
+
+  <div class="lab" id="lab-bv">
+    <h3>Phòng thí nghiệm 5 — Phân rã sai số của k-NN hồi quy (tính bằng công thức đóng)</h3>
+    <div class="row">
+      <div class="ctrl">
+        <label>Độ lệch chuẩn nhiễu σ = <span class="val" id="b-s-v">0.30</span>
+          <input type="range" id="b-s" min="0.05" max="0.8" step="0.05" value="0.3"></label>
+        <label>Điểm đánh dấu k = <span class="val" id="b-k-v">8</span>
+          <input type="range" id="b-k" min="1" max="50" value="8"></label>
+        <div class="stats" id="b-stats"></div>
+        <p class="small"><b>Thử:</b> k nhỏ → phương sai σ²/k lớn; k lớn → thiên lệch² lớn (các láng giềng xa kéo trung bình lệch khỏi hàm thật). Tổng có hình chữ “U”; tăng σ thì đáy dịch sang k lớn hơn.</p>
+      </div>
+      <div><canvas id="b-canvas" width="560" height="340"></canvas>
+        <div class="legend"><span><i style="background:var(--c2)"></i>thiên lệch²</span><span><i style="background:var(--c0)"></i>phương sai σ²/k</span><span><i style="background:var(--c1)"></i>tổng (có nhiễu σ²)</span></div></div>
+    </div>
+  </div>
+
+  <div class="lab" id="lab-cd">
+    <h3>Phòng thí nghiệm 6 — Lời nguyền chiều: khoảng cách mất ý nghĩa</h3>
+    <div class="row">
+      <div class="ctrl">
+        <label>Số chiều d = <span class="val" id="x-d-v">10</span>
+          <input type="range" id="x-d" min="1" max="3" step="0.01" value="1"><span class="small">(thang logarit: 10<sup>1</sup> đến 10<sup>3</sup> chiều)</span></label>
+        <label>Số điểm n = <span class="val" id="x-n-v">1000</span>
+          <input type="range" id="x-n" min="100" max="5000" step="100" value="1000"></label>
+        <div><button id="x-run">Chạy lại (điểm ngẫu nhiên mới)</button></div>
+        <div class="stats" id="x-stats"></div>
+        <p class="small">Lấy n điểm ngẫu nhiên đều trong hình lập phương [0,1]<sup>d</sup> và một điểm truy vấn. Khi d tăng, điểm <i>xa nhất</i> và <i>gần nhất</i> gần như cùng khoảng cách: “gần nhất” mất ý nghĩa, và k-NN không còn “nhìn các điểm gần” nữa.</p>
+      </div>
+      <div style="flex:2 1 300px"><canvas id="x-canvas" width="560" height="300"></canvas></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ MỤC 7 ============================ -->
+<section id="m7">
+  <h2>Mục 7. Đánh giá, trực quan hóa và chọn siêu tham số</h2>
+  <p>Ma trận nhầm lẫn tính bằng một phép nhân ma trận, và từ đó có precision, recall, F1 theo từng lớp:</p>
+  <div class="mw"><math display="block"><mrow><mi>𝐌</mi><mo>=</mo><msup><mi>𝐘</mi><mo>⊤</mo></msup><mover><mi>𝐘</mi><mo>^</mo></mover><mo>,</mo><mspace width="1.5em"/><msub><mi mathvariant="normal">P</mi><mi>c</mi></msub><mo>=</mo><mfrac><msub><mi>M</mi><mrow><mi>c</mi><mi>c</mi></mrow></msub><mrow><msub><mo>∑</mo><mi>a</mi></msub><msub><mi>M</mi><mrow><mi>a</mi><mi>c</mi></mrow></msub></mrow></mfrac><mo>,</mo><mspace width="1.5em"/><msub><mi mathvariant="normal">R</mi><mi>c</mi></msub><mo>=</mo><mfrac><msub><mi>M</mi><mrow><mi>c</mi><mi>c</mi></mrow></msub><mrow><msub><mo>∑</mo><mi>b</mi></msub><msub><mi>M</mi><mrow><mi>c</mi><mi>b</mi></mrow></msub></mrow></mfrac><mo>,</mo><mspace width="1.5em"/><msub><mtext>F1</mtext><mi>c</mi></msub><mo>=</mo><mfrac><mrow><mn>2</mn><msub><mi mathvariant="normal">P</mi><mi>c</mi></msub><msub><mi mathvariant="normal">R</mi><mi>c</mi></msub></mrow><mrow><msub><mi mathvariant="normal">P</mi><mi>c</mi></msub><mo>+</mo><msub><mi mathvariant="normal">R</mi><mi>c</mi></msub></mrow></mfrac></mrow></math></div>
+  <div class="mw"><math display="block"><mrow><mtext>LogLoss</mtext><mo>=</mo><mo>−</mo><mfrac><mn>1</mn><mi>n</mi></mfrac><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><mi>ln</mi><msub><mover><mi>p</mi><mo>^</mo></mover><mrow><mi>i</mi><mo>,</mo><msub><mi>y</mi><mi>i</mi></msub></mrow></msub><mo>,</mo><mspace width="1.5em"/><msub><mover><mi>p</mi><mo>~</mo></mover><mi>c</mi></msub><mo>=</mo><mfrac><mrow><msub><mi>v</mi><mi>c</mi></msub><mo>+</mo><mi>α</mi></mrow><mrow><mi>k</mi><mo>+</mo><mi>K</mi><mi>α</mi></mrow></mfrac><mtext>&#160;(làm trơn cho k-NN)</mtext></mrow></math></div>
+
+  <h3>Chữ số viết tay (1 257 ảnh huấn luyện, 540 ảnh kiểm tra) — kết quả trong tài liệu</h3>
+  <div class="tablewrap"><table>
+    <tr><th>Mô hình (siêu tham số chọn bằng kiểm định chéo 5 phần)</th><th class="num">Độ chính xác kiểm tra</th><th>Ghi chú</th></tr>
+    <tr><td>SVM nhân Gauss (C = 1, γ = 0,001)</td><td class="num">99,26%</td><td>643 vector hỗ trợ</td></tr>
+    <tr><td>k-NN (k = 1)</td><td class="num">98,33%</td><td>k = 3 làm trơn α = 0,001: 98,52%, log-loss 0,083</td></tr>
+    <tr><td>Bayes (KDE) trên 20 thành phần PCA (h = 6)</td><td class="num">98,15%</td><td>KDE trực tiếp trên 64 chiều sẽ hỏng (lời nguyền chiều)</td></tr>
+    <tr><td>Rừng ngẫu nhiên (300 cây)</td><td class="num">97,78%</td><td>cây đơn lẻ chỉ đạt 84,3%</td></tr>
+    <tr><td>Softmax Regression (C = 0,011)</td><td class="num">97,59%</td><td>650 tham số</td></tr>
+    <tr><td>Mạng nơ-ron (64 nơ-ron ẩn)</td><td class="num">97,04%</td><td>chỉ chỉnh một siêu tham số</td></tr>
+    <tr><td>Bayes ngây thơ Gauss (làm trơn 10<sup>−2</sup>)</td><td class="num">90,74%</td><td>mặc định (10<sup>−9</sup>): 84,81%</td></tr>
+    <tr><td>Bayes ngây thơ Multinomial</td><td class="num">89,81%</td><td>quá tự tin: tin 0,99, đúng 0,90</td></tr>
+  </table></div>
+  <div class="tip">Với 540 ảnh kiểm tra, sai số chuẩn của độ chính xác quanh 98% khoảng 0,6 điểm: chênh lệch dưới ~1 điểm giữa nhóm đầu chưa đủ để xếp hạng. Bayes ngây thơ chạm trần ≈ 90% vì các điểm ảnh lân cận rất tương quan (giả định ngây thơ sai).</div>
+</section>
+
+<!-- ============================ MỤC 8 ============================ -->
+<section id="m8">
+  <h2>Mục 8. Tổng kết và mở rộng</h2>
+  <p>Gần như mọi phương pháp của bài là một <b>trung bình có trọng số</b> <math><mrow><mover><mi>𝐩</mi><mo>^</mo></mover><mo>(</mo><msub><mi>𝐱</mi><mn>0</mn></msub><mo>)</mo><mo>=</mo><msub><mo>∑</mo><mi>i</mi></msub><msub><mi>s</mi><mi>i</mi></msub><mo>(</mo><msub><mi>𝐱</mi><mn>0</mn></msub><mo>)</mo><msub><mi>𝐲</mi><mi>i</mi></msub></mrow></math>, chỉ khác cách đặt trọng số <math><mrow><msub><mi>s</mi><mi>i</mi></msub></mrow></math>:</p>
+  <div class="tablewrap"><table>
+    <tr><th>Phương pháp</th><th>Trọng số hiệu dụng sᵢ(x₀)</th><th>“Nút chỉnh”</th></tr>
+    <tr><td>k-NN</td><td>1/k cho k láng giềng gần nhất</td><td>k</td></tr>
+    <tr><td>Nadaraya–Watson</td><td>κ(dᵢ/h) / Σ κ(d_l/h)</td><td>băng thông h</td></tr>
+    <tr><td>LOESS</td><td>hàng thứ i của x̃₀(X̃ᵀVX̃)⁻¹X̃ᵀV (có thể âm)</td><td>h, bậc đa thức cục bộ</td></tr>
+    <tr><td>Cây quyết định</td><td>1/|lá| nếu xᵢ cùng lá với x₀</td><td>độ sâu, số mẫu tối thiểu mỗi lá</td></tr>
+    <tr><td>Rừng ngẫu nhiên</td><td>trung bình trọng số của B cây (khái niệm “gần” được học từ nhãn)</td><td>số cây, số đặc trưng thử mỗi nút</td></tr>
+  </table></div>
+  <h3>Ưu điểm và hạn chế (tóm tắt)</h3>
+  <div class="row">
+    <div class="card" style="flex:1 1 300px"><b>Ưu điểm</b><ul>
+      <li>không phải chọn trước dạng hàm</li><li>huấn luyện gần như không tốn gì</li><li>nhất quán với mọi phân phối khi k→∞, k/n→0</li>
+      <li>ảnh hưởng của dữ liệu xấu mang tính cục bộ</li><li>thêm dữ liệu mới gần như miễn phí</li></ul></div>
+    <div class="card" style="flex:1 1 300px"><b>Hạn chế</b><ul>
+      <li>lời nguyền chiều; nhạy với đặc trưng nhiễu và thang đo</li><li>dự đoán O(nd), bộ nhớ O(nd)</li><li>không ngoại suy; thiên lệch ở biên</li>
+      <li>xác suất thô hoặc quá tự tin (Bayes ngây thơ)</li><li>không có “mô hình toàn cục” để đọc</li></ul></div>
+  </div>
+  <h3>Ba mở rộng</h3>
+  <ul>
+    <li><b>Cây quyết định</b>: chia không gian bằng cách cực tiểu độ tạp Gini <math><mrow><mi>G</mi><mo>=</mo><mn>1</mn><mo>−</mo><msub><mo>∑</mo><mi>c</mi></msub><msubsup><mover><mi>p</mi><mo>^</mo></mover><mi>c</mi><mn>2</mn></msubsup></mrow></math> — một “láng giềng thích nghi” có lân cận được học từ nhãn, nhưng phương sai cao.</li>
+    <li><b>Rừng ngẫu nhiên</b>: trung bình B cây ít tương quan, phương sai <math><mrow><mi>ρ</mi><msup><mi>σ</mi><mn>2</mn></msup><mo>+</mo><mfrac><mrow><mn>1</mn><mo>−</mo><mi>ρ</mi></mrow><mi>B</mi></mfrac><msup><mi>σ</mi><mn>2</mn></msup></mrow></math>; trên chữ số: 1 cây 75,9% → 300 cây 97,7%. Bền với đặc trưng nhiễu (78,3% khi có 100 đặc trưng nhiễu, so với k-NN 54,4%).</li>
+    <li><b>Hỗn hợp Gauss</b> <math><mrow><mi>p</mi><mo>(</mo><mi>𝐱</mi><mo>)</mo><mo>=</mo><msub><mo>∑</mo><mi>j</mi></msub><msub><mi>π</mi><mi>j</mi></msub><mi mathvariant="script">N</mi><mo>(</mo><mi>𝐱</mi><mo>;</mo><msub><mi>𝛍</mi><mi>j</mi></msub><mo>,</mo><msub><mi>𝚺</mi><mi>j</mi></msub><mo>)</mo></mrow></math>: nằm giữa Gauss đơn (J = 1) và KDE (J = n); học bằng EM, trong đó bước M là công thức Bayes ngây thơ với Y thay bằng ma trận trách nhiệm Γ; chọn J bằng BIC (chọn đúng J = 2 trên dữ liệu hai đỉnh, đạt −1,846 nats/mẫu so với KDE −1,869 chỉ với 5 tham số).</li>
+  </ul>
+  <div class="tip"><b>Kết luận:</b> chọn mô hình không phải là chọn “tốt nhất” mà là chọn <b>đúng mức giả định cho lượng dữ liệu và cấu trúc bài toán</b>, rồi <b>đo công bằng</b> (kiểm định chéo, tập kiểm tra dùng một lần, chỉnh siêu tham số cho mọi mô hình) để biết mình chọn đúng hay không.</div>
+</section>
+</main>
+<footer>Trang này là bản minh họa tương tác của loạt tài liệu “Các mô hình phi tham số”. Toàn bộ mã JavaScript nằm trong file này; dữ liệu và thuật toán được cài đặt từ đầu.</footer>
+
+<script>
+"use strict";
+/* ======================================================================
+   Tiện ích: bộ sinh số ngẫu nhiên có hạt giống (mulberry32), Gauss (Box–Muller)
+   ====================================================================== */
+function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+function makeGauss(rng){ let spare=null; return function(){
+  if(spare!==null){ const s=spare; spare=null; return s; }
+  let u=0; while(u===0) u=rng(); const v=rng(); const m=Math.sqrt(-2*Math.log(u));
+  spare=m*Math.sin(2*Math.PI*v); return m*Math.cos(2*Math.PI*v); }; }
+const COLORS=["#d95f02","#1b9e77","#7570b3"], LIGHT=[[251,217,191],[191,232,220],[217,214,236]];
+const $=id=>document.getElementById(id);
+const fmt=(x,d=3)=>Number.isFinite(x)?x.toFixed(d).replace('.',','):'−∞';
+function sizeCanvas(c){ // vẽ sắc nét trên màn hình có độ phân giải cao
+  const r=window.devicePixelRatio||1; if(c._s) return c.getContext('2d');
+  const w=c.width,h=c.height; c.style.width='100%'; c.style.maxWidth=w+'px'; c.style.height='auto'; c.width=w*r; c.height=h*r; c._s=true; c._w=w; c._h=h; const g=c.getContext('2d'); g.scale(r,r); return g; }
+
+/* ======================================================================
+   PHÒNG THÍ NGHIỆM 1 — PHÂN LOẠI
+   ====================================================================== */
+const CLS={seed:1,key:null,cache:{},query:null};
+function genData(kind,seed){
+  const rng=mulberry32(seed), gs=makeGauss(rng); const X=[],y=[];
+  if(kind==="stu"){
+    const mu=[[3.5,4.2],[6.5,2.4],[9.5,1.0]], sd=[[1.6,1.3],[1.7,1.2],[1.6,1.0]];
+    for(let c=0;c<3;c++) for(let i=0;i<200;i++){
+      X.push([Math.max(0,Math.round((mu[c][0]+sd[c][0]*gs())*10)/10), Math.max(0,Math.round(mu[c][1]+sd[c][1]*gs()))]); y.push(c); }
+    return {X,y,b:[-1,15,-0.5,8],names:["rớt","đạt","giỏi"],ax:["giờ tự học","số buổi vắng"]};
+  }
+  const R=[1,3,5];
+  for(let c=0;c<3;c++) for(let i=0;i<200;i++){
+    const th=2*Math.PI*rng(); const r=c===0?Math.sqrt(rng()):R[c]+0.3*gs(); X.push([r*Math.cos(th),r*Math.sin(th)]); y.push(c); }
+  return {X,y,b:[-6.5,6.5,-6.5,6.5],names:["tròn đặc (bán kính 1)","vòng bán kính 3","vòng bán kính 5"],ax:["x₁","x₂"]};
+}
+function splitStrat(y,seed){ const rng=mulberry32(seed+99), tr=[],te=[];
+  for(let c=0;c<3;c++){ const idx=[]; y.forEach((v,i)=>{ if(v===c) idx.push(i); });
+    for(let i=idx.length-1;i>0;i--){ const j=Math.floor(rng()*(i+1)); [idx[i],idx[j]]=[idx[j],idx[i]]; }
+    const nte=Math.round(0.3*idx.length); te.push(...idx.slice(0,nte)); tr.push(...idx.slice(nte)); }
+  return {tr,te}; }
+function getCls(){
+  const kind=$("c-data").value, key=kind+"|"+CLS.seed;
+  if(CLS.key!==key){ const d=genData(kind,CLS.seed), sp=splitStrat(d.y,CLS.seed);
+    const Xtr=sp.tr.map(i=>d.X[i]), ytr=sp.tr.map(i=>d.y[i]), Xte=sp.te.map(i=>d.X[i]), yte=sp.te.map(i=>d.y[i]);
+    const mu=[0,1].map(j=>Xtr.reduce((s,r)=>s+r[j],0)/Xtr.length);
+    const sd=[0,1].map(j=>Math.sqrt(Xtr.reduce((s,r)=>s+(r[j]-mu[j])**2,0)/Xtr.length)+1e-12);
+    CLS.d=d; CLS.Xtr=Xtr; CLS.ytr=ytr; CLS.Xte=Xte; CLS.yte=yte; CLS.mu=mu; CLS.sd=sd; CLS.key=key; CLS.sm=null; CLS.nb=null; CLS.query=null; }
+  return CLS;
+}
+/* --- k-NN: chọn k láng giềng bằng chèn vào danh sách đã sắp (rẻ khi k nhỏ) --- */
+function knnProba(q,k,weighted,std){
+  const Xtr=CLS.Xtr,ytr=CLS.ytr,mu=CLS.mu,sd=CLS.sd; const n=Xtr.length;
+  const sx=std?sd[0]:1, sy=std?sd[1]:1; const dd=[],ii=[]; let worst=Infinity;
+  for(let i=0;i<n;i++){ const a=(Xtr[i][0]-q[0])/sx, b=(Xtr[i][1]-q[1])/sy, d2=a*a+b*b;
+    if(dd.length<k||d2<worst){ let p=dd.length; while(p>0&&dd[p-1]>d2) p--; dd.splice(p,0,d2); ii.splice(p,0,i); if(dd.length>k){dd.pop(); ii.pop();} worst=dd.length<k?Infinity:dd[dd.length-1]; } }
+  const P=[0,0,0]; let tot=0;
+  for(let t=0;t<dd.length;t++){ const w=weighted?1/(dd[t]+1e-12):1; P[ytr[ii[t]]]+=w; tot+=w; }
+  return {P:P.map(v=>v/tot), nb:ii};
+}
+/* --- Softmax Regression bằng Gradient Descent trên đặc trưng đã chuẩn hóa --- */
+function trainSoftmax(){
+  const Z=CLS.Xtr.map(r=>[1,(r[0]-CLS.mu[0])/CLS.sd[0],(r[1]-CLS.mu[1])/CLS.sd[1]]), y=CLS.ytr, n=Z.length;
+  const W=[[0,0,0],[0,0,0],[0,0,0]]; // W[j][c], j = (hệ số chặn, x1, x2)
+  const lr=0.5, lam=1e-3;
+  for(let ep=0;ep<1200;ep++){
+    const G=[[0,0,0],[0,0,0],[0,0,0]];
+    for(let i=0;i<n;i++){ const s=[0,0,0]; for(let c=0;c<3;c++) s[c]=Z[i][0]*W[0][c]+Z[i][1]*W[1][c]+Z[i][2]*W[2][c];
+      const m=Math.max(s[0],s[1],s[2]); const e=s.map(v=>Math.exp(v-m)), t=e[0]+e[1]+e[2];
+      for(let c=0;c<3;c++){ const g=e[c]/t-(y[i]===c?1:0); for(let j=0;j<3;j++) G[j][c]+=Z[i][j]*g; } }
+    for(let j=0;j<3;j++) for(let c=0;c<3;c++) W[j][c]-=lr*(G[j][c]/n+(j>0?lam*W[j][c]:0)); }
+  return W;
+}
+function smProba(q,W){ const z=[1,(q[0]-CLS.mu[0])/CLS.sd[0],(q[1]-CLS.mu[1])/CLS.sd[1]]; const s=[0,1,2].map(c=>z[0]*W[0][c]+z[1]*W[1][c]+z[2]*W[2][c]);
+  const m=Math.max(...s), e=s.map(v=>Math.exp(v-m)), t=e[0]+e[1]+e[2]; return e.map(v=>v/t); }
+/* --- Bayes ngây thơ Gauss: công thức đóng (đếm và lấy trung bình) --- */
+function trainNB(){ const K=3, stat=[]; const nn=[0,0,0]; CLS.ytr.forEach(c=>nn[c]++);
+  const allVar=[0,1].map(j=>{const m=CLS.mu[j]; return CLS.Xtr.reduce((s,r)=>s+(r[j]-m)**2,0)/CLS.Xtr.length;}); const floor=1e-9*Math.max(...allVar);
+  for(let c=0;c<K;c++){ const rows=CLS.Xtr.filter((_,i)=>CLS.ytr[i]===c); const mu=[0,1].map(j=>rows.reduce((s,r)=>s+r[j],0)/rows.length);
+    const v=[0,1].map(j=>rows.reduce((s,r)=>s+(r[j]-mu[j])**2,0)/rows.length+floor); stat.push({pi:nn[c]/CLS.ytr.length,mu,v}); }
+  return stat; }
+function nbProba(q,stat){ const s=stat.map(st=>Math.log(st.pi)+[0,1].reduce((a,j)=>a-0.5*Math.log(2*Math.PI*st.v[j])-0.5*(q[j]-st.mu[j])**2/st.v[j],0));
+  const m=Math.max(...s), e=s.map(v=>Math.exp(v-m)), t=e[0]+e[1]+e[2]; return e.map(v=>v/t); }
+function clsProba(q){
+  const m=$("c-model").value;
+  if(m==="knn") return knnProba(q,+$("c-k").value,$("c-w").checked,$("c-std").checked).P;
+  if(m==="sm"){ if(!CLS.sm) CLS.sm=trainSoftmax(); return smProba(q,CLS.sm); }
+  if(!CLS.nb) CLS.nb=trainNB(); return nbProba(q,CLS.nb);
+}
+const argmax=a=>a.indexOf(Math.max(...a));
+function renderCls(){
+  const d=getCls().d, cv=$("c-canvas"), g=sizeCanvas(cv), W=cv._w,H=cv._h, [x0,x1,y0,y1]=d.b;
+  const toX=v=>(v-x0)/(x1-x0)*W, toY=v=>H-(v-y0)/(y1-y0)*H;
+  const res=84, off=document.createElement("canvas"); off.width=res; off.height=res; const og=off.getContext("2d"), img=og.createImageData(res,res);
+  for(let r=0;r<res;r++) for(let c=0;c<res;c++){ const q=[x0+(c+0.5)/res*(x1-x0), y1-(r+0.5)/res*(y1-y0)]; const k=argmax(clsProba(q)); const p=(r*res+c)*4;
+    img.data[p]=LIGHT[k][0]; img.data[p+1]=LIGHT[k][1]; img.data[p+2]=LIGHT[k][2]; img.data[p+3]=255; }
+  og.putImageData(img,0,0); g.imageSmoothingEnabled=false; g.drawImage(off,0,0,W,H); g.imageSmoothingEnabled=true;
+  for(let i=0;i<CLS.Xtr.length;i++){ g.fillStyle=COLORS[CLS.ytr[i]]; g.beginPath(); g.arc(toX(CLS.Xtr[i][0]),toY(CLS.Xtr[i][1]),2.6,0,6.3); g.fill(); }
+  // điểm truy vấn
+  const qy=CLS.query, box=$("c-query"); box.innerHTML="";
+  if(qy){ const m=$("c-model").value; let nbIdx=[]; let P;
+    if(m==="knn"){ const r=knnProba(qy,+$("c-k").value,$("c-w").checked,$("c-std").checked); P=r.P; nbIdx=r.nb; } else P=clsProba(qy);
+    g.strokeStyle="#333"; g.lineWidth=1; nbIdx.forEach(i=>{ g.beginPath(); g.moveTo(toX(qy[0]),toY(qy[1])); g.lineTo(toX(CLS.Xtr[i][0]),toY(CLS.Xtr[i][1])); g.stroke(); });
+    g.fillStyle="#000"; g.strokeStyle="#fff"; g.lineWidth=2; g.beginPath(); g.arc(toX(qy[0]),toY(qy[1]),6,0,6.3); g.fill(); g.stroke();
+    box.innerHTML="<b>Điểm truy vấn</b> ("+fmt(qy[0],2)+"; "+fmt(qy[1],2)+") — xác suất dự đoán:"+P.map((p,c)=>"<div class='bar'><span style='width:150px'>"+d.names[c]+"</span><span class='b' style='width:"+Math.round(p*180)+"px;background:"+COLORS[c]+"'></span>"+fmt(p,3)+"</div>").join("")+
+      (m==="knn"?"<div class='small'>"+nbIdx.length+" láng giềng được nối bằng đường mảnh (với k-NN, xác suất chỉ nhận các giá trị dạng v/k).</div>":""); }
+  // độ chính xác
+  const acc=(X,y)=>X.reduce((s,q,i)=>s+(argmax(clsProba(q))===y[i]?1:0),0)/X.length;
+  $("c-stats").innerHTML="<div>Độ chính xác huấn luyện: <b>"+fmt(100*acc(CLS.Xtr,CLS.ytr),1)+"%</b> ("+CLS.Xtr.length+" mẫu)</div><div>Độ chính xác kiểm tra: <b>"+fmt(100*acc(CLS.Xte,CLS.yte),1)+"%</b> ("+CLS.Xte.length+" mẫu)</div>";
+  $("c-legend").innerHTML=d.names.map((n,c)=>"<span><i style='background:"+COLORS[c]+"'></i>"+n+"</span>").join("")+"<span class='small'>trục ngang: "+d.ax[0]+"; trục dọc: "+d.ax[1]+"</span>";
+}
+function wireCls(){
+  const upd=()=>{ $("c-k-v").textContent=$("c-k").value; $("c-knn-ctl").style.display=$("c-model").value==="knn"?"block":"none"; renderCls(); };
+  ["c-data","c-model","c-k","c-w","c-std"].forEach(id=>$(id).addEventListener("input",()=>{ if(id==="c-data") CLS.query=null; upd(); }));
+  $("c-reseed").addEventListener("click",()=>{ CLS.seed++; upd(); });
+  $("c-canvas").addEventListener("pointerdown",ev=>{ const cv=$("c-canvas"), r=cv.getBoundingClientRect(), d=CLS.d||getCls().d, [x0,x1,y0,y1]=d.b;
+    CLS.query=[x0+(ev.clientX-r.left)/r.width*(x1-x0), y1-(ev.clientY-r.top)/r.height*(y1-y0)]; renderCls(); });
+  upd();
+}
+
+/* ======================================================================
+   PHÒNG THÍ NGHIỆM 2 — HỒI QUY MỘT CHIỀU
+   ====================================================================== */
+const fTrue=x=>Math.sin(1.2*x)+0.15*x;
+const REG={seed:1,x:[],y:[],xt:[],yt:[],cv:null};
+function genReg(){ const n=+$("r-n").value, sg=+$("r-s").value, rng=mulberry32(REG.seed*7+n), gs=makeGauss(rng);
+  const xs=Array.from({length:n},()=>10*rng()).sort((a,b)=>a-b); REG.x=xs; REG.y=xs.map(v=>fTrue(v)+sg*gs());
+  const r2=mulberry32(REG.seed*13+5), g2=makeGauss(r2); REG.xt=Array.from({length:400},()=>10*r2()); REG.yt=REG.xt.map(v=>fTrue(v)+sg*g2()); REG.cv=null; }
+function solveLin(A,b){ const n=b.length; A=A.map((r,i)=>[...r,b[i]]);
+  for(let c=0;c<n;c++){ let p=c; for(let r=c+1;r<n;r++) if(Math.abs(A[r][c])>Math.abs(A[p][c])) p=r; [A[c],A[p]]=[A[p],A[c]];
+    for(let r=c+1;r<n;r++){ const f=A[r][c]/A[c][c]; for(let k=c;k<=n;k++) A[r][k]-=f*A[c][k]; } }
+  const x=new Array(n); for(let r=n-1;r>=0;r--){ let s=A[r][n]; for(let k=r+1;k<n;k++) s-=A[r][k]*x[k]; x[r]=s/A[r][r]; } return x; }
+function regPredictor(method,p,xs,ys){
+  if(method==="lin"||method==="poly"){ const deg=method==="lin"?1:Math.round(p); const t=v=>v/5-1, m=deg+1;
+    const A=Array.from({length:m},()=>new Array(m).fill(0)), b=new Array(m).fill(0);
+    xs.forEach((x,i)=>{ const pw=[1]; for(let k=1;k<m;k++) pw.push(pw[k-1]*t(x)); for(let a=0;a<m;a++){ b[a]+=pw[a]*ys[i]; for(let c=0;c<m;c++) A[a][c]+=pw[a]*pw[c]; } });
+    for(let a=0;a<m;a++) A[a][a]+=1e-9; const w=solveLin(A,b);
+    return x0=>{ let s=0, pw=1; for(let k=0;k<m;k++){ s+=w[k]*pw; pw*=t(x0); } return s; }; }
+  if(method==="knn"){ const k=Math.round(p); return x0=>{ const idx=xs.map((x,i)=>[Math.abs(x-x0),i]).sort((a,b)=>a[0]-b[0]).slice(0,k); return idx.reduce((s,a)=>s+ys[a[1]],0)/k; }; }
+  if(method==="nw"){ return x0=>{ let s=0,t=0; for(let i=0;i<xs.length;i++){ const u=(xs[i]-x0)/p, v=Math.exp(-0.5*u*u); s+=v*ys[i]; t+=v; } return s/(t+1e-300); }; }
+  return x0=>loessAt(x0,xs,ys,p).fit; // loess
+}
+function loessAt(x0,xs,ys,h){ // tọa độ được dời về tâm x0: hệ số chặn chính là dự đoán tại x0
+  let S0=0,S1=0,S2=0,T0=0,T1=0; for(let i=0;i<xs.length;i++){ const dx=xs[i]-x0, v=Math.exp(-0.5*(dx/h)**2); S0+=v; S1+=v*dx; S2+=v*dx*dx; T0+=v*ys[i]; T1+=v*dx*ys[i]; }
+  const lam=1e-8, a=S0+lam, b=S1, c=S2+lam, det=a*c-b*b; return {fit:(c*T0-b*T1)/det, sii:c/det}; }
+function loocvScore(method,p){ const xs=REG.x, ys=REG.y, n=xs.length; let s=0;
+  for(let i=0;i<n;i++){ let yh, sii;
+    if(method==="nw"){ let a=0,t=0; for(let l=0;l<n;l++){ const u=(xs[l]-xs[i])/p, v=Math.exp(-0.5*u*u); a+=v*ys[l]; t+=v; } yh=a/t; sii=1/t; s+=((ys[i]-yh)/(1-sii))**2; }
+    else if(method==="loess"){ const r=loessAt(xs[i],xs,ys,p); s+=((ys[i]-r.fit)/(1-r.sii))**2; }
+    else { const k=Math.round(p); const d=[]; for(let l=0;l<n;l++) if(l!==i) d.push([Math.abs(xs[l]-xs[i]),l]); d.sort((a,b)=>a[0]-b[0]); yh=d.slice(0,k).reduce((q,a)=>q+ys[a[1]],0)/k; s+=(ys[i]-yh)**2; } }
+  return s/n; }
+function setRegParam(){ const m=$("r-method").value, sl=$("r-p");
+  const cfg={nw:["Băng thông h",0.05,2,0.01,0.3],loess:["Băng thông h",0.05,2,0.01,0.35],knn:["Số láng giềng k",1,60,1,6],poly:["Bậc đa thức p",1,12,1,7],lin:["(không có tham số)",1,1,1,1]}[m];
+  $("r-pname").textContent=cfg[0]; sl.min=cfg[1]; sl.max=cfg[2]; sl.step=cfg[3]; sl.value=cfg[4]; sl.disabled=(m==="lin"); REG.cv=null; }
+function drawAxes(g,W,H,xr,yr,pad,opt){ opt=opt||{}; g.strokeStyle="#bbb"; g.lineWidth=1; g.fillStyle="#666"; g.font="11px system-ui";
+  const toX=v=>pad.l+(v-xr[0])/(xr[1]-xr[0])*(W-pad.l-pad.r), toY=v=>H-pad.b-(v-yr[0])/(yr[1]-yr[0])*(H-pad.t-pad.b);
+  g.beginPath(); g.moveTo(pad.l,pad.t); g.lineTo(pad.l,H-pad.b); g.lineTo(W-pad.r,H-pad.b); g.stroke();
+  const xt=opt.xticks||Array.from({length:6},(_,i)=>xr[0]+i*(xr[1]-xr[0])/5); xt.forEach(v=>{ g.fillText(String(Math.round(v*100)/100),toX(v)-6,H-pad.b+14); });
+  const ty=(yr[1]-yr[0])/4; for(let v=yr[0];v<=yr[1]+1e-9;v+=ty){ g.fillText(String(Math.round(v*100)/100),2,toY(v)+4); g.strokeStyle="#eee"; g.beginPath(); g.moveTo(pad.l,toY(v)); g.lineTo(W-pad.r,toY(v)); g.stroke(); }
+  return {toX,toY}; }
+function renderReg(){
+  const m=$("r-method").value, p=+$("r-p").value, cv=$("r-canvas"), g=sizeCanvas(cv), W=cv._w,H=cv._h; g.clearRect(0,0,W,H);
+  $("r-p-v").textContent=(m==="knn"||m==="poly")?String(Math.round(p)):p.toFixed(2); $("r-n-v").textContent=$("r-n").value; $("r-s-v").textContent=(+$("r-s").value).toFixed(2);
+  const A=drawAxes(g,W,H,[0,10],[-2,3],{l:30,r:10,t:10,b:22});
+  g.fillStyle="#999"; REG.x.forEach((x,i)=>{ g.beginPath(); g.arc(A.toX(x),A.toY(REG.y[i]),2.4,0,6.3); g.fill(); });
+  g.strokeStyle="#222"; g.lineWidth=1.4; g.setLineDash([5,4]); g.beginPath(); for(let i=0;i<=200;i++){ const x=i*0.05; i?g.lineTo(A.toX(x),A.toY(fTrue(x))):g.moveTo(A.toX(x),A.toY(fTrue(x))); } g.stroke(); g.setLineDash([]);
+  const f=regPredictor(m,p,REG.x,REG.y); g.strokeStyle=COLORS[1]; g.lineWidth=2.4; g.beginPath();
+  for(let i=0;i<=300;i++){ const x=i/30, y=Math.max(-2,Math.min(3,f(x))); i?g.lineTo(A.toX(x),A.toY(y)):g.moveTo(A.toX(x),A.toY(y)); } g.stroke();
+  const rm=Math.sqrt(REG.xt.reduce((s,x,i)=>s+(REG.yt[i]-f(x))**2,0)/REG.xt.length), rt=Math.sqrt(REG.x.reduce((s,x,i)=>s+(REG.y[i]-f(x))**2,0)/REG.x.length);
+  $("r-stats").innerHTML="<div>RMSE huấn luyện: <b>"+fmt(rt)+"</b> | RMSE kiểm tra: <b>"+fmt(rm)+"</b></div><div class='small'>mức sàn do nhiễu: σ = "+fmt(+$("r-s").value,2)+"</div>"+(REG.cv?"<div>Bỏ-một-ra chọn: <b>"+REG.cv.best+"</b> (MSE bỏ-một-ra = "+fmt(REG.cv.mse,4)+")</div>":"");
+  // đường LOOCV
+  const c2=$("r-cvcanvas"), g2=sizeCanvas(c2), W2=c2._w,H2=c2._h; g2.clearRect(0,0,W2,H2);
+  if(REG.cv){ const pts=REG.cv.pts, xr=[pts[0][0],pts[pts.length-1][0]], ys2=pts.map(a=>a[1]), yr=[Math.min(...ys2)*0.9,Math.min(Math.max(...ys2),Math.min(...ys2)*8)]; const B=drawAxes(g2,W2,H2,xr,yr,{l:38,r:10,t:8,b:20});
+    g2.strokeStyle=COLORS[2]; g2.lineWidth=2; g2.beginPath(); pts.forEach((a,i)=>{ const yy=Math.min(a[1],yr[1]); i?g2.lineTo(B.toX(a[0]),B.toY(yy)):g2.moveTo(B.toX(a[0]),B.toY(yy)); }); g2.stroke();
+    g2.fillStyle=COLORS[0]; g2.beginPath(); g2.arc(B.toX(REG.cv.bestv),B.toY(REG.cv.mse),4,0,6.3); g2.fill(); }
+}
+function runLOO(){ const m=$("r-method").value; if(m==="lin"||m==="poly"){ $("r-stats").innerHTML="<div class='small'>Bỏ-một-ra ở đây áp dụng cho k-NN, Nadaraya–Watson và LOESS.</div>"; return; }
+  const grid=m==="knn"?Array.from({length:40},(_,i)=>i+1):Array.from({length:40},(_,i)=>0.05+i*0.05); const pts=grid.map(v=>[v,loocvScore(m,v)]); let b=pts[0]; pts.forEach(a=>{ if(a[1]<b[1]) b=a; });
+  REG.cv={pts,best:(m==="knn"?String(b[0]):b[0].toFixed(2)),bestv:b[0],mse:b[1]}; $("r-p").value=b[0]; renderReg(); }
+function wireReg(){
+  genReg(); setRegParam();
+  $("r-method").addEventListener("input",()=>{ setRegParam(); renderReg(); });
+  ["r-p"].forEach(id=>$(id).addEventListener("input",renderReg));
+  ["r-n","r-s"].forEach(id=>$(id).addEventListener("input",()=>{ genReg(); renderReg(); }));
+  $("r-cv").addEventListener("click",runLOO); $("r-reseed").addEventListener("click",()=>{ REG.seed++; genReg(); renderReg(); });
+  renderReg(); }
+
+/* ======================================================================
+   PHÒNG THÍ NGHIỆM 3 — ƯỚC LƯỢNG MẬT ĐỘ
+   ====================================================================== */
+const truePdf=x=>0.6*Math.exp(-0.5*((x+1.5)/0.7)**2)/(0.7*Math.sqrt(2*Math.PI))+0.4*Math.exp(-0.5*((x-2)/1.0)**2)/(1.0*Math.sqrt(2*Math.PI));
+const DEN={seed:1,x:[],xt:[],lcv:null};
+function genDen(){ const n=+$("d-n").value, rng=mulberry32(DEN.seed*31+n), gs=makeGauss(rng);
+  const draw=(r,g)=>r()<0.6?-1.5+0.7*g():2+g(); DEN.x=Array.from({length:n},()=>draw(rng,gs)); const r2=mulberry32(DEN.seed*5+1), g2=makeGauss(r2); DEN.xt=Array.from({length:2000},()=>draw(r2,g2)); DEN.lcv=null; }
+function stdev(a){ const m=a.reduce((s,v)=>s+v,0)/a.length; return Math.sqrt(a.reduce((s,v)=>s+(v-m)**2,0)/(a.length-1)); }
+function pct(a,q){ const s=[...a].sort((x,y)=>x-y), p=q*(s.length-1), lo=Math.floor(p), f=p-lo; return s[lo]*(1-f)+(s[Math.min(lo+1,s.length-1)])*f; }
+function silverman(x){ return 0.9*Math.min(stdev(x),(pct(x,0.75)-pct(x,0.25))/1.34)*Math.pow(x.length,-0.2); }
+function kdeAt(x0,xs,h){ let s=0; for(let i=0;i<xs.length;i++){ const u=(x0-xs[i])/h; s+=Math.exp(-0.5*u*u); } return s/(xs.length*h*Math.sqrt(2*Math.PI)); }
+function lcvScore(xs,h){ const n=xs.length; let tot=0; for(let i=0;i<n;i++){ let s=0; for(let j=0;j<n;j++){ if(j===i) continue; const u=(xs[i]-xs[j])/h; s+=Math.exp(-0.5*u*u); } tot+=Math.log(s/((n-1)*h*Math.sqrt(2*Math.PI))+1e-300); } return tot/n; }
+function denEstimator(){ const m=$("d-method").value, p=+$("d-p").value, xs=DEN.x, n=xs.length;
+  if(m==="kde") return x0=>kdeAt(x0,xs,p);
+  if(m==="hist"){ const o=+$("d-o").value*p, cnt=new Map(); xs.forEach(v=>{ const b=Math.floor((v-o)/p); cnt.set(b,(cnt.get(b)||0)+1); }); return x0=>(cnt.get(Math.floor((x0-o)/p))||0)/(n*p); }
+  if(m==="knn"){ const k=Math.round(p), s=[...xs].sort((a,b)=>a-b); return x0=>{ const d=xs.map(v=>Math.abs(v-x0)).sort((a,b)=>a-b); const r=d[Math.min(k,n)-1]; return k/(n*2*Math.max(r,1e-9)); }; }
+  const mu=xs.reduce((s,v)=>s+v,0)/n, sd=Math.sqrt(xs.reduce((s,v)=>s+(v-mu)**2,0)/n); return x0=>Math.exp(-0.5*((x0-mu)/sd)**2)/(sd*Math.sqrt(2*Math.PI)); }
+function setDenParam(){ const m=$("d-method").value, sl=$("d-p");
+  const cfg={kde:["Băng thông h",0.05,2,0.01,0.3],hist:["Độ rộng ô Δ",0.05,3,0.05,0.5],knn:["Số láng giềng k",1,100,1,15],gauss:["(không có tham số)",1,1,1,1]}[m];
+  $("d-pname").textContent=cfg[0]; sl.min=cfg[1]; sl.max=cfg[2]; sl.step=cfg[3]; sl.value=cfg[4]; sl.disabled=(m==="gauss"); $("d-orig-wrap").style.display=m==="hist"?"flex":"none"; }
+function renderDen(){
+  const m=$("d-method").value, p=+$("d-p").value, cv=$("d-canvas"), g=sizeCanvas(cv), W=cv._w,H=cv._h; g.clearRect(0,0,W,H);
+  $("d-p-v").textContent=(m==="knn")?String(Math.round(p)):p.toFixed(2); $("d-n-v").textContent=$("d-n").value; $("d-o-v").textContent=(+$("d-o").value).toFixed(2);
+  const A=drawAxes(g,W,H,[-5,6],[0,0.6],{l:34,r:10,t:10,b:22});
+  g.strokeStyle="#aaa"; DEN.x.forEach(v=>{ g.beginPath(); g.moveTo(A.toX(v),H-22); g.lineTo(A.toX(v),H-17); g.stroke(); });
+  g.strokeStyle="#222"; g.lineWidth=1.4; g.setLineDash([5,4]); g.beginPath(); for(let i=0;i<=220;i++){ const x=-5+i*0.05; i?g.lineTo(A.toX(x),A.toY(truePdf(x))):g.moveTo(A.toX(x),A.toY(truePdf(x))); } g.stroke(); g.setLineDash([]);
+  const f=denEstimator(); g.strokeStyle=COLORS[0]; g.lineWidth=2.4; g.beginPath(); let ise=0, first=true; const dx=0.01;
+  for(let i=0;i<=1100;i++){ const x=-5+i*dx, v=f(x); ise+=(v-truePdf(x))**2*dx; if(i%2===0){ const yy=Math.min(v,0.6); first?g.moveTo(A.toX(x),A.toY(yy)):g.lineTo(A.toX(x),A.toY(yy)); first=false; } } g.stroke();
+  let ll=0, zeros=0; DEN.xt.forEach(x=>{ const v=f(x); if(v<=0) zeros++; ll+=Math.log(Math.max(v,1e-6)); }); ll/=DEN.xt.length;
+  let integ=""; if(m==="knn"){ let t=0; for(let x=-60;x<=60;x+=0.05) t+=f(x)*0.05; integ="<div>Tích phân của f̂ trên [−60, 60] = <b>"+fmt(t,2)+"</b> (> 1: không phải mật độ hợp lệ)</div>"; }
+  $("d-stats").innerHTML="<div>ISE (so với mật độ thật): <b>"+fmt(ise,4)+"</b></div><div>Log-hợp lý TB trên 2000 mẫu kiểm tra: <b>"+fmt(ll,3)+"</b> <span class='small'>(mật độ thật: −1,84; sàn 10⁻⁶ cho mật độ 0)</span></div>"+(zeros?"<div>"+zeros+" mẫu kiểm tra rơi vào vùng mật độ 0 (log-hợp lý −∞ nếu không có sàn)</div>":"")+integ+(m==="kde"?"<div class='small'>Silverman cho h = "+fmt(silverman(DEN.x),3)+"</div>":"");
+  const c2=$("d-lcvcanvas"), g2=sizeCanvas(c2), W2=c2._w,H2=c2._h; g2.clearRect(0,0,W2,H2);
+  if(DEN.lcv){ const pts=DEN.lcv.pts, ys=pts.map(a=>a[1]), yr=[Math.max(Math.min(...ys),Math.max(...ys)-1.2),Math.max(...ys)+0.02]; const B=drawAxes(g2,W2,H2,[pts[0][0],pts[pts.length-1][0]],yr,{l:42,r:10,t:8,b:20});
+    g2.strokeStyle=COLORS[2]; g2.lineWidth=2; g2.beginPath(); pts.forEach((a,i)=>{ const y=Math.max(a[1],yr[0]); i?g2.lineTo(B.toX(a[0]),B.toY(y)):g2.moveTo(B.toX(a[0]),B.toY(y)); }); g2.stroke();
+    g2.fillStyle=COLORS[0]; g2.beginPath(); g2.arc(B.toX(DEN.lcv.best),B.toY(DEN.lcv.val),4,0,6.3); g2.fill(); }
+}
+function wireDen(){
+  genDen(); setDenParam();
+  $("d-method").addEventListener("input",()=>{ setDenParam(); renderDen(); });
+  ["d-p","d-o"].forEach(id=>$(id).addEventListener("input",renderDen));
+  $("d-n").addEventListener("input",()=>{ genDen(); renderDen(); });
+  $("d-reseed").addEventListener("click",()=>{ DEN.seed++; genDen(); renderDen(); });
+  $("d-sil").addEventListener("click",()=>{ $("d-method").value="kde"; setDenParam(); const h=silverman(DEN.x); $("d-p").value=Math.min(2,h); renderDen(); });
+  $("d-lcv").addEventListener("click",()=>{ $("d-method").value="kde"; setDenParam(); const hs=[],pts=[]; for(let h=0.05;h<=1.5;h+=0.05){ pts.push([h,lcvScore(DEN.x,h)]); } let b=pts[0]; pts.forEach(a=>{ if(a[1]>b[1]) b=a; });
+    DEN.lcv={pts,best:b[0],val:b[1]}; $("d-p").value=b[0]; renderDen(); });
+  renderDen(); }
+
+/* ======================================================================
+   PHÒNG THÍ NGHIỆM 4 — BAYES NGÂY THƠ MULTINOMIAL
+   ====================================================================== */
+const NBX=[[2,1,0,0],[1,2,0,1],[0,0,1,2],[1,0,1,1],[0,0,2,1]], NBY=[1,1,0,0,0], WORDS=["thưởng","miễn_phí","họp","bài"], CL=["bình thường","rác"];
+function renderNB(){
+  const a=+$("n-a").value; $("n-a-v").textContent=a.toFixed(1); const x0=[0,1,2,3].map(j=>Math.max(0,+$("n-x"+j).value||0));
+  const nc=[0,0], C=[[0,0,0,0],[0,0,0,0]]; NBY.forEach((c,i)=>{ nc[c]++; for(let j=0;j<4;j++) C[c][j]+=NBX[i][j]; });
+  const theta=C.map(row=>{ const tot=row.reduce((s,v)=>s+v,0); return row.map(v=>(v+a)/(tot+a*4)); });
+  const score=[0,1].map(c=>{ let s=Math.log(nc[c]/5); for(let j=0;j<4;j++){ if(x0[j]>0){ s+= theta[c][j]===0?-Infinity:x0[j]*Math.log(theta[c][j]); } } return s; });
+  const f=v=>Number.isFinite(v)?fmt(v,3):"−∞";
+  let html="<tr><th></th>"+WORDS.map(w=>"<th class='num'>θ(“"+w+"”)</th>").join("")+"<th class='num'>π</th><th class='num'>điểm số s</th></tr>";
+  for(let c=0;c<2;c++) html+="<tr><td><b>"+CL[c]+"</b> ("+nc[c]+" bình luận)</td>"+theta[c].map(v=>"<td class='num'>"+fmt(v,3)+"</td>").join("")+"<td class='num'>"+fmt(nc[c]/5,2)+"</td><td class='num'><b>"+f(score[c])+"</b></td></tr>";
+  $("n-table").innerHTML=html;
+  let res;
+  if(!Number.isFinite(score[0])&&!Number.isFinite(score[1])) res="<div class='warn'>Cả hai lớp đều có điểm số −∞: mô hình <b>không kết luận được</b>. Hãy tăng α để làm trơn.</div>";
+  else { const m=Math.max(...score), e=score.map(s=>Math.exp(s-m)), t=e[0]+e[1], p=e.map(v=>v/t);
+    res="<div>Hậu nghiệm: bình thường <b>"+fmt(p[0],3)+"</b> | rác <b>"+fmt(p[1],3)+"</b> → dự đoán <b>"+CL[p[1]>p[0]?1:0]+"</b></div><div class='small'>(điểm số được cộng trong không gian log rồi chuẩn hóa bằng softmax)</div>"; }
+  $("n-result").innerHTML=res; }
+function wireNB(){ ["n-a","n-x0","n-x1","n-x2","n-x3"].forEach(id=>$(id).addEventListener("input",renderNB)); renderNB(); }
+
+/* ======================================================================
+   PHÒNG THÍ NGHIỆM 5 — PHÂN RÃ THIÊN LỆCH-PHƯƠNG SAI CỦA k-NN
+   ====================================================================== */
+const BV={x:null};
+function bvData(){ if(!BV.x){ const r=mulberry32(77); BV.x=Array.from({length:100},()=>10*r()); BV.g=Array.from({length:201},(_,i)=>i*0.05); } }
+function bvCurve(sig){ bvData(); const xs=BV.x, gr=BV.g, rows=[];
+  const order=gr.map(g0=>xs.map((x,i)=>[Math.abs(x-g0),i]).sort((a,b)=>a[0]-b[0]).map(a=>a[1]));
+  for(let k=1;k<=50;k++){ let b2=0; for(let j=0;j<gr.length;j++){ let s=0; for(let t=0;t<k;t++) s+=fTrue(xs[order[j][t]]); b2+=(s/k-fTrue(gr[j]))**2; } b2/=gr.length; rows.push({k,b2,v:sig*sig/k}); }
+  return rows; }
+function renderBV(){ const sig=+$("b-s").value, k=+$("b-k").value; $("b-s-v").textContent=sig.toFixed(2); $("b-k-v").textContent=k;
+  const rows=bvCurve(sig), cv=$("b-canvas"), g=sizeCanvas(cv), W=cv._w,H=cv._h; g.clearRect(0,0,W,H);
+  const tot=rows.map(r=>sig*sig+r.b2+r.v), ymax=Math.min(0.7,Math.max(0.2,Math.min(...tot)*4)); const A=drawAxes(g,W,H,[1,50],[0,ymax],{l:38,r:10,t:10,b:22},{xticks:[1,10,20,30,40,50]});
+  const line=(key,col,w)=>{ g.strokeStyle=col; g.lineWidth=w; g.beginPath(); rows.forEach((r,i)=>{ const y=Math.min(ymax,key(r)); i?g.lineTo(A.toX(r.k),A.toY(y)):g.moveTo(A.toX(r.k),A.toY(y)); }); g.stroke(); };
+  line(r=>r.b2,COLORS[2],2); line(r=>r.v,COLORS[0],2); line(r=>sig*sig+r.b2+r.v,COLORS[1],2.6);
+  g.strokeStyle="#888"; g.setLineDash([4,3]); g.beginPath(); g.moveTo(A.toX(1),A.toY(sig*sig)); g.lineTo(A.toX(50),A.toY(sig*sig)); g.stroke(); g.setLineDash([]);
+  const best=tot.indexOf(Math.min(...tot))+1, r=rows[k-1]; g.strokeStyle="#000"; g.beginPath(); g.moveTo(A.toX(k),A.toY(0)); g.lineTo(A.toX(k),A.toY(ymax)); g.stroke();
+  $("b-stats").innerHTML="<div>k = "+k+": thiên lệch² = <b>"+fmt(r.b2,4)+"</b></div><div>phương sai σ²/k = <b>"+fmt(r.v,4)+"</b></div><div>nhiễu σ² = <b>"+fmt(sig*sig,4)+"</b> (mức sàn)</div><div>tổng = <b>"+fmt(sig*sig+r.b2+r.v,4)+"</b></div><div class='small'>k tối ưu theo công thức đóng: <b>"+best+"</b></div>"; }
+function wireBV(){ ["b-s","b-k"].forEach(id=>$(id).addEventListener("input",renderBV)); renderBV(); }
+
+/* ======================================================================
+   PHÒNG THÍ NGHIỆM 6 — LỜI NGUYỀN CHIỀU
+   ====================================================================== */
+const CD={seed:1};
+function cdStat(d,n,seed){ const r=mulberry32(seed*101+d*7+n), q=Array.from({length:d},()=>r()); let mn=Infinity,mx=0; for(let i=0;i<n;i++){ let s=0; for(let j=0;j<d;j++){ const v=r()-q[j]; s+=v*v; } const dd=Math.sqrt(s); if(dd<mn)mn=dd; if(dd>mx)mx=dd; } return {mn,mx,rho:(mx-mn)/mn}; }
+function renderCD(){ const d=Math.round(Math.pow(10,+$("x-d").value)), n=+$("x-n").value; $("x-d-v").textContent=d; $("x-n-v").textContent=n;
+  const s=cdStat(d,n,CD.seed); $("x-stats").innerHTML="<div>Khoảng cách gần nhất: <b>"+fmt(s.mn,3)+"</b></div><div>Khoảng cách xa nhất: <b>"+fmt(s.mx,3)+"</b></div><div>(xa nhất − gần nhất) / gần nhất = <b>"+fmt(s.rho,3)+"</b></div><div>Cạnh hình lập phương con chứa 1% dữ liệu: <b>"+fmt(Math.pow(0.01,1/d),3)+"</b></div>";
+  const cv=$("x-canvas"), g=sizeCanvas(cv), W=cv._w,H=cv._h; g.clearRect(0,0,W,H); const ds=[2,3,5,10,20,50,100,200,500,1000], vals=ds.map(x=>Math.log10(cdStat(x,n,CD.seed).rho+1e-3));
+  const A=drawAxes(g,W,H,[0,ds.length-1],[-1,Math.ceil(Math.max(...vals))],{l:40,r:10,t:10,b:30},{xticks:[]});
+  g.strokeStyle=COLORS[0]; g.lineWidth=2.4; g.beginPath(); ds.forEach((x,i)=>{ const X=A.toX(i),Y=A.toY(vals[i]); i?g.lineTo(X,Y):g.moveTo(X,Y); }); g.stroke(); g.fillStyle=COLORS[0]; ds.forEach((x,i)=>{ g.beginPath(); g.arc(A.toX(i),A.toY(vals[i]),3,0,6.3); g.fill(); g.fillStyle="#666"; g.font="11px system-ui"; g.fillText("d="+x,A.toX(i)-10,H-12); g.fillStyle=COLORS[0]; });
+  g.fillStyle="#666"; g.fillText("log10[(xa − gần)/gần] theo số chiều d",50,22); }
+function wireCD(){ ["x-d","x-n"].forEach(id=>$(id).addEventListener("input",renderCD)); $("x-run").addEventListener("click",()=>{ CD.seed++; renderCD(); }); renderCD(); }
+
+window.addEventListener("DOMContentLoaded",()=>{ wireCls(); wireReg(); wireDen(); wireNB(); wireBV(); wireCD(); });
+</script>
+</body>
+</html>
