@@ -39,7 +39,6 @@ Sau khi hoàn thành chương này, sinh viên có thể:
 ### 4.2. Minh họa HTML
 
 - [Xem minh họa Linear Regression – Từng bước](https://chuminhuneti.github.io/Machine-Learning/02_Linear_Regression/html/Linear_Regression_tung_buoc.html)
-- [Danh sách tài liệu HTML](html/)
 
 ### 4.3. Mã nguồn Python
 
