@@ -22,11 +22,20 @@ Giúp sinh viên nắm vững nguyên lý xây dựng và huấn luyện các m�
 Machine-Learning/
 │
 ├── README.md
+├── LICENSE.md
+│
 ├── 01_Tong_quan_Hoc_may/
 ├── 02_Linear_Regression/
 ├── 03_Perceptron_Classification/
 ├── 04_Logistic_Regression/
-└── 05_Softmax_Regression/
+├── 05_Softmax_Regression/
+├── 06_Neural_Networks/
+├── 07_SVM_SVR/
+├── 08_Nonparametric_Models/
+├── 09_Decision_Trees/
+├── 10_Clustering/
+└── 11_Dimensionality_Reduction/
+
 ```
 
 ## 4. Công cụ sử dụng
