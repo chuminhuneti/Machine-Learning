@@ -36,7 +36,7 @@ Sau khi hoàn thành chương này, sinh viên có thể:
 
 ### 4.3. Mã nguồn Python
 
-- [Xem và tải mã nguồn Python](code/)
+- [Xem và tải mã nguồn Python](code/perceptron_minh_hoa.py)
 
 ### 4.4. Tài liệu học tập (Word và PDF)
 
