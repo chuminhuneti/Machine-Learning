@@ -17,7 +17,7 @@ Sau khi hoàn thành chương này, sinh viên có thể:
 - Sử dụng Python để huấn luyện và đánh giá mô hình phân loại Perceptron.
 ...
 
-## 3. Nội dung chương học
+## 3. Nội dung
 
 
 ## 4. Tài liệu học tập
@@ -45,6 +45,17 @@ Sau khi hoàn thành chương này, sinh viên có thể:
 ### 4.5. Bài giảng trình chiếu
 
 - [Xem slide PDF](slides/Perceptron_Classificasion_Slides.pdf)
+
+
+## 3. Học liệu
+
+| Thư mục | Nội dung |
+|---|---|
+| `notebooks/` | Notebook thực hành: [Xem trên GitHub](notebooks/perceptron_minh_hoa.ipynb) · [Mở bằng Google Colab](https://colab.research.google.com/github/chuminhuneti/Machine-Learning/blob/main/03_Perceptron_Classification/notebooks/perceptron_minh_hoa.ipynb) · [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/chuminhuneti/Machine-Learning/blob/main/03_Perceptron_Classification/notebooks/perceptron_minh_hoa.ipynb) |
+| `code/` | Mã nguồn Python: [Xem và tải mã nguồn](code/perceptron_minh_hoa.py) |
+| `documents/` | Tài liệu học tập: [Đọc tài liệu PDF](documents/Perceptron_Classification.pdf) |
+| `html/` | Bài giảng trực tuyến: [Xem minh họa Perceptron Classification – Từng bước](https://chuminhuneti.github.io/Machine-Learning/03_Perceptron_Classification/html/Perceptron_Minh_hoa.html) |
+| `slides/` | Bài giảng trình chiếu: [Xem slide PDF](slides/Perceptron_Classificasion_Slides.pdf) |
 
 
 ## 5. Công cụ thực hành
