@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Huấn luyện SVR – minh họa từng bước</title>
+<style>
+:root{
+  --bg:#FFFCF5; --card:#FFFFFF; --ink:#17284B; --mut:#5B6784; --line:#C9D6EE;
+  --blue:#1F6AC8; --green:#0E8660; --orange:#D9480F; --purple:#6B3FC9; --pink:#C2185B;
+  --pb:#E3EEFC; --pg:#DDF5EA; --po:#FFE9DC; --py:#FFF1C2; --pp:#EDE7FB;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Nunito Sans","Segoe UI",Arial,sans-serif;line-height:1.5}
+header{background:linear-gradient(135deg,#C2185B,#1F6AC8);color:#fff;padding:22px 28px}
+header h1{margin:0 0 4px;font-size:28px}
+header p{margin:0;opacity:.94;max-width:1150px}
+main{max-width:1500px;margin:0 auto;padding:18px 20px 60px}
+.card{background:var(--card);border:2px solid var(--line);border-radius:18px;padding:14px 18px}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.tabs button{background:var(--pb);color:var(--blue);font-size:15px;padding:10px 18px}
+.tabs button.on{background:var(--blue);color:#fff}
+.controls{display:flex;flex-wrap:wrap;gap:14px 26px;align-items:center;margin-bottom:14px}
+.controls label{font-weight:700;font-size:14px;display:flex;flex-direction:column;gap:2px}
+.controls input[type=range]{width:150px}
+.controls select{padding:4px 6px;border-radius:8px;border:2px solid var(--line);font:inherit;font-size:14px}
+.val{color:var(--blue);font-weight:800}
+button{font:inherit;font-weight:700;border:0;border-radius:12px;padding:8px 16px;cursor:pointer;background:var(--blue);color:#fff}
+button.sec{background:var(--pb);color:var(--blue)}
+button.warn{background:var(--po);color:var(--orange)}
+button.ok{background:var(--green)}
+button:disabled{opacity:.4;cursor:default}
+.steps{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}
+.chip{border-radius:999px;padding:5px 12px;font-size:13px;font-weight:700;cursor:pointer;border:2px solid transparent;user-select:none}
+.chip.f{background:var(--pb);color:var(--blue)}
+.chip.b{background:var(--po);color:var(--orange)}
+.chip.u{background:var(--pg);color:var(--green)}
+.chip.cur{border-color:var(--ink);box-shadow:0 0 0 2px #fff inset}
+.chip.done{opacity:1}.chip.todo{opacity:.55}
+.grid{display:grid;grid-template-columns:minmax(520px,1.05fr) minmax(460px,1fr);gap:16px;align-items:start}
+@media(max-width:1050px){.grid{grid-template-columns:1fr}}
+svg text{font-family:"Nunito Sans","Segoe UI",Arial,sans-serif}
+.panel h2{margin:0 0 6px;font-size:22px}
+.tag{display:inline-block;border-radius:8px;padding:2px 10px;font-size:13px;font-weight:800;margin-right:8px;vertical-align:middle}
+.tag.f{background:var(--pb);color:var(--blue)}.tag.b{background:var(--po);color:var(--orange)}.tag.u{background:var(--pg);color:var(--green)}
+.why{background:var(--py);border-radius:12px;padding:8px 12px;margin:8px 0;font-size:15px}
+.eq{background:#17284B;color:#fff;border-radius:12px;padding:10px 14px;margin:8px 0;font-size:18px;overflow-x:auto}
+.eq b{color:#FFE08A}
+.row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin:8px 0}
+.op{font-size:22px;font-weight:800;color:var(--mut)}
+table.m{border-collapse:separate;border-spacing:0;border-left:3px solid var(--ink);border-right:3px solid var(--ink);border-radius:6px;margin:0 2px}
+table.m td{padding:3px 8px;text-align:right;font-variant-numeric:tabular-nums;font-size:15px;border-radius:4px}
+table.m td.hl{background:#FFE08A}
+table.m td.neg{color:var(--orange)}
+.cap{font-size:12px;color:var(--mut);text-align:center;margin-top:2px}
+.mw{display:flex;flex-direction:column;align-items:center}
+.detail{background:var(--pg);border-radius:12px;padding:8px 12px;margin:8px 0;font-size:15px}
+.detail b{color:var(--green)}
+.pitfall{background:var(--pp);border-radius:12px;padding:8px 12px;margin:8px 0;font-size:14px}
+.sel button{padding:3px 12px;margin-right:6px;font-size:13px;background:var(--pb);color:var(--blue)}
+.sel button.on{background:var(--blue);color:#fff}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--mut);margin-top:6px;align-items:center}
+.dot{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+.sq{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.ln{display:inline-block;width:22px;height:0;border-top:3px solid;margin-right:5px;vertical-align:3px}
+.tools{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(420px,100%),1fr));gap:16px;margin-top:16px}
+table.g{border-collapse:collapse;width:100%;font-size:14px}
+table.g th{background:#C9D9F5;padding:4px 8px;text-align:right}
+table.g td{padding:3px 8px;text-align:right;border-bottom:1px solid #E5ECF8;font-variant-numeric:tabular-nums}
+table.g th:first-child,table.g td:first-child{text-align:left}
+table.g tr.hlr td{background:#FFF6D6}
+.good{color:var(--green);font-weight:800}
+.warnc{color:#B25B00;font-weight:800}
+.badc{color:var(--orange);font-weight:800}
+details{margin-top:14px}
+details summary{cursor:pointer;font-weight:800;font-size:17px}
+.sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:10px;margin-top:10px}
+.sum div{border-radius:12px;padding:8px 12px;font-size:15px}
+.hidden{display:none!important}
+.note{font-size:13px;color:var(--mut)}
+.gc{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media(max-width:800px){.gc{grid-template-columns:1fr}}
+.gc .cell{border:2px solid var(--line);border-radius:14px;padding:8px;background:#fff}
+.gc .cell h4{margin:0 0 4px;font-size:14px}
+.gc .cell .st{font-size:13px;color:var(--mut)}
+.gc .cell.over{border-color:var(--orange)} .gc .cell.under{border-color:#B25B00} .gc .cell.best{border-color:var(--green)}
+.gc h3{grid-column:1/-1;margin:8px 0 0;font-size:17px}
+</style>
+</head>
+<body>
+<header>
+<h1>Huấn luyện SVR (hồi quy vector hỗ trợ), từng bước một</h1>
+<p>SVR giữ nguyên các “viên gạch” của SVM: điều chuẩn ½‖w‖², mất mát cắt cụt, biến lỏng với hệ số C và dạng đối ngẫu dùng được kernel; chỉ đổi hinge thành <b>mất mát ε-insensitive</b> với một <b>ống ε</b> quanh đường dự đoán. Tab ① giải tay một chiều có ngoại lai; tab ② huấn luyện bằng <b>gradient descent</b> từng vòng; tab ③ huấn luyện đường cong phi tuyến bằng <b>SMO</b>; tab ④ xem ε, C, γ ảnh hưởng ra sao. Bấm <b>Bước tiếp</b> (hoặc phím →) để đi qua các bước.</p>
+</header>
+<main>
+
+<div class="tabs">
+  <button id="tab1" class="on">① Giải tay: ống ε chống ngoại lai</button>
+  <button id="tab2">② Huấn luyện gradient descent (gốc)</button>
+  <button id="tab3">③ Huấn luyện SVR kernel bằng SMO (đối ngẫu)</button>
+  <button id="tab4">④ Vai trò của ε, C, γ</button>
+</div>
+
+<div class="card controls" id="ctl1"></div>
+
+<div class="card controls hidden" id="ctl2">
+  <label>Dữ liệu
+    <select id="rdata"><option value="6" selected>6 sinh viên (SV6 ngoại lai)</option><option value="5">5 sinh viên (sạch)</option></select></label>
+  <label id="ry6L">y₆ (ngoại lai) = <span class="val" id="vry6"></span><input type="range" id="ry6" min="-3" max="5" step="0.5" value="2"></label>
+  <label>ε = <span class="val" id="vre"></span><input type="range" id="re" min="0" max="2" step="0.05" value="0.2"></label>
+  <label>C = <span class="val" id="vrC"></span><input type="range" id="rC" min="0" max="5" step="1" value="2"></label>
+  <label>Tốc độ học
+    <select id="rsched"><option value="inv" selected>η = 1/t (giảm dần)</option><option value="const">η hằng số</option></select></label>
+  <label id="retaL" class="hidden">η = <span class="val" id="vreta"></span><input type="range" id="reta" min="0.01" max="1" step="0.01" value="0.2"></label>
+  <button class="sec" id="rreset">Đặt lại (w = 0, b = 0)</button>
+</div>
+
+<div class="card controls hidden" id="ctl3">
+  <label>ε = <span class="val" id="vse"></span><input type="range" id="se" min="0.02" max="1" step="0.02" value="0.1"></label>
+  <label>C = <span class="val" id="vsC"></span><input type="range" id="sC" min="0" max="7" step="1" value="4"></label>
+  <label>γ (RBF) = <span class="val" id="vsg"></span><input type="range" id="sg" min="0" max="6" step="1" value="3"></label>
+  <button class="warn" id="snew">Dữ liệu mới</button>
+  <button class="sec" id="sreset">Đặt lại (α = 0)</button>
+  <span class="note">42 điểm y = sin x + nhiễu, có 3 điểm ngoại lai; x đã chuẩn hóa khi tính kernel.</span>
+</div>
+
+<div class="card" id="stepCard">
+  <div class="steps" id="steps"></div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap">
+    <button class="sec" id="prev">← Bước trước</button>
+    <button id="next">Bước tiếp →</button>
+    <button class="sec trainOnly" id="play">▶ Tự chạy</button>
+    <button class="ok trainOnly" id="commit">Áp dụng cập nhật và lặp lại ↻</button>
+    <button class="sec trainOnly" id="t10">Lặp 10 lần</button>
+    <button class="sec trainOnly" id="t100">Lặp 100 lần</button>
+    <button class="sec trainOnly" id="tconv">Chạy tới hội tụ</button>
+  </div>
+</div>
+
+<div class="grid" id="mainGrid" style="margin-top:14px">
+  <div class="card">
+    <svg id="plane" viewBox="0 0 560 420" width="100%" role="img" aria-label="Đồ thị hồi quy với đường dự đoán và ống epsilon"></svg>
+    <div class="legend" id="legend"></div>
+    <div class="note" id="planeHint"></div>
+  </div>
+  <div class="card panel" id="panel"></div>
+</div>
+
+<div class="tools hidden" id="tools2">
+  <div class="card">
+    <h2 style="margin:0 0 6px;font-size:20px">Hàm mục tiêu J qua các vòng lặp</h2>
+    <svg id="hist" viewBox="0 0 560 230" width="100%"></svg>
+    <div class="note" id="histcap" style="text-align:center"></div>
+  </div>
+  <div class="card">
+    <h2 style="margin:0 0 6px;font-size:20px">Mất mát theo phần dư r</h2>
+    <svg id="lossc" viewBox="0 0 560 230" width="100%"></svg>
+    <div class="note" style="text-align:center">Mỗi chấm là một sinh viên tại phần dư r hiện tại. ε-insensitive bằng 0 trong ống và tăng tuyến tính ngoài ống.</div>
+  </div>
+  <div class="card">
+    <h2 style="margin:0 0 6px;font-size:20px">Mức “kéo” của mẫu: đạo hàm theo r</h2>
+    <svg id="infl" viewBox="0 0 560 230" width="100%"></svg>
+    <div class="note" style="text-align:center">MSE: 2r tăng không giới hạn. ε-insensitive: 0 trong ống, bị chặn ở ±1 ngoài ống ⇒ ngoại lai không kéo mạnh tùy ý.</div>
+  </div>
+  <div class="card">
+    <h2 style="margin:0 0 6px;font-size:20px">Đường đi của (w, b)</h2>
+    <svg id="param" viewBox="0 0 560 260" width="100%"></svg>
+    <div class="note" style="text-align:center">Chấm xanh lá = hiện tại; ở bước 7, mũi tên xám = co, hồng = đẩy.</div>
+  </div>
+  <div class="card" style="grid-column:1/-1">
+    <h2 style="margin:0 0 6px;font-size:20px">Nghiệm tối ưu (giải đối ngẫu bằng SMO) và ba loại mẫu</h2>
+    <p style="margin:0 0 8px;font-size:14px;color:var(--mut)">w = Σ βᵢxᵢ với βᵢ = αᵢ − αᵢ* ∈ [−C, C] và Σ βᵢ = 0. Mẫu trong ống có β = 0 nên không ảnh hưởng nghiệm.</p>
+    <button class="sec" id="optBtn">Hiện nghiệm tối ưu trên hình</button>
+    <div id="optOut" style="margin-top:8px"></div>
+  </div>
+</div>
+
+<div class="tools hidden" id="tools3">
+  <div class="card">
+    <h2 style="margin:0 0 6px;font-size:20px">Hàm đối ngẫu D(α, α*) qua các vòng SMO</h2>
+    <svg id="dh" viewBox="0 0 560 230" width="100%"></svg>
+    <div class="note" id="dhcap" style="text-align:center"></div>
+  </div>
+  <div class="card">
+    <h2 style="margin:0 0 6px;font-size:20px">“Lực” βᵢ của từng mẫu (xếp theo x)</h2>
+    <svg id="beta" viewBox="0 0 560 230" width="100%"></svg>
+    <div class="note" id="betacap" style="text-align:center"></div>
+  </div>
+  <div class="card">
+    <h2 style="margin:0 0 6px;font-size:20px">Dự đoán tại một điểm: các đồi và hố cộng lại</h2>
+    <svg id="vote" viewBox="0 0 560 230" width="100%"></svg>
+    <div class="note" id="votecap" style="text-align:center">Bấm vào hình bên trên để chọn x.</div>
+  </div>
+</div>
+
+<div class="hidden" id="gcWrap">
+  <div class="card controls">
+    <button class="warn" id="gnew">Sinh dữ liệu mới</button>
+    <span class="note">42 điểm huấn luyện y = sin x + nhiễu với 3 ngoại lai. Mỗi ô được huấn luyện đến hội tụ bằng SMO. Nét chấm xám = sin x thật, vùng vàng = ống ε quanh dự đoán, vòng xanh lá = vector hỗ trợ. RMSE đo giữa dự đoán và sin x thật. Dữ liệu sinh lại nên số liệu không trùng tuyệt đối với tài liệu, nhưng xu hướng giống.</span>
+  </div>
+  <div class="gc" id="gcgrid" style="margin-top:14px"></div>
+</div>
+
+<details class="card" style="margin-top:16px">
+<summary>Tóm tắt: nhớ ba dòng này là đủ</summary>
+<div class="sum">
+ <div style="background:var(--pb)"><b>Bài toán:</b> J = ½‖w‖² + C·Σ max(0, |yᵢ − xᵢw − b| − ε). Mẫu trong ống (|r| ≤ ε) miễn phí; ngoài ống bị phạt tuyến tính, lực kéo bị chặn ở C.</div>
+ <div style="background:var(--po)"><b>Gradient:</b> sᵢ = sign(rᵢ)·1[|rᵢ| &gt; ε]; ∇<sub>w</sub>J = w − C·Xᵀs; ∂J/∂b = −C·1ᵀs. Cập nhật: w ← (1 − η)w + ηC·Xᵀs, b ← b + ηC·1ᵀs.</div>
+ <div style="background:var(--pg)"><b>Đối ngẫu:</b> w = Σ βᵢxᵢ, Σβᵢ = 0, |βᵢ| ≤ C; f(x) = Σ βᵢ·k(xᵢ, x) + b. Ba loại mẫu: trong ống (β = 0), trên biên ống (0 &lt; |β| &lt; C), ngoài ống (|β| = C).</div>
+</div>
+<table class="g" style="margin-top:12px">
+<tr><th>Tiêu chí</th><th style="text-align:left">SVM phân loại</th><th style="text-align:left">SVR</th></tr>
+<tr><td>Đại lượng đo lỗi</td><td style="text-align:left">margin m = y·f(x)</td><td style="text-align:left">phần dư r = y − f(x)</td></tr>
+<tr><td>Hàm mất mát</td><td style="text-align:left">hinge max(0, 1 − m)</td><td style="text-align:left">max(0, |r| − ε)</td></tr>
+<tr><td>Vùng không mất mát</td><td style="text-align:left">ngoài dải lề (m ≥ 1)</td><td style="text-align:left">trong ống (|r| ≤ ε)</td></tr>
+<tr><td>Hệ số đối ngẫu</td><td style="text-align:left">αᵢ ∈ [0, C], Σαᵢyᵢ = 0</td><td style="text-align:left">αᵢ, αᵢ* ∈ [0, C], βᵢ = αᵢ − αᵢ*, Σβᵢ = 0</td></tr>
+</table>
+</details>
+</main>
+
+<script>
+"use strict";
+/* ================= Tiện ích ================= */
+const BLUE="#1F6AC8",ORG="#D9480F",GRN="#0E8660",PINK="#C2185B",INK="#17284B",MUT="#5B6784",PUR="#6B3FC9",GOLD="#E0A100";
+const $=id=>document.getElementById(id),NS="http://www.w3.org/2000/svg";
+function el(tag,attrs,txt){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(txt!==undefined)e.textContent=txt;return e}
+const f=(v,d=3)=>{const z=Math.abs(v)<0.5*Math.pow(10,-d)?0:v;return z.toFixed(d).replace(".",",").replace("-","−")};
+const sg=v=>v>0?"+":v<0?"−":"";
+const op=s=>`<span class="op">${s}</span>`,col=a=>a.map(v=>[v]);
+function mat(rows,opt={}){
+  const {hlRows=[],caption="",d=3,fmt=null}=opt;
+  let h='<div class="mw"><table class="m">';
+  rows.forEach((r,i)=>{h+="<tr>"+r.map(v=>`<td class="${hlRows.includes(i)?"hl":""} ${v<0?"neg":""}">${fmt?fmt(v):f(v,d)}</td>`).join("")+"</tr>"});
+  return h+"</table>"+(caption?`<div class="cap">${caption}</div>`:"")+"</div>";
+}
+function frac(v,maxd=60){for(let d=1;d<=maxd;d++){const n=Math.round(v*d);if(Math.abs(n/d-v)<1e-9)return d===1?String(n).replace("-","−"):`${n}/${d}`.replace("-","−")}return f(v)}
+function solveLin(A,b){
+  const n=b.length,M=A.map((r,i)=>[...r,b[i]]);
+  for(let c=0;c<n;c++){let p=c;for(let r=c+1;r<n;r++)if(Math.abs(M[r][c])>Math.abs(M[p][c]))p=r;[M[c],M[p]]=[M[p],M[c]];
+    for(let r=0;r<n;r++){if(r===c)continue;const k=M[r][c]/M[c][c];for(let j=c;j<=n;j++)M[r][j]-=k*M[c][j]}}
+  return M.map((r,i)=>r[n]/r[i]);
+}
+function rng(seed){return()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function gauss(r){let u=0;while(!u)u=r();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*r())}
+const lossE=(r,e)=>Math.max(0,Math.abs(r)-e);
+
+/* ================= Kernel, SMO tổng quát và SVR đối ngẫu ================= */
+function mkK(s){
+  if(s.t==="lin")return (a,b)=>a[0]*b[0]+a[1]*b[1];
+  return (a,b)=>Math.exp(-s.g*((a[0]-b[0])**2+(a[1]-b[1])**2));
+}
+function smoInit(Km,y,C,p){return {y,C,Km,n:y.length,al:Array(y.length).fill(0),G:p.slice(),p,it:0}}
+const cloneS=S=>Object.assign({},S,{al:S.al.slice(),G:S.G.slice()});
+function smoSelect(S){
+  let i=-1,j=-1,gmax=-Infinity,gmin=Infinity;
+  for(let t=0;t<S.n;t++){
+    const up=(S.y[t]===1&&S.al[t]<S.C)||(S.y[t]===-1&&S.al[t]>0),lo=(S.y[t]===1&&S.al[t]>0)||(S.y[t]===-1&&S.al[t]<S.C),v=-S.y[t]*S.G[t];
+    if(up&&v>gmax){gmax=v;i=t}if(lo&&v<gmin){gmin=v;j=t}
+  }
+  return {i,j,gmax,gmin,gap:(i<0||j<0)?0:gmax-gmin};
+}
+function smoPair(S,i,j){
+  const {y,C,Km,al,G}=S;let kap=Km[i][i]+Km[j][j]-2*Km[i][j];if(kap<1e-12)kap=1e-12;
+  const dE=y[i]*G[i]-y[j]*G[j];let L,H;
+  if(y[i]!==y[j]){L=Math.max(0,al[j]-al[i]);H=Math.min(C,C+al[j]-al[i])}else{L=Math.max(0,al[i]+al[j]-C);H=Math.min(C,al[i]+al[j])}
+  const ajU=al[j]+y[j]*dE/kap,ajN=Math.min(H,Math.max(L,ajU)),aiN=al[i]+y[i]*y[j]*(al[j]-ajN);
+  return {i,j,kap,dE,L,H,ajU,ajN,aiN,ai:al[i],aj:al[j]};
+}
+function smoApply(S,P){
+  const {i,j}=P,y=S.y,Km=S.Km,di=P.aiN-S.al[i],dj=P.ajN-S.al[j];
+  for(let t=0;t<S.n;t++)S.G[t]+=y[t]*y[i]*Km[t][i]*di+y[t]*y[j]*Km[t][j]*dj;
+  const eps=1e-11*Math.max(1,S.C),sn=v=>v<eps?0:(v>S.C-eps?S.C:v);
+  S.al[i]=sn(P.aiN);S.al[j]=sn(P.ajN);S.it++;return Math.abs(di)+Math.abs(dj);
+}
+function smoBias(S){
+  let ub=Infinity,lb=-Infinity,sf=0,nf=0;
+  for(let t=0;t<S.n;t++){const yg=S.y[t]*S.G[t],a=S.al[t];
+    if(a>=S.C-1e-9){if(S.y[t]===-1)ub=Math.min(ub,yg);else lb=Math.max(lb,yg)}
+    else if(a<=1e-9){if(S.y[t]===1)ub=Math.min(ub,yg);else lb=Math.max(lb,yg)}
+    else{sf+=yg;nf++}}
+  return -(nf?sf/nf:((isFinite(ub)&&isFinite(lb))?(ub+lb)/2:0));
+}
+function smoRun(S,tol,maxIt){let stuck=0;for(let k=0;k<maxIt;k++){const s=smoSelect(S);if(s.gap<tol)break;if(smoApply(S,smoPair(S,s.i,s.j))<1e-14){if(++stuck>5)break}else stuck=0}}
+/* SVR: 2n biến (α_i với dấu +1, α*_i với dấu −1) */
+function svrInit(X,y,C,eps,K){
+  const n=X.length,kf=mkK(K),K1=X.map(a=>X.map(b=>kf(a,b))),m=2*n;
+  const Km=Array.from({length:m},(_,t)=>Array.from({length:m},(_,s)=>K1[t%n][s%n]));
+  const yy=Array.from({length:m},(_,t)=>t<n?1:-1),p=Array.from({length:m},(_,t)=>t<n?eps-y[t]:eps+y[t-n]);
+  const S=smoInit(Km,yy,C,p);S.n1=n;S.kf=kf;S.X=X;S.yv=y;S.eps=eps;return S;
+}
+const betaOf=S=>Array.from({length:S.n1},(_,i)=>S.al[i]-S.al[i+S.n1]);
+function svrF(S,b,x){let s=b;for(let i=0;i<S.n1;i++){const be=S.al[i]-S.al[i+S.n1];if(Math.abs(be)>1e-12)s+=be*S.kf(S.X[i],x)}return s}
+const svrDual=S=>{let s=0;for(let t=0;t<S.n;t++)s+=S.al[t]*(S.G[t]+S.p[t]);return -s/2};
+const typeB=(S,i)=>{const b=Math.abs(S.al[i]-S.al[i+S.n1]);return b<1e-7?1:(b>S.C-1e-7?3:2)};
+
+/* ================= Vẽ đồ thị hồi quy ================= */
+let GEO=null;
+function drawReg(svg,o){
+  svg.innerHTML="";
+  const W=o.mini?300:560,H=o.mini?200:420,ml=o.mini?6:48,mr=o.mini?6:14,mt=o.mini?6:12,mb=o.mini?6:40;
+  svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
+  const [x0,x1,y0,y1]=o.dom,pw=W-ml-mr,ph=H-mt-mb,px=x=>ml+(x-x0)/(x1-x0)*pw,py=y=>mt+(y1-y)/(y1-y0)*ph;
+  if(o.main)GEO={dom:o.dom,ml,mt,pw,ph};
+  const id="cr"+(o.id||"");
+  const defs=el("defs",{}),cp=el("clipPath",{id});cp.appendChild(el("rect",{x:ml,y:mt,width:pw,height:ph}));defs.appendChild(cp);
+  [["mk-pink",PINK],["mk-gray",MUT],["mk-blue",BLUE]].forEach(([i2,c])=>{const m=el("marker",{id:i2,viewBox:"0 0 10 10",refX:"7",refY:"5",markerWidth:"6",markerHeight:"6",orient:"auto-start-reverse"});m.appendChild(el("path",{d:"M0 0L10 5L0 10z",fill:c}));defs.appendChild(m)});
+  svg.appendChild(defs);
+  svg.appendChild(el("rect",{x:ml,y:mt,width:pw,height:ph,fill:"#fff"}));
+  if(!o.mini){
+    for(let v=Math.ceil(x0);v<=x1;v++){svg.appendChild(el("line",{x1:px(v),x2:px(v),y1:mt,y2:mt+ph,stroke:"#EDF1F9"}));svg.appendChild(el("text",{x:px(v),y:mt+ph+16,"text-anchor":"middle","font-size":12,fill:MUT},String(v).replace("-","−")))}
+    for(let v=Math.ceil(y0);v<=y1;v++){svg.appendChild(el("line",{x1:ml,x2:ml+pw,y1:py(v),y2:py(v),stroke:v===0?"#C9D6EE":"#EDF1F9"}));svg.appendChild(el("text",{x:ml-8,y:py(v)+4,"text-anchor":"end","font-size":12,fill:MUT},String(v).replace("-","−")))}
+    svg.appendChild(el("text",{x:ml+pw/2,y:H-6,"text-anchor":"middle","font-size":14,"font-weight":700,fill:MUT},o.xl||"x"));
+    svg.appendChild(el("text",{x:14,y:mt+ph/2,"text-anchor":"middle","font-size":14,"font-weight":700,fill:MUT,transform:`rotate(-90 14 ${mt+ph/2})`},o.yl||"y"));
+  }
+  svg.appendChild(el("rect",{x:ml,y:mt,width:pw,height:ph,fill:"none",stroke:"#C9D6EE","stroke-width":2}));
+  const g=el("g",{"clip-path":`url(#${id})`});svg.appendChild(g);
+  const N=o.mini?90:160,xs=Array.from({length:N+1},(_,k)=>x0+(x1-x0)*k/N);
+  const path=(fn,off=0)=>xs.map((x,k)=>`${k?"L":"M"}${px(x).toFixed(1)} ${py(fn(x)+off).toFixed(1)}`).join("");
+  if(o.truth)g.appendChild(el("path",{d:path(o.truth),fill:"none",stroke:"#8E99B3","stroke-width":2,"stroke-dasharray":"2 4"}));
+  (o.pre||[]).forEach(L=>g.appendChild(el("path",{d:path(L.fn),fill:"none",stroke:L.c,"stroke-width":L.w||2.5,"stroke-dasharray":L.d||"",opacity:L.op??1})));
+  if(o.fn&&o.eps!=null){
+    const up=xs.map(x=>`${px(x).toFixed(1)},${py(o.fn(x)+o.eps).toFixed(1)}`),dn=xs.slice().reverse().map(x=>`${px(x).toFixed(1)},${py(o.fn(x)-o.eps).toFixed(1)}`);
+    g.appendChild(el("polygon",{points:[...up,...dn].join(" "),fill:"rgba(255,213,79,.38)"}));
+    [1,-1].forEach(k=>g.appendChild(el("path",{d:path(o.fn,k*o.eps),fill:"none",stroke:INK,"stroke-width":1.5,"stroke-dasharray":"6 5",opacity:.8})));
+  }
+  (o.lines||[]).forEach(L=>g.appendChild(el("path",{d:path(L.fn),fill:"none",stroke:L.c,"stroke-width":L.w||2.5,"stroke-dasharray":L.d||"",opacity:L.op??1})));
+  if(o.fn)g.appendChild(el("path",{d:path(o.fn),fill:"none",stroke:INK,"stroke-width":o.mini?2.4:3.6}));
+  (o.segs||[]).forEach(S=>g.appendChild(el("line",{x1:px(S.a[0]),y1:py(S.a[1]),x2:px(S.b[0]),y2:py(S.b[1]),stroke:S.c,"stroke-width":S.w||2,"stroke-dasharray":S.d||"","marker-end":S.arrow?`url(#${S.arrow})`:""})));
+  if(o.vline!=null)g.appendChild(el("line",{x1:px(o.vline),x2:px(o.vline),y1:mt,y2:mt+ph,stroke:PUR,"stroke-width":2,"stroke-dasharray":"4 4"}));
+  o.X.forEach((x,i)=>{
+    const cx=px(x),cy=py(o.Y[i]),r=o.r?o.r(i):(o.mini?3:9),R=o.ring&&o.ring[i],dim=o.dim&&o.dim[i];
+    if(cx<ml-10||cx>ml+pw+10||cy<mt-10||cy>mt+ph+10)return;
+    const gg=el("g",{opacity:dim?.4:1});
+    if(R)gg.appendChild(el("circle",{cx,cy,r:r+5,fill:"none",stroke:R.c,"stroke-width":R.w||4}));
+    gg.appendChild(el("circle",{cx,cy,r,fill:(o.col&&o.col[i])||BLUE,stroke:"#fff","stroke-width":o.mini?1:2}));
+    if(o.num)gg.appendChild(el("text",{x:cx,y:cy+4.5,"text-anchor":"middle","font-size":12.5,"font-weight":800,fill:"#fff"},o.num(i)));
+    const L=o.lab&&o.lab[i];
+    if(L){const ly=L.below?cy+r+22:cy-r-10,w=L.t.length*7+12;gg.appendChild(el("rect",{x:cx-w/2,y:ly-13,width:w,height:18,rx:6,fill:"#fff",opacity:.93,stroke:L.c,"stroke-width":1}));gg.appendChild(el("text",{x:cx,y:ly+1,"text-anchor":"middle","font-size":12,"font-weight":800,fill:L.c},L.t))}
+    svg.appendChild(gg);
+  });
+  (o.texts||[]).forEach(k=>{const w=k.t.length*7+12;svg.appendChild(el("rect",{x:px(k.p[0])-w/2,y:py(k.p[1])-13,width:w,height:19,rx:6,fill:"#fff",opacity:.93,stroke:k.c,"stroke-width":1}));svg.appendChild(el("text",{x:px(k.p[0]),y:py(k.p[1])+1,"text-anchor":"middle","font-size":12.5,"font-weight":800,fill:k.c},k.t))});
+}
+function setLegend(a){$("legend").innerHTML=a.join("")}
+const LGB=[`<span><span class="dot" style="background:${BLUE}"></span>mẫu (x, y)</span>`,`<span><span class="ln" style="border-color:${INK}"></span>f(x) = xw + b</span>`,`<span><span class="ln" style="border-color:${INK};border-top-style:dashed"></span>f ± ε</span>`,`<span><span class="sq" style="background:rgba(255,213,79,.6)"></span>ống ε</span>`];
+const ring=(c)=>`<span><span class="dot" style="border:3px solid ${c};width:12px;height:12px"></span>`;
+
+/* ================= Dữ liệu một chiều và nghiệm tối ưu ================= */
+const dataL=(nd,y6)=>nd===5?{x:[1,2,3,4,5],y:[1,2.2,2.9,4,5]}:{x:[1,2,3,4,5,6],y:[1,2.2,2.9,4,5,y6]};
+function olsFit(x,y){const n=x.length,mx=x.reduce((a,b)=>a+b,0)/n,my=y.reduce((a,b)=>a+b,0)/n;let sxy=0,sxx=0;x.forEach((v,i)=>{sxy+=(v-mx)*(y[i]-my);sxx+=(v-mx)**2});const w=sxy/sxx;return {w,b:my-w*mx}}
+const Jp=(w,b,x,y,C,e)=>.5*w*w+C*x.reduce((s,v,i)=>s+lossE(y[i]-w*v-b,e),0);
+const _sv={};
+function solve1D(x,y,C,eps){
+  const key=JSON.stringify([x,y,C,eps]);if(_sv[key])return _sv[key];
+  const S=svrInit(x.map(v=>[v,0]),y,C,eps,{t:"lin"});smoRun(S,1e-10,300000);
+  const beta=betaOf(S),w=beta.reduce((s,bt,i)=>s+bt*x[i],0),b=smoBias(S);
+  return _sv[key]={S,beta,w,b,J:Jp(w,b,x,y,C,eps),D:svrDual(S),types:x.map((_,i)=>typeB(S,i))};
+}
+
+/* ================= TAB ① Giải tay ================= */
+const T1={nd:6,y6:2},EPS1=0.2,C1=1;
+let s1=0;
+const STEPS1=[
+ {k:"f",t:"Hồi quy MSE bị ngoại lai kéo lệch"},
+ {k:"f",t:"Mất mát ε-insensitive và ống ε"},
+ {k:"f",t:"Biến lỏng ξ, ξ* và bài toán tối ưu"},
+ {k:"b",t:"Đoán cấu trúc vector hỗ trợ"},
+ {k:"b",t:"Giải w, b từ hai biên ống"},
+ {k:"b",t:"Giải hệ số β (cân bằng lực)"},
+ {k:"u",t:"Kiểm tra KKT, J = D, ngoại lai bị chặn"}
+];
+function ctx1(){
+  const {x,y}=dataL(T1.nd,T1.y6),n=x.length,tr=solve1D(x,y,C1,EPS1),ols=olsFit(x,y);
+  const f1=v=>tr.w*v+tr.b,r=x.map((v,i)=>y[i]-f1(v));
+  const pos=x.map((_,i)=>{const t=tr.types[i],be=tr.beta[i];return t===1?"in":t===3?(be>0?"up":"dn"):(be>0?"fup":"fdn")});
+  return {x,y,n,tr,ols,r,pos};
+}
+const POSN={in:"trong ống",up:"trên ống",dn:"dưới ống",fup:"biên trên",fdn:"biên dưới"};
+function plane1(s,C){
+  const {x,y,n,tr,ols,r,pos}=C,fS=v=>tr.w*v+tr.b,fO=v=>ols.w*v+ols.b;
+  const o={dom:[0,7,-3.5,6.5],main:true,X:x,Y:y,num:i=>String(i+1),lab:{},ring:{},segs:[],lines:[],dim:{},texts:[]};
+  if(s===0){o.lines=[{fn:fO,c:ORG,w:3.5}];x.forEach((v,i)=>{o.segs.push({a:[v,y[i]],b:[v,fO(v)],c:ORG,w:1.6,d:"4 4"});o.lab[i]={t:"r="+f(y[i]-fO(v),2),c:ORG,below:i<n-1&&y[i]<fO(v)}})}
+  if(s===1){o.fn=fO;o.eps=EPS1;x.forEach((v,i)=>{const rr=y[i]-fO(v);o.lab[i]={t:"ℓ="+f(lossE(rr,EPS1),2),c:lossE(rr,EPS1)>0?PINK:GRN,below:rr<0};if(lossE(rr,EPS1)>0)o.ring[i]={c:PINK,w:3.5}})}
+  if(s>=2){o.fn=fS;o.eps=EPS1}
+  if(s===2)x.forEach((v,i)=>{const rr=r[i];if(Math.abs(rr)>EPS1+1e-9){const edge=fS(v)+Math.sign(rr)*EPS1;o.segs.push({a:[v,y[i]],b:[v,edge],c:PINK,w:3.5,arrow:"mk-pink"});o.lab[i]={t:(rr>0?"ξ=":"ξ*=")+f(Math.abs(rr)-EPS1,2),c:PINK,below:rr<0};o.ring[i]={c:PINK,w:3.5}}else o.lab[i]={t:"ξ=0",c:GRN,below:rr<0}});
+  if(s>=3)x.forEach((v,i)=>{const p=pos[i];if(p==="fup"||p==="fdn")o.ring[i]={c:GRN,w:4};if(p==="up"||p==="dn")o.ring[i]={c:ORG,w:4};if(p==="in")o.dim[i]=true});
+  if(s===3)x.forEach((v,i)=>{o.lab[i]={t:POSN[pos[i]],c:pos[i]==="in"?MUT:(pos[i]==="up"||pos[i]==="dn"?ORG:GRN),below:r[i]<0}});
+  if(s===4)x.forEach((v,i)=>{if(pos[i]==="fup"||pos[i]==="fdn")o.lab[i]={t:"r="+(pos[i]==="fup"?"+":"−")+"ε",c:GRN,below:r[i]<0}});
+  if(s===5)x.forEach((v,i)=>{if(tr.types[i]>1)o.lab[i]={t:"β="+f(tr.beta[i],3),c:tr.types[i]===3?ORG:GRN,below:r[i]<0}});
+  if(s===6){o.lines=[{fn:fO,c:ORG,w:2.5,d:"7 5",op:.8}];x.forEach((v,i)=>{o.lab[i]={t:"r="+f(r[i],2),c:Math.abs(r[i])>EPS1+1e-9?ORG:(Math.abs(Math.abs(r[i])-EPS1)<1e-7?GRN:MUT),below:r[i]<0}})}
+  drawReg($("plane"),o);
+  const lg=[...LGB.slice(0,1)];
+  if(s>=2)lg.push(...LGB.slice(1));
+  if(s===0||s===1||s===6)lg.push(`<span><span class="ln" style="border-color:${ORG};${s===6?"border-top-style:dashed":""}"></span>hồi quy MSE: y = ${f(ols.w,2)}x + ${f(ols.b,2)}</span>`);
+  if(s>=3)lg.push(ring(GRN)+"</span>trên biên ống (tự do)</span>",ring(ORG)+"</span>ngoài ống (bị chặn)</span>");
+  setLegend(lg);$("planeHint").textContent="";
+}
+function panel1(s,C){
+  const {x,y,n,tr,ols,r,pos}=C,st=STEPS1[s],tag=st.k==="f"?'<span class="tag f">THIẾT LẬP →</span>':st.k==="b"?'<span class="tag b">← GIẢI</span>':'<span class="tag u">KIỂM TRA</span>';
+  let h=`<h2>${tag}Bước ${s+1}/${STEPS1.length}: ${st.t}</h2>`;
+  const six=T1.nd===6,free=[...Array(n).keys()].filter(i=>tr.types[i]===2),bnd=[...Array(n).keys()].filter(i=>tr.types[i]===3);
+  const dflt=six&&Math.abs(T1.y6-2)<1e-9||(!six);
+  switch(s){
+  case 0: {
+    h+=`<div class="why">Hồi quy tuyến tính chọn (w, b) làm nhỏ nhất tổng <b>bình phương</b> phần dư. Mẫu sai càng nhiều thì kéo đường càng mạnh và <b>không có trần</b>. ${six?"Chỉ một sinh viên (SV6) lệch xu hướng đã đủ làm đường bị kéo xuống.":"Dữ liệu 5 sinh viên sạch: đường hồi quy rất sát."}</div>`;
+    h+=`<div class="row">${mat(col(x),{caption:"x (giờ tự học)",d:0,hlRows:six?[5]:[]})}${mat(col(y),{caption:"y (điểm thi)",d:1,hlRows:six?[5]:[]})}${mat(col(r.map((_,i)=>y[i]-(ols.w*x[i]+ols.b))),{caption:"phần dư MSE",d:2})}</div>`;
+    h+=`<div class="detail">Hồi quy MSE: <b>y = ${f(ols.w)}·x + ${f(ols.b)}</b>, MSE = ${f(x.reduce((s2,v,i)=>s2+(y[i]-ols.w*v-ols.b)**2,0)/n)}.</div>`;
+    const rows=[null,3,2,-2].map(v=>{const d2=v===null?dataL(5):dataL(6,v),o2=olsFit(d2.x,d2.y),sv=solve1D(d2.x,d2.y,C1,EPS1);return `<tr><td>${v===null?"không có ngoại lai":"y₆ = "+f(v,1)}</td><td>${f(o2.w)}</td><td>${f(o2.b)}</td><td>${f(sv.w)}</td></tr>`}).join("");
+    h+=`<table class="g"><tr><th>Ngoại lai</th><th>w (MSE)</th><th>b (MSE)</th><th>w (SVR, ε = 0,2, C = 1)</th></tr>${rows}</table>`;
+    h+=`<div class="pitfall"><b>Mong muốn:</b> bỏ qua sai số nhỏ (nhiễu), chặn ảnh hưởng của mẫu sai nặng, giữ hàm phẳng, và dùng được kernel. Cột cuối cho thấy SVR đáp ứng điều đó.</div>`;
+    break; }
+  case 1: {
+    const ee=0.5,rs=[0.2,0.5,1,2,5];
+    h+=`<div class="why">Hàm mất mát <b>ε-insensitive</b> ℓ<sub>ε</sub>(r) = max(0, |r| − ε), với r = y − f(x): bỏ qua sai số trong ống |r| ≤ ε và phạt <i>tuyến tính</i> phần vượt ra ngoài. Giống hinge nhưng đảo chiều: mẫu “dễ” nằm <b>trong</b> ống.</div>`;
+    h+=`<table class="g"><tr><th>r</th><th>r²</th><th>|r|</th><th>ℓ<sub>ε</sub> (ε = 0,5)</th></tr>${rs.map(v=>`<tr><td>${f(v,1)}</td><td>${f(v*v,2)}</td><td>${f(v,1)}</td><td><b>${f(lossE(v,ee),1)}</b></td></tr>`).join("")}</table>`;
+    h+=`<div class="detail">r = 5 bị MSE phạt gấp <b>25</b> lần r = 1, còn ℓ<sub>ε</sub> chỉ gấp <b>9</b> lần (4,5/0,5). Đạo hàm theo r: (r²)′ = 2r (không chặn), ℓ<sub>ε</sub>′ = sign(r)·1[|r| &gt; ε] (chặn ở ±1): ngoại lai không kéo mạnh tùy ý (xem biểu đồ ở tab ②).</div>`;
+    h+=`<div class="detail">Hình: ống ε = ${f(EPS1,1)} quanh đường MSE. Mẫu ngoài ống bị phạt bằng khoảng cách <i>theo chiều dọc</i> đến biên ống: ${x.map((v,i)=>({i,l:lossE(y[i]-(ols.w*v+ols.b),EPS1)})).filter(o=>o.l>0).map(o=>`SV${o.i+1}: ℓ = ${f(o.l,2)}`).join("; ")||"không có"}.</div>`;
+    h+=`<div class="pitfall"><b>Trường hợp đặc biệt:</b> ε = 0 cho |r| (hồi quy độ lệch tuyệt đối); ε rất lớn thì mọi mẫu nằm trong ống và chỉ còn điều chuẩn.</div>`;
+    break; }
+  case 2: {
+    h+=`<div class="why">Muốn mọi mẫu nằm trong ống: −ε ≤ y<sub>i</sub> − f(x<sub>i</sub>) ≤ ε. Cho phép vi phạm bằng hai biến lỏng không âm: <b>ξ<sub>i</sub></b> (y lớn hơn dự đoán quá ε, mẫu <i>trên</i> ống) và <b>ξ<sub>i</sub>*</b> (mẫu <i>dưới</i> ống).</div>`;
+    h+=`<div class="eq">min ½w² + C·Σ(ξ<sub>i</sub> + ξ<sub>i</sub>*) &nbsp; với &nbsp; y<sub>i</sub> − wx<sub>i</sub> − b ≤ ε + ξ<sub>i</sub>,&nbsp; wx<sub>i</sub> + b − y<sub>i</sub> ≤ ε + ξ<sub>i</sub>*,&nbsp; ξ, ξ* ≥ 0</div>`;
+    h+=`<table class="g"><tr><th>Vị trí</th><th>Phần dư</th><th>ξ</th><th>ξ*</th></tr><tr><td>Trong ống</td><td>|r| ≤ ε</td><td>0</td><td>0</td></tr><tr><td>Trên ống</td><td>r &gt; ε</td><td>r − ε</td><td>0</td></tr><tr><td>Dưới ống</td><td>r &lt; −ε</td><td>0</td><td>−r − ε</td></tr></table>`;
+    const xi=x.map((_,i)=>r[i]>EPS1?r[i]-EPS1:0),xs=x.map((_,i)=>r[i]<-EPS1?-r[i]-EPS1:0),tot=xi.reduce((a,b)=>a+b,0)+xs.reduce((a,b)=>a+b,0);
+    h+=`<div class="detail">Hình dùng đường nghiệm f(x) = ${f(tr.w)}x + ${f(tr.b)} (sẽ tìm ở bước 5). Biến lỏng khác 0: ${x.map((_,i)=>xi[i]>0?`ξ<sub>${i+1}</sub> = ${f(xi[i],3)}`:xs[i]>0?`ξ<sub>${i+1}</sub>* = ${f(xs[i],3)}`:null).filter(Boolean).join("; ")||"không có"}.<br>Mỗi mẫu có <b>nhiều nhất một</b> biến lỏng khác 0, và ξ + ξ* = ℓ<sub>ε</sub>(r). Khử biến lỏng ta được J = ½w² + C·Σℓ<sub>ε</sub>(r<sub>i</sub>) = <b>${f(tr.J)}</b> tại nghiệm.</div>`;
+    break; }
+  case 3: {
+    h+=`<div class="why">Đoán “ai là vector hỗ trợ” rồi giải với các ràng buộc đó ở dạng đẳng thức, như ở mục 2.5. Từ hình: các mẫu <b>chạm biên ống</b> là vector hỗ trợ <i>tự do</i>; mẫu <b>nằm hẳn ngoài ống</b> bị chặn ở |β| = C; mẫu <b>trong ống</b> có β = 0.</div>`;
+    h+=`<table class="g"><tr><th>SV</th><th>x</th><th>y</th><th>Giả thiết</th><th>β</th></tr>${x.map((v,i)=>`<tr class="${tr.types[i]>1?"hlr":""}"><td>${i+1}</td><td>${f(v,0)}</td><td>${f(y[i],1)}</td><td style="text-align:right">${POSN[pos[i]]}</td><td>${pos[i]==="in"?"0":pos[i]==="up"?"+C":pos[i]==="dn"?"−C":pos[i]==="fup"?"0 &lt; β &lt; C":"−C &lt; β &lt; 0"}</td></tr>`).join("")}</table>`;
+    h+=`<div class="detail">Có <b>${free.length}</b> vector hỗ trợ tự do (${free.map(i=>"SV"+(i+1)).join(", ")}) và <b>${bnd.length}</b> bị chặn (${bnd.map(i=>"SV"+(i+1)).join(", ")||"không"}). Hai ẩn (w, b) được xác định bởi hai biên ống, hai ẩn β của mẫu tự do bởi Σβ = 0 và w = Σβx.</div>`;
+    h+=`<div class="pitfall"><b>Hệ quả KKT:</b> α<sub>i</sub> và α<sub>i</sub>* không thể cùng dương (vì ε &gt; 0), nên |β<sub>i</sub>| = max(α<sub>i</sub>, α<sub>i</sub>*).</div>`;
+    break; }
+  case 4: {
+    if(free.length!==2){h+=`<div class="pitfall">Cấu trúc ở cấu hình này có ${free.length} vector tự do, khác với 2 của ví dụ. Nghiệm số: w = ${f(tr.w)}, b = ${f(tr.b)}.</div>`;break}
+    const [a,c]=free,ca=y[a]-EPS1*Math.sign(tr.beta[a]),cc=y[c]-EPS1*Math.sign(tr.beta[c]);
+    h+=`<div class="why">Mẫu tự do nằm đúng trên biên ống: r = +ε (biên trên) hoặc r = −ε (biên dưới). Mỗi mẫu cho một phương trình tuyến tính trong (w, b).</div>`;
+    h+=`<div class="eq">${[a,c].map(i=>`y<sub>${i+1}</sub> − (w·${f(x[i],0)} + b) = ${tr.beta[i]>0?"+":"−"}ε &nbsp;⇒&nbsp; ${f(x[i],0)}w + b = ${f(i===a?ca:cc,1)}`).join("<br>")}</div>`;
+    const dx=x[c]-x[a];
+    h+=`<div class="detail">Trừ vế theo vế: ${f(dx,0)}·w = ${f(cc,1)} − ${f(ca,1)} = ${f(cc-ca,1)} ⇒ <b>w = ${f(tr.w)}</b>${Math.abs(tr.w*dx-(cc-ca))<1e-6&&dflt?` = ${frac(tr.w)}`:""}<br>b = ${f(ca,1)} − ${f(x[a],0)}·w = <b>${f(tr.b)}</b>${dflt?` = ${frac(tr.b)}`:""}</div>`;
+    h+=`<div class="detail">Đối chiếu bộ giải số SMO (đối ngẫu): w = ${f(tr.w,6)}, b = ${f(tr.b,6)} ✔. ${six?"Hình: đường nghiệm và ống ε; SV1, SV4 chạm biên ống.":"Với 5 sinh viên sạch: w = 1 − ε/2 = 0,9 và b = 1,5ε = 0,3."}</div>`;
+    break; }
+  case 5: {
+    if(free.length!==2){h+=`<div class="pitfall">Cấu hình này không có đúng 2 vector tự do; xem bảng β ở bước 7.</div>`;break}
+    const [a,c]=free,sB=bnd.reduce((s2,i)=>s2+tr.beta[i],0),sBx=bnd.reduce((s2,i)=>s2+tr.beta[i]*x[i],0);
+    h+=`<div class="why">Hai điều kiện đối ngẫu: <b>Σβ = 0</b> (cân bằng lực giữa hai phía ống, xác định b) và <b>w = Σβ<sub>i</sub>x<sub>i</sub></b>. Mẫu bị chặn có β = ±C = ${bnd.map(i=>fS2(tr.beta[i])).join("; ")||"không có"}.</div>`;
+    h+=`<div class="eq">β<sub>${a+1}</sub> + β<sub>${c+1}</sub> = ${f(-sB,0)} &nbsp;·&nbsp; ${f(x[a],0)}β<sub>${a+1}</sub> + ${f(x[c],0)}β<sub>${c+1}</sub> = w − (${f(sBx,0)}) = ${f(tr.w-sBx)}</div>`;
+    h+=`<div class="detail">Giải: <b>β<sub>${a+1}</sub> = ${f(tr.beta[a],4)}</b>${dflt&&six?` = ${frac(tr.beta[a])}`:""}, <b>β<sub>${c+1}</sub> = ${f(tr.beta[c],4)}</b>${dflt&&six?` = ${frac(tr.beta[c])}`:""}. Đều thỏa 0 &lt; |β| &lt; C = 1 ✔ đúng như giả thiết (vector hỗ trợ tự do).${six?"":`<br>Ví dụ 5 SV: D(a) = 3,6a − 8a², D′ = 0 ⇒ a = 0,225 = β₅ = −β₁ ✔`}</div>`;
+    h+=`<div class="pitfall"><b>Đọc theo “lực”:</b> mẫu nằm trên ống kéo đường lên (β &gt; 0), mẫu nằm dưới ống kéo xuống (β &lt; 0); mỗi mẫu kéo tối đa C.</div>`;
+    break; }
+  case 6: {
+    const xiT=x.reduce((s2,_,i)=>s2+lossE(r[i],EPS1),0);
+    h+=`<table class="g"><tr><th>SV</th><th>x</th><th>y</th><th>f(x)</th><th>r = y − f</th><th>Vị trí</th><th>β</th></tr>${x.map((v,i)=>`<tr class="${Math.abs(r[i])>EPS1+1e-9?"hlr":""}"><td>${i+1}</td><td>${f(v,0)}</td><td>${f(y[i],1)}</td><td>${f(tr.w*v+tr.b)}</td><td>${f(r[i])}</td><td style="text-align:right">${POSN[pos[i]]}</td><td>${f(tr.beta[i],3)}</td></tr>`).join("")}</table>`;
+    h+=`<div class="detail">Mọi giả thiết đúng: |r| ≤ ε với mẫu trong ống/biên, ngoài ống với mẫu bị chặn. Gốc: J = ½w² + CΣℓ<sub>ε</sub> = ½·${f(tr.w*tr.w)} + ${f(xiT)} = <b>${f(tr.J)}</b>; đối ngẫu: D = <b>${f(tr.D)}</b> ${Math.abs(tr.J-tr.D)<1e-6?'<span class="good">(bằng nhau: đối ngẫu mạnh ✔)</span>':""}</div>`;
+    if(six)h+=`<div class="why"><b>Ngoại lai bị chặn:</b> kéo thanh trượt y₆ (hoặc bấm nút). Chừng nào SV6 còn <i>dưới ống</i> (y₆ &lt; f(6) − ε ≈ 5,33), các phương trình ở bước 5 và 6 chỉ dùng y₁, y₄ và β₆ = −C ⇒ (w, b) <b>không đổi</b>, trong khi hồi quy MSE (đường cam đứt) bị kéo đi: w<sub>MSE</sub> = ${f(ols.w)} so với w<sub>SVR</sub> = ${f(tr.w)}.</div>`;
+    h+=`<div class="pitfall"><b>Lý do:</b> lực của mỗi mẫu bị chặn ở C: ngoại lai càng xa thì độ lệch càng lớn nhưng lực nó tác động vẫn chỉ bằng C.</div>`;
+    break; }
+  }
+  return h;
+}
+const fS2=v=>(v>0?"+":"−")+"C";
+function ctl1HTML(){
+  return `<label>Dữ liệu <select id="d1"><option value="6" ${T1.nd===6?"selected":""}>6 sinh viên (SV6 ngoại lai)</option><option value="5" ${T1.nd===5?"selected":""}>5 sinh viên (sạch)</option></select></label>
+  ${T1.nd===6?`<label>y₆ (điểm của ngoại lai) = <span class="val">${f(T1.y6,1)}</span><input type="range" id="y61" min="-3" max="5" step="0.5" value="${T1.y6}"></label>
+  <span class="sel">Đặt nhanh: ${[3,2,-2].map(v=>`<button data-y6="${v}" class="${T1.y6===v?"on":""}">${f(v,1)}</button>`).join("")}</span>`:""}
+  <span class="note">ε = 0,2 và C = 1 (như tài liệu). x = giờ tự học, y = điểm thi.</span>`;
+}
+
+/* ================= TAB ② Gradient descent (bài toán gốc) ================= */
+const CVL=[0.1,0.3,1,3,10,100];
+const R={nd:6,y6:2,e:0.2,ci:2,sched:"inv",eta0:0.2};
+let P={w:0,b:0},T=1,s2=0,hist=[],path=[],showOpt=false,sel=0,playTimer=null;
+const STEPS2=[
+ {k:"f",t:"Dữ liệu và tham số"},
+ {k:"f",t:"Dự đoán f(x) = xw + b"},
+ {k:"f",t:"Phần dư r = y − f"},
+ {k:"f",t:"Ngoài ống? s và ξ, ξ*"},
+ {k:"f",t:"Hàm mục tiêu J"},
+ {k:"b",t:"Dưới đạo hàm g"},
+ {k:"u",t:"Cập nhật w, b"}
+];
+const rC=()=>CVL[R.ci];
+function ctx2(){
+  const {x,y}=dataL(R.nd,R.y6),n=x.length,C=rC(),e=R.e,w=P.w,b=P.b,t=T;
+  const fv=x.map(v=>w*v+b),r=y.map((v,i)=>v-fv[i]),a=r.map(v=>Math.abs(v)>e?1:0),s=r.map((v,i)=>a[i]*Math.sign(v));
+  const xi=r.map(v=>v>e?v-e:0),xs=r.map(v=>v<-e?-v-e:0),loss=xi.reduce((p,q,i)=>p+q+xs[i],0),reg=.5*w*w,J=reg+C*loss;
+  const Sx=x.reduce((p,v,i)=>p+v*s[i],0),Ss=s.reduce((p,v)=>p+v,0),eta=R.sched==="inv"?1/t:R.eta0;
+  const gw=w-C*Sx,gb=-C*Ss,shrink=(1-eta)*w,push=eta*C*Sx,wn=shrink+push,bn=b+eta*C*Ss;
+  return {x,y,n,C,e,w,b,t,fv,r,a,s,xi,xs,loss,reg,J,Sx,Ss,eta,gw,gb,shrink,push,wn,bn,Jn:Jp(wn,bn,x,y,C,e)};
+}
+const opt2=()=>{const {x,y}=dataL(R.nd,R.y6);return solve1D(x,y,rC(),R.e)};
+function resetP(){P={w:0,b:0};T=1;hist=[];path=[{w:0,b:0}];s2=0}
+function commit2(){const c=ctx2();hist.push(c.J);P={w:c.wn,b:c.bn};T++;path.push({w:c.wn,b:c.bn})}
+function plane2(s,c){
+  const {x,y,n,e,w,b}=c,o=opt2(),fC=v=>w*v+b;
+  const o2={dom:[0,7,-3.5,6.5],main:true,X:x,Y:y,num:i=>String(i+1),lab:{},ring:{},segs:[],dim:{},pre:[]};
+  o2.fn=fC;o2.eps=e;
+  if(s===1)x.forEach((v,i)=>{o2.lab[i]={t:"f="+f(c.fv[i],2),c:MUT,below:c.r[i]<0}});
+  if(s>=2&&s<=4)x.forEach((v,i)=>o2.segs.push({a:[v,y[i]],b:[v,c.fv[i]],c:MUT,w:1.5,d:"4 4"}));
+  if(s===2)x.forEach((v,i)=>{o2.lab[i]={t:"r="+f(c.r[i],2),c:c.a[i]?ORG:GRN,below:c.r[i]<0}});
+  if(s===3||s===4)x.forEach((v,i)=>{
+    if(c.a[i]){o2.ring[i]={c:PINK,w:4};const edge=c.fv[i]+Math.sign(c.r[i])*e;o2.segs.push({a:[v,y[i]],b:[v,edge],c:PINK,w:3.5,arrow:"mk-pink"});o2.lab[i]={t:(c.r[i]>0?"ξ=":"ξ*=")+f(Math.abs(c.r[i])-e,2),c:PINK,below:c.r[i]<0}}
+    else{o2.lab[i]={t:"ξ=0",c:GRN,below:c.r[i]<0};o2.dim[i]=true}});
+  if(s===5)x.forEach((v,i)=>{if(c.a[i]){o2.ring[i]={c:PINK,w:4};o2.lab[i]={t:"s="+(c.s[i]>0?"+1":"−1"),c:PINK,below:c.r[i]<0}}else{o2.lab[i]={t:"s=0",c:GRN,below:c.r[i]<0};o2.dim[i]=true}});
+  if(s===6){o2.pre=[{fn:v=>c.w*v+c.b,c:MUT,w:2.5,d:"7 5",op:.8}];o2.fn=v=>c.wn*v+c.bn}
+  if(showOpt){const ols=olsFit(x,y);o2.pre.push({fn:v=>o.w*v+o.b,c:GRN,w:3,d:"9 5"},{fn:v=>ols.w*v+ols.b,c:ORG,w:2,d:"3 4",op:.8})}
+  drawReg($("plane"),o2);
+  setLegend([...LGB,ring(PINK)+"</span>mẫu ngoài ống (s ≠ 0)</span>",...(showOpt?[`<span><span class="ln" style="border-color:${GRN};border-top-style:dashed"></span>SVR tối ưu</span>`,`<span><span class="ln" style="border-color:${ORG};border-top-style:dotted"></span>hồi quy MSE</span>`]:[])]);
+  $("planeHint").textContent="";
+}
+function panel2(s,c){
+  const {x,y,n,C,e,w,b,t}=c,st=STEPS2[s],tag=st.k==="f"?'<span class="tag f">ĐÁNH GIÁ →</span>':st.k==="b"?'<span class="tag b">← GRADIENT</span>':'<span class="tag u">CẬP NHẬT</span>';
+  const j=Math.min(sel,n-1);
+  const selBtns=()=>`<div class="sel" style="margin:6px 0">Xem chi tiết sinh viên: `+[...Array(n).keys()].map(k=>`<button class="${k===j?"on":""}" data-sel="${k}">${k+1}</button>`).join("")+"</div>";
+  let h=`<h2>${tag}Vòng ${t} · Bước ${s+1}/${STEPS2.length}: ${st.t}</h2>`;
+  switch(s){
+  case 0:
+    h+=`<div class="why">SVR tuyến tính đi tìm <b>w</b> và <b>b</b> làm nhỏ nhất J(w, b) = ½w² + C·Σ max(0, |y<sub>i</sub> − wx<sub>i</sub> − b| − ε). Số hạng đầu giữ hàm <i>phẳng</i>; số hạng sau phạt mẫu nằm <i>ngoài ống</i> ε. Mỗi vòng lặp gồm 7 bước: đo từng mẫu → gradient → đi ngược gradient.</div>`;
+    h+=`<div class="row">${mat(col(x),{caption:"x",d:0})}${mat(col(y),{caption:"y",d:1})}${mat([[w]],{caption:"w"})}${mat([[b]],{caption:"b"})}</div>`;
+    h+=`<div class="detail">Vòng <b>${t}</b>: C = <b>${f(C,1)}</b>, ε = <b>${f(e,2)}</b>, η<sub>t</sub> = <b>${f(c.eta,3)}</b> ${R.sched==="inv"?"(= 1/t)":"(hằng số)"}. J hiện tại = <b>${f(c.J)}</b>; nghiệm tối ưu J* = ${f(opt2().J)}.</div>`;
+    h+=t===1?`<div class="pitfall"><b>Khởi tạo:</b> w = 0, b = 0 ⇒ f ≡ 0, phần dư r = y. Mọi mẫu có y &gt; ε đều nằm trên ống: cả ${c.a.reduce((p,q)=>p+q,0)}/${n} mẫu đều bị phạt ở vòng đầu.</div>`:`<div class="pitfall"><b>Gợi ý:</b> bấm Lặp 10/100 lần để xem J giảm, rồi bật “Hiện nghiệm tối ưu” ở khung dưới. Kéo y₆ để thấy ngoại lai không kéo đường SVR.</div>`;
+    break;
+  case 1:
+    h+=`<div class="why">Dự đoán của mô hình tuyến tính là <b>f(x) = xw + b</b>; ống ε là vùng giữa f − ε và f + ε (vùng vàng).</div>`;
+    h+=`<div class="eq"><b>f</b> = <b>x</b>·w + b·<b>1</b></div>`;
+    h+=`<div class="row">${mat(col(x),{caption:"x",d:0,hlRows:[j]})}${op("·")}${mat([[w]],{caption:"w"})}${op("+ "+f(b))}${op("=")}${mat(col(c.fv),{caption:"f",hlRows:[j]})}</div>`+selBtns();
+    h+=`<div class="detail">f(x<sub>${j+1}</sub>) = ${f(x[j],0)}·${f(w)} + ${f(b)} = <b>${f(c.fv[j])}</b></div>`;
+    break;
+  case 2:
+    h+=`<div class="why">Phần dư <b>r = y − f(x)</b>: dương nghĩa là điểm thật nằm <i>trên</i> đường dự đoán, âm nghĩa là nằm dưới. Mẫu ở trong ống nếu |r| ≤ ε.</div>`;
+    h+=`<div class="eq"><b>r</b> = <b>y</b> − <b>f</b></div>`;
+    h+=`<div class="row">${mat(col(y),{caption:"y",d:1,hlRows:[j]})}${op("−")}${mat(col(c.fv),{caption:"f",hlRows:[j]})}${op("=")}${mat(col(c.r),{caption:"r",hlRows:[j]})}</div>`+selBtns();
+    h+=`<div class="detail">r<sub>${j+1}</sub> = ${f(y[j],1)} − ${f(c.fv[j])} = <b>${f(c.r[j])}</b> → ${Math.abs(c.r[j])<=e?'<span class="good">trong ống</span>':c.r[j]>0?'<span class="badc">trên ống</span>':'<span class="badc">dưới ống</span>'} (|r| ${Math.abs(c.r[j])<=e?"≤":">"} ε = ${f(e,2)})</div>`;
+    break;
+  case 3: {
+    h+=`<div class="why">Chỉ báo <b>a<sub>i</sub> = 1[|r<sub>i</sub>| &gt; ε]</b> đánh dấu mẫu ngoài ống; <b>s<sub>i</sub> = sign(r<sub>i</sub>)·a<sub>i</sub> ∈ {−1, 0, +1}</b> cho biết mẫu kéo đường <i>lên</i> (+1), <i>xuống</i> (−1) hay không kéo (0). Biến lỏng ξ (trên ống), ξ* (dưới ống) chính là phần vượt ngoài ống (mũi tên hồng).</div>`;
+    h+=`<table class="g"><tr><th>Mẫu</th><th>r</th><th>Vị trí</th><th>a</th><th>s</th><th>ξ</th><th>ξ*</th></tr>${x.map((_,k)=>`<tr class="${c.a[k]?"hlr":""}"><td>SV${k+1}</td><td>${f(c.r[k])}</td><td style="text-align:right">${c.a[k]?(c.r[k]>0?'<span class="badc">trên ống</span>':'<span class="badc">dưới ống</span>'):'<span class="good">trong ống</span>'}</td><td>${c.a[k]}</td><td>${c.s[k]>0?"+1":c.s[k]<0?"−1":"0"}</td><td>${f(c.xi[k])}</td><td>${f(c.xs[k])}</td></tr>`).join("")}</table>`;
+    h+=`<div class="detail">Số mẫu ngoài ống: <b>${c.a.reduce((p,q)=>p+q,0)}/${n}</b> · Σ(ξ + ξ*) = <b>${f(c.loss)}</b></div>`;
+    h+=`<div class="pitfall"><b>Tính thưa:</b> mẫu trong ống (a = 0) không đóng góp gì vào gradient. Hãy nhìn các mẫu mờ đi trên hình.</div>`;
+    break; }
+  case 4:
+    h+=`<div class="why">Gộp hai thứ vào một số: độ <b>phẳng</b> của hàm (½w²; w nhỏ thì f ít dốc, ít nhạy nhiễu) và <b>tổng vi phạm ống</b> Σ(ξ + ξ*), cân bằng bởi C.</div>`;
+    h+=`<div class="eq">J = ½w² + C·Σ(ξ<sub>i</sub> + ξ<sub>i</sub>*) = ½·${f(w)}² + ${f(C,1)}·${f(c.loss)} = ${f(c.reg)} + ${f(C*c.loss)} = <b>${f(c.J)}</b></div>`;
+    h+=`<div class="detail">Mốc: tại w = 0, b = 0 thì J = C·Σℓ<sub>ε</sub>(y<sub>i</sub>) = ${f(Jp(0,0,x,y,C,e))}. Nghiệm tối ưu có J* = <b>${f(opt2().J)}</b>; hiện còn cách ${f(c.J-opt2().J)}.</div>`;
+    h+=`<div class="pitfall"><b>Lưu ý:</b> ℓ<sub>ε</sub> không trơn tại |r| = ε nên một bước dưới đạo hàm không đảm bảo J giảm; ta dùng η giảm dần.</div>`;
+    break;
+  case 5:
+    h+=`<div class="why">Vì r<sub>i</sub> = y<sub>i</sub> − x<sub>i</sub>w − b nên ∂r<sub>i</sub>/∂w = −x<sub>i</sub> và ∂r<sub>i</sub>/∂b = −1. Mẫu ngoài ống có dưới đạo hàm của mất mát là −s<sub>i</sub>x<sub>i</sub> (theo w) và −s<sub>i</sub> (theo b); mẫu trong ống có 0.</div>`;
+    h+=`<div class="eq"><b>g</b><sub>w</sub> = w − C·<b>x</b>ᵀ<b>s</b> &nbsp;&nbsp; g<sub>b</sub> = −C·<b>1</b>ᵀ<b>s</b></div>`;
+    h+=`<div class="detail">xᵀs = Σ s<sub>i</sub>x<sub>i</sub> = ${x.map((v,i)=>c.s[i]?`(${c.s[i]>0?"+1":"−1"})·${f(v,0)}`:null).filter(Boolean).join(" + ")||"0"} = <b>${f(c.Sx,0)}</b> &nbsp;·&nbsp; 1ᵀs = <b>${f(c.Ss,0)}</b></div>`;
+    h+=`<div class="detail">g<sub>w</sub> = ${f(w)} − ${f(C,1)}·(${f(c.Sx,0)}) = <b>${f(c.gw)}</b> &nbsp;·&nbsp; g<sub>b</sub> = −${f(C,1)}·(${f(c.Ss,0)}) = <b>${f(c.gb)}</b></div>`;
+    h+=`<div class="pitfall"><b>Mỗi mẫu kéo tối đa C:</b> s<sub>i</sub> chỉ nhận −1, 0, +1 nên lực của một mẫu bị chặn ở C dù nó lệch xa cỡ nào. Với MSE, lực tỷ lệ với phần dư r nên không có trần.</div>`;
+    break;
+  case 6: {
+    const up=c.Jn<c.J-1e-12;
+    h+=`<div class="why">Đi ngược gradient một bước η<sub>t</sub> = ${f(c.eta,3)}: <b>co</b> w về 0 (giữ hàm phẳng) rồi <b>đẩy</b> về phía các mẫu ngoài ống (mẫu trên ống kéo đường lên, mẫu dưới ống kéo xuống). Giống hệt dạng cập nhật của SVM phân loại.</div>`;
+    h+=`<div class="eq"><b>w</b> ← (1 − η)w + ηC·xᵀs &nbsp;&nbsp; b ← b + ηC·1ᵀs</div>`;
+    h+=`<div class="row">${mat([[c.shrink]],{caption:"co: (1−η)·w"})}${op("+")}${mat([[c.push]],{caption:"đẩy: η·C·xᵀs"})}${op("=")}${mat([[c.wn]],{caption:"w mới"})}</div>`;
+    h+=`<div class="detail">b mới = ${f(b)} + ${f(c.eta,3)}·${f(C,1)}·(${f(c.Ss,0)}) = <b>${f(c.bn)}</b><br>Chạy lại với tham số mới: J = <b>${f(c.J)} → ${f(c.Jn)}</b> ${up?'<span class="good">(giảm ✔)</span>':'<span class="warnc">(không giảm: bình thường với dưới đạo hàm)</span>'}. Bấm “Áp dụng cập nhật và lặp lại” để sang vòng ${t+1}.</div>`;
+    h+=`<div class="pitfall"><b>Ba cách đo lỗi, một dạng cập nhật:</b> w ← w + ηΣφ(r<sub>i</sub>)x<sub>i</sub>: MSE dùng φ = 2r (không chặn), SVR dùng sign(r)·1[|r| &gt; ε].</div>`;
+    break; }
+  }
+  return h;
+}
+function drawHist2(c){
+  const svg=$("hist");svg.innerHTML="";const W=560,H=230,m={l:52,r:14,t:14,b:36},o=opt2(),pts=hist.concat([c.J]);
+  svg.appendChild(el("rect",{x:0,y:0,width:W,height:H,fill:"#fff"}));
+  const maxJ=Math.max(o.J*1.8,...pts.slice(0,60),0.1)*1.05,X=i=>m.l+(W-m.l-m.r)*(pts.length===1?0.5:i/(pts.length-1)),Y=v=>H-m.b-(H-m.t-m.b)*Math.min(1.02,v/maxJ);
+  for(let g=0;g<=4;g++){const v=maxJ*g/4;svg.appendChild(el("line",{x1:m.l,x2:W-m.r,y1:Y(v),y2:Y(v),stroke:"#E5ECF8"}));svg.appendChild(el("text",{x:m.l-6,y:Y(v)+4,"text-anchor":"end","font-size":12,fill:MUT},f(v,2)))}
+  svg.appendChild(el("line",{x1:m.l,x2:W-m.r,y1:Y(o.J),y2:Y(o.J),stroke:GRN,"stroke-dasharray":"6 5","stroke-width":2}));
+  svg.appendChild(el("text",{x:W-m.r-2,y:Y(o.J)-5,"text-anchor":"end","font-size":12,"font-weight":700,fill:GRN},"J* = "+f(o.J)+" (tối ưu)"));
+  svg.appendChild(el("polyline",{points:pts.map((v,i)=>`${X(i)},${Y(v)}`).join(" "),fill:"none",stroke:BLUE,"stroke-width":2.5}));
+  if(pts.length<=60)pts.forEach((v,i)=>svg.appendChild(el("circle",{cx:X(i),cy:Y(v),r:i===pts.length-1?6:3.2,fill:i===pts.length-1?GRN:BLUE})));else svg.appendChild(el("circle",{cx:X(pts.length-1),cy:Y(pts[pts.length-1]),r:6,fill:GRN}));
+  svg.appendChild(el("text",{x:(W+m.l)/2,y:H-8,"text-anchor":"middle","font-size":13,fill:MUT},"vòng lặp t (1 … "+pts.length+")"));
+  $("histcap").textContent=`Đã cập nhật ${hist.length} lần · J = ${f(c.J)} · J* = ${f(o.J)} · mẫu ngoài ống: ${c.a.reduce((p,q)=>p+q,0)}/${c.n}`;
+}
+function chartAxes(svg,W,H,m,x0,x1,y0,y1,xt,yt,xl){
+  svg.appendChild(el("rect",{x:0,y:0,width:W,height:H,fill:"#fff"}));
+  const X=v=>m.l+(W-m.l-m.r)*(v-x0)/(x1-x0),Y=v=>H-m.b-(H-m.t-m.b)*(v-y0)/(y1-y0);
+  xt.forEach(v=>{svg.appendChild(el("line",{x1:X(v),x2:X(v),y1:Y(y1),y2:Y(y0),stroke:v===0?"#C9D6EE":"#EDF1F9"}));svg.appendChild(el("text",{x:X(v),y:H-m.b+16,"text-anchor":"middle","font-size":12,fill:MUT},String(v).replace("-","−")))});
+  yt.forEach(v=>{svg.appendChild(el("line",{x1:m.l,x2:W-m.r,y1:Y(v),y2:Y(v),stroke:v===0?"#C9D6EE":"#EDF1F9"}));svg.appendChild(el("text",{x:m.l-6,y:Y(v)+4,"text-anchor":"end","font-size":12,fill:MUT},String(v).replace("-","−")))});
+  svg.appendChild(el("text",{x:(W+m.l)/2,y:H-6,"text-anchor":"middle","font-size":13,fill:MUT},xl));
+  return {X,Y};
+}
+function curve(svg,X,Y,x0,x1,y0,y1,fn,c,w,d,step=0.04){const p=[];for(let v=x0;v<=x1+1e-9;v+=step)p.push(`${X(v)},${Y(Math.max(y0,Math.min(y1,fn(v))))}`);svg.appendChild(el("polyline",{points:p.join(" "),fill:"none",stroke:c,"stroke-width":w,"stroke-dasharray":d||""}))}
+function drawLoss(c){
+  const svg=$("lossc");svg.innerHTML="";const W=560,H=230,m={l:44,r:14,t:14,b:34},x0=-3,x1=3,y0=0,y1=4;
+  const {X,Y}=chartAxes(svg,W,H,m,x0,x1,y0,y1,[-3,-2,-1,0,1,2,3],[0,1,2,3,4],"phần dư r = y − f(x)");
+  [-c.e,c.e].forEach(v=>svg.appendChild(el("line",{x1:X(v),x2:X(v),y1:Y(y1),y2:Y(0),stroke:GRN,"stroke-dasharray":"4 4"})));
+  curve(svg,X,Y,x0,x1,y0,y1,v=>v*v,"#9AA5BD",2,"5 4");curve(svg,X,Y,x0,x1,y0,y1,v=>Math.abs(v),"#E0A38A",2,"5 4");curve(svg,X,Y,x0,x1,y0,y1,v=>lossE(v,c.e),BLUE,3.5);
+  svg.appendChild(el("text",{x:X(1.8),y:Y(3.6),"font-size":12,fill:"#8E99B3"},"r² (MSE)"));svg.appendChild(el("text",{x:X(2.1),y:Y(2.3),"font-size":12,fill:"#C97B5B"},"|r|"));svg.appendChild(el("text",{x:X(-2.95),y:Y(2.6),"font-size":12,"font-weight":800,fill:BLUE},"max(0,|r|−ε)"));
+  c.r.forEach((rv,i)=>{const rr=Math.max(x0+0.15,Math.min(x1-0.15,rv)),l=lossE(rv,c.e);svg.appendChild(el("circle",{cx:X(rr),cy:Y(Math.min(y1-0.1,l)),r:10,fill:BLUE,stroke:c.a[i]?PINK:"#fff","stroke-width":c.a[i]?3:2}));svg.appendChild(el("text",{x:X(rr),y:Y(Math.min(y1-0.1,l))+4,"text-anchor":"middle","font-size":11.5,"font-weight":800,fill:"#fff"},String(i+1)))});
+}
+function drawInfl(c){
+  const svg=$("infl");svg.innerHTML="";const W=560,H=230,m={l:44,r:14,t:14,b:34},x0=-3,x1=3,y0=-3,y1=3;
+  const {X,Y}=chartAxes(svg,W,H,m,x0,x1,y0,y1,[-3,-2,-1,0,1,2,3],[-3,-2,-1,0,1,2,3],"phần dư r");
+  [-c.e,c.e].forEach(v=>svg.appendChild(el("line",{x1:X(v),x2:X(v),y1:Y(y1),y2:Y(y0),stroke:GRN,"stroke-dasharray":"4 4"})));
+  curve(svg,X,Y,x0,x1,y0,y1,v=>2*v,"#9AA5BD",2,"5 4");curve(svg,X,Y,x0,x1,y0,y1,v=>Math.sign(v),"#E0A38A",2,"5 4");
+  curve(svg,X,Y,x0,x1,y0,y1,v=>Math.abs(v)>c.e?Math.sign(v):0,BLUE,3.5,"",0.01);
+  svg.appendChild(el("text",{x:X(1.3),y:Y(2.7),"font-size":12,fill:"#8E99B3"},"2r (MSE, không chặn)"));svg.appendChild(el("text",{x:X(-2.95),y:Y(1.35),"font-size":12,"font-weight":800,fill:BLUE},"ℓε′ ∈ {−1, 0, +1}"));
+  c.r.forEach((rv,i)=>{const rr=Math.max(x0+0.15,Math.min(x1-0.15,rv)),d=Math.abs(rv)>c.e?Math.sign(rv):0;svg.appendChild(el("circle",{cx:X(rr),cy:Y(d),r:10,fill:BLUE,stroke:c.a[i]?PINK:"#fff","stroke-width":c.a[i]?3:2}));svg.appendChild(el("text",{x:X(rr),y:Y(d)+4,"text-anchor":"middle","font-size":11.5,"font-weight":800,fill:"#fff"},String(i+1)))});
+}
+function drawParam(c,s){
+  const svg=$("param");svg.innerHTML="";const W=560,H=260,m={l:50,r:20,t:14,b:36},o=opt2();
+  const all=path.map(p=>[p.w,p.b]).concat([[c.w,c.b],[o.w,o.b],[0,0]]);if(s>=6)all.push([c.wn,c.bn],[c.shrink,c.b]);
+  let a0=Math.min(...all.map(p=>p[0])),a1=Math.max(...all.map(p=>p[0])),c0=Math.min(...all.map(p=>p[1])),c1=Math.max(...all.map(p=>p[1]));
+  const pa=Math.max(0.2,(a1-a0)*0.15),pc=Math.max(0.2,(c1-c0)*0.15);a0-=pa;a1+=pa;c0-=pc;c1+=pc;
+  const X=v=>m.l+(W-m.l-m.r)*(v-a0)/(a1-a0),Y=v=>H-m.b-(H-m.t-m.b)*(v-c0)/(c1-c0);
+  svg.appendChild(el("rect",{x:0,y:0,width:W,height:H,fill:"#fff"}));
+  const tick=(lo,hi)=>{const r=hi-lo,st=Math.pow(10,Math.floor(Math.log10(r/4))),k=[1,2,5].find(q=>r/(q*st)<=6)*st,a=[];for(let v=Math.ceil(lo/k)*k;v<=hi;v+=k)a.push(+v.toFixed(6));return a};
+  tick(a0,a1).forEach(v=>{svg.appendChild(el("line",{x1:X(v),x2:X(v),y1:Y(c1),y2:Y(c0),stroke:Math.abs(v)<1e-9?"#C9D6EE":"#EDF1F9"}));svg.appendChild(el("text",{x:X(v),y:H-m.b+15,"text-anchor":"middle","font-size":11.5,fill:MUT},f(v,2)))});
+  tick(c0,c1).forEach(v=>{svg.appendChild(el("line",{x1:X(a0),x2:X(a1),y1:Y(v),y2:Y(v),stroke:Math.abs(v)<1e-9?"#C9D6EE":"#EDF1F9"}));svg.appendChild(el("text",{x:m.l-6,y:Y(v)+4,"text-anchor":"end","font-size":11.5,fill:MUT},f(v,2)))});
+  svg.appendChild(el("text",{x:(W+m.l)/2,y:H-6,"text-anchor":"middle","font-size":13,fill:MUT},"w (hệ số góc)"));svg.appendChild(el("text",{x:12,y:(H-m.b)/2,"text-anchor":"middle","font-size":13,fill:MUT,transform:`rotate(-90 12 ${(H-m.b)/2})`},"b (hệ số chệch)"));
+  const defs=el("defs",{});[["pg",MUT],["pp",PINK]].forEach(([id,cc])=>{const mk=el("marker",{id,viewBox:"0 0 10 10",refX:"7",refY:"5",markerWidth:"6",markerHeight:"6",orient:"auto"});mk.appendChild(el("path",{d:"M0 0L10 5L0 10z",fill:cc}));defs.appendChild(mk)});svg.insertBefore(defs,svg.firstChild);
+  svg.appendChild(el("polyline",{points:(path.length>1?path.map(p=>[p.w,p.b]):[[c.w,c.b]]).map(p=>`${X(p[0])},${Y(p[1])}`).join(" "),fill:"none",stroke:"#9AB7E6","stroke-width":2}));
+  if(path.length<=40)path.forEach(p=>svg.appendChild(el("circle",{cx:X(p.w),cy:Y(p.b),r:3,fill:BLUE})));
+  svg.appendChild(el("path",{d:`M${X(o.w)-9} ${Y(o.b)} l9 -9 l9 9 l-9 9z`,fill:GRN,stroke:"#fff","stroke-width":2}));svg.appendChild(el("text",{x:X(o.w)+14,y:Y(o.b)-10,"font-size":12,"font-weight":800,fill:GRN},"(w*, b*)"));
+  if(s>=6){svg.appendChild(el("line",{x1:X(c.w),y1:Y(c.b),x2:X(c.shrink),y2:Y(c.b),stroke:MUT,"stroke-width":3,"marker-end":"url(#pg)"}));svg.appendChild(el("line",{x1:X(c.shrink),y1:Y(c.b),x2:X(c.wn),y2:Y(c.bn),stroke:PINK,"stroke-width":3,"marker-end":"url(#pp)"}));svg.appendChild(el("circle",{cx:X(c.wn),cy:Y(c.bn),r:5,fill:"#fff",stroke:PINK,"stroke-width":2.5}))}
+  svg.appendChild(el("circle",{cx:X(c.w),cy:Y(c.b),r:7,fill:GRN,stroke:"#fff","stroke-width":2}));
+}
+function optCard(){
+  const o=opt2(),{x,y}=dataL(R.nd,R.y6),n=x.length,C=rC();$("optBtn").textContent=showOpt?"Ẩn nghiệm tối ưu trên hình":"Hiện nghiệm tối ưu trên hình";
+  const typ=t=>t===1?'<span class="good">loại 1: trong ống (β = 0)</span>':t===3?'<span class="badc">loại 3: ngoài ống (|β| = C)</span>':'<span class="warnc">loại 2: trên biên ống (0 &lt; |β| &lt; C)</span>';
+  let rows="";x.forEach((v,i)=>{const fv=o.w*v+o.b;rows+=`<tr><td>SV${i+1}</td><td>${f(v,0)}</td><td>${f(y[i],1)}</td><td>${f(fv)}</td><td>${f(y[i]-fv)}</td><td>${f(o.beta[i],4)}</td><td style="text-align:left">${typ(o.types[i])}</td></tr>`});
+  const nsv=o.types.filter(t=>t>1).length;
+  $("optOut").innerHTML=`<table class="g"><tr><th>Mẫu</th><th>x</th><th>y</th><th>f*(x)</th><th>r*</th><th>β*</th><th style="text-align:left">Loại</th></tr>${rows}</table>
+  <p style="margin:8px 0 0">w* = ${f(o.w)}, b* = ${f(o.b)}, J* = <b>${f(o.J)}</b>. Có <b>${nsv}/${n}</b> vector hỗ trợ. Kiểm tra: Σβ = ${f(o.beta.reduce((p,q)=>p+q,0),6)} ≈ 0 ✔ · w = Σβx = ${f(o.beta.reduce((p,q,i)=>p+q*x[i],0))} · đối ngẫu D = ${f(o.D)} ${Math.abs(o.D-o.J)<1e-6?'= J* <span class="good">✔ (đối ngẫu mạnh)</span>':'<span class="badc">≠ J*</span>'}.<br>Gradient descent hiện tại: |w − w*| = <b>${f(Math.abs(P.w-o.w))}</b>, |b − b*| = <b>${f(Math.abs(P.b-o.b))}</b>, J − J* = <b>${f(Jp(P.w,P.b,x,y,C,R.e)-o.J)}</b>.</p>`;
+}
+
+/* ================= TAB ③ SMO cho SVR phi tuyến ================= */
+const CV3=[0.1,0.3,1,3,10,30,100,1000],GV3=[0.05,0.1,0.3,1,3,10,50];
+const SC={e:0.1,ci:4,gi:3,seed:21};
+let DS=null,SS=null,s3=0,thist3=[],squery=null,Dst=null;
+const STEPS3=[
+ {k:"f",t:"Trạng thái: α, α*, β, D"},
+ {k:"f",t:"Chọn cặp biến vi phạm KKT nhất"},
+ {k:"b",t:"Giải bài toán hai biến"},
+ {k:"b",t:"Cập nhật, giữ Σβ = 0"},
+ {k:"u",t:"Cập nhật b và đường cong f(x)"}
+];
+function makeSin(n,seed){
+  const r=rng(seed),xs=Array.from({length:n},()=>6.2*r()).sort((a,b)=>a-b),ys=xs.map(x=>Math.sin(x)+0.1*gauss(r)),out=new Set();
+  while(out.size<3)out.add(Math.floor(r()*n));out.forEach(i=>{ys[i]+=(r()<.5?1:-1)*(1.3+0.4*r())});
+  const mu=xs.reduce((a,b)=>a+b,0)/n,sd=Math.sqrt(xs.reduce((a,b)=>a+(b-mu)**2,0)/n);
+  return {xs,ys,mu,sd,z:xs.map(v=>[(v-mu)/sd,0]),out:[...out]};
+}
+const zOf=x=>[(x-DS.mu)/DS.sd,0];
+function resetS(){
+  DS=makeSin(42,SC.seed);const C=CV3[SC.ci],g=GV3[SC.gi];
+  SS=svrInit(DS.z,DS.ys,C,SC.e,{t:"rbf",g});s3=0;thist3=[];squery=null;
+  const S2=svrInit(DS.z,DS.ys,C,SC.e,{t:"rbf",g});smoRun(S2,1e-9,400000);Dst={D:svrDual(S2),S:S2,b:smoBias(S2)};
+}
+function ctx3(){
+  const S=SS,sel=smoSelect(S),done=sel.gap<1e-3;let pr=null,S2=S;
+  if(!done){pr=smoPair(S,sel.i,sel.j);S2=cloneS(S);smoApply(S2,pr)}
+  const b=smoBias(S),b2=smoBias(S2);
+  return {S,sel,done,pr,S2,b,b2,D:svrDual(S),D2:svrDual(S2),V:s3>=3?S2:S,bV:s3>=3?b2:b};
+}
+const vname=(S,t)=>t<S.n1?`α<sub>${t+1}</sub>`:`α*<sub>${t-S.n1+1}</sub>`;
+const vnameP=(S,t)=>t<S.n1?`α${t+1}`:`α*${t-S.n1+1}`;
+const sinF=x=>Math.sin(x);
+function rmseTruth(S,b){let s=0,N=120;for(let k=0;k<N;k++){const x=0.1+6*k/(N-1);s+=(svrF(S,b,zOf(x))-Math.sin(x))**2}return Math.sqrt(s/N)}
+function plane3(s,C){
+  const {S,V,bV,pr,done}=C,n=S.n1,rg={},lab={},segs=[];
+  const rad=[];for(let i=0;i<n;i++){const t=typeB(V,i);if(t===2)rg[i]={c:GRN,w:3.5};if(t===3)rg[i]={c:ORG,w:3.5};rad.push(4+6*Math.sqrt(Math.abs(V.al[i]-V.al[i+n])/V.C))}
+  if(!done&&s>=1&&s<=3){[pr.i,pr.j].forEach((t,k)=>{const i=t%n;rg[i]={c:PINK,w:5};lab[i]={t:(k?"j: ":"i: ")+vnameP(S,t),c:PINK}})}
+  const ex=DS.xs;
+  drawReg($("plane"),{dom:[-0.3,6.6,-2.6,2.6],main:true,X:ex,Y:DS.ys,fn:x=>svrF(V,bV,zOf(x)),eps:SC.e,truth:sinF,ring:rg,lab,r:i=>rad[i],vline:squery,col:DS.ys.map((_,i)=>DS.out.includes(i)?"#7A5CC9":BLUE),segs});
+  setLegend([`<span><span class="dot" style="background:${BLUE}"></span>mẫu</span>`,`<span><span class="dot" style="background:#7A5CC9"></span>ngoại lai</span>`,`<span><span class="ln" style="border-color:${INK}"></span>f(x) dự đoán</span>`,`<span><span class="ln" style="border-color:${INK};border-top-style:dashed"></span>f ± ε</span>`,`<span><span class="sq" style="background:rgba(255,213,79,.6)"></span>ống ε</span>`,`<span><span class="ln" style="border-color:#8E99B3;border-top-style:dotted"></span>sin x thật</span>`,ring(GRN)+"</span>vector tự do</span>",ring(ORG)+"</span>bị chặn (|β| = C)</span>",ring(PINK)+"</span>cặp đang cập nhật</span>",`<span>kích thước điểm ∝ √|β|</span>`]);
+  $("planeHint").textContent="Bấm vào hình để chọn một giá trị x và xem các đồi/hố cộng lại thành f(x).";
+}
+function panel3(s,C){
+  const {S,sel,done,pr,S2,b,b2,D,D2}=C,n=S.n1,Cc=S.C,st=STEPS3[s],tag=st.k==="f"?'<span class="tag f">ĐÁNH GIÁ →</span>':st.k==="b"?'<span class="tag b">← GIẢI</span>':'<span class="tag u">CẬP NHẬT</span>';
+  let h=`<h2>${tag}Vòng ${S.it+1} · Bước ${s+1}/${STEPS3.length}: ${st.t}</h2>`;
+  const be=betaOf(S),cnt=[0,0,0,0];for(let i=0;i<n;i++)cnt[typeB(S,i)]++;
+  if(done&&s>=1&&s<=3){h+=`<div class="detail"><b>Đã hội tụ.</b> Khoảng vi phạm KKT = ${f(sel.gap,5)} &lt; 0,001. Nghiệm hiện tại là nghiệm tối ưu của bài toán đối ngẫu.</div><div class="pitfall">Đổi ε, C, γ ở phía trên để huấn luyện lại hoặc bấm “Đặt lại”.</div>`;return h}
+  switch(s){
+  case 0:
+    h+=`<div class="why">SVR có <b>2n biến</b>: α<sub>i</sub> (mẫu nằm trên ống) và α<sub>i</sub>* (nằm dưới ống), đặt β<sub>i</sub> = α<sub>i</sub> − α<sub>i</sub>*. Ta làm lớn nhất D = −½βᵀKβ − ε·1ᵀ(α + α*) + yᵀβ với Σβ = 0 và 0 ≤ α, α* ≤ C. Dữ liệu chỉ qua ma trận Gram K nên <b>kernel dùng được nguyên vẹn</b>. SMO mỗi vòng chỉ chỉnh <i>hai</i> trong 2n biến.</div>`;
+    h+=`<div class="eq">f(<b>x</b>) = Σ β<sub>i</sub>·exp(−γ‖x<sub>i</sub> − x‖²) + b &nbsp;·&nbsp; γ = ${f(GV3[SC.gi],2)}, ε = ${f(SC.e,2)}, C = ${f(Cc,1)}</div>`;
+    h+=`<table class="g"><tr><th>Đại lượng</th><th>Giá trị</th></tr>
+     <tr><td>Σβ (phải = 0)</td><td>${f(be.reduce((p,q)=>p+q,0),6)}</td></tr>
+     <tr><td>Loại 1: β = 0 (trong ống)</td><td>${cnt[1]}</td></tr>
+     <tr><td>Loại 2: 0 &lt; |β| &lt; C (trên biên ống)</td><td>${cnt[2]}</td></tr>
+     <tr><td>Loại 3: |β| = C (ngoài ống)</td><td>${cnt[3]}</td></tr>
+     <tr><td>D hiện tại / D* tối ưu</td><td><b>${f(D)}</b> / ${f(Dst.D)}</td></tr>
+     <tr><td>RMSE so với sin x thật</td><td>${f(rmseTruth(S,b))}</td></tr></table>`;
+    h+=`<div class="detail">Gradient G<sub>t</sub> = (Qα)<sub>t</sub> + p<sub>t</sub>, với p<sub>t</sub> = ε − y<sub>i</sub> (biến α<sub>i</sub>) hoặc ε + y<sub>i</sub> (biến α<sub>i</sub>*). Ban đầu α = 0 nên G = p. ${S.it===0?"Khi α = 0, f ≡ b = trung điểm của miền y: đường nằm ngang.":""}</div>`;
+    break;
+  case 1: {
+    h+=`<div class="why">Mỗi biến có độ vi phạm <b>−y<sub>t</sub>G<sub>t</sub></b> (y<sub>t</sub> = +1 cho α, −1 cho α*). Chọn <b>i</b> là biến còn tăng được có giá trị lớn nhất, <b>j</b> là biến còn giảm được có giá trị nhỏ nhất. Nếu hiệu G<sub>max</sub> − G<sub>min</sub> ≤ ngưỡng thì KKT đã thỏa.</div>`;
+    const row=(nm,t)=>`<tr class="hlr"><td><b>${nm}</b> = ${vname(S,t)}</td><td>mẫu ${t%n+1}</td><td>(${f(DS.xs[t%n],2)}; ${f(DS.ys[t%n],2)})</td><td>${f(S.al[t],4)}</td><td>${f(S.G[t],4)}</td><td>${f(-S.y[t]*S.G[t],4)}</td></tr>`;
+    h+=`<table class="g"><tr><th>Vai trò</th><th>Mẫu</th><th>(x; y)</th><th>Giá trị</th><th>G</th><th>−y·G</th></tr>${row("i",sel.i)}${row("j",sel.j)}</table>`;
+    h+=`<div class="detail">G<sub>max</sub> = <b>${f(sel.gmax,4)}</b>, G<sub>min</sub> = <b>${f(sel.gmin,4)}</b> ⇒ khoảng vi phạm = <b>${f(sel.gap,4)}</b> &gt; 0,001: chưa hội tụ (vòng hồng trên hình).</div>`;
+    h+=`<div class="pitfall"><b>Liên hệ KKT:</b> mẫu trong ống phải có β = 0; mẫu trên biên ống có 0 &lt; |β| &lt; C; mẫu ngoài ống có |β| = C. Cặp được chọn vi phạm các điều kiện này mạnh nhất.</div>`;
+    break; }
+  case 2: {
+    const ii=pr.i%n,jj=pr.j%n,kij=S.Km[pr.i][pr.j];
+    h+=`<div class="why">Cố định mọi biến khác, bài toán chỉ phụ thuộc một biến (biến kia bị ràng buộc Σβ = 0) và là một parabol: tiến một bước <b>(E<sub>i</sub> − E<sub>j</sub>)/κ</b> rồi <b>cắt vào [L, H]</b>.</div>`;
+    h+=`<div class="eq">κ = K<sub>ii</sub> + K<sub>jj</sub> − 2K<sub>ij</sub> &nbsp;·&nbsp; v<sub>j</sub><sup>mới</sup> = clip( v<sub>j</sub> + y<sub>j</sub>(E<sub>i</sub> − E<sub>j</sub>)/κ , L, H )</div>`;
+    h+=`<div class="detail">Hai biến: i = ${vname(S,pr.i)} (mẫu ${ii+1}), j = ${vname(S,pr.j)} (mẫu ${jj+1}).<br>κ = ${f(S.Km[pr.i][pr.i])} + ${f(S.Km[pr.j][pr.j])} − 2·${f(kij)} = <b>${f(pr.kap)}</b> &nbsp;·&nbsp; E<sub>i</sub> − E<sub>j</sub> = y<sub>i</sub>G<sub>i</sub> − y<sub>j</sub>G<sub>j</sub> = <b>${f(pr.dE,4)}</b><br>Không cắt: v<sub>j</sub> = ${f(pr.aj,4)} ⇒ <b>${f(pr.ajU,4)}</b></div>`;
+    h+=`<div class="detail">Đoạn cho phép [L, H] = <b>[${f(pr.L,4)}; ${f(pr.H,4)}]</b> ⇒ sau khi cắt: v<sub>j</sub><sup>mới</sup> = <b>${f(pr.ajN,4)}</b> ${Math.abs(pr.ajN-pr.ajU)>1e-12?'<span class="warnc">(bị cắt vào biên)</span>':'<span class="good">(không bị cắt)</span>'}</div>`;
+    h+=`<div class="pitfall"><b>Lưu ý:</b> khi i và j là cặp (α<sub>k</sub>, α<sub>k</sub>*) của cùng một mẫu thì κ = 0 và bước chỉ bị giới hạn bởi [L, H]; trong thực tế KKT cho thấy hai biến này không đồng thời dương.</div>`;
+    break; }
+  case 3: {
+    h+=`<div class="why">v<sub>i</sub> được suy ra từ v<sub>j</sub> sao cho y<sub>i</sub>v<sub>i</sub> + y<sub>j</sub>v<sub>j</sub> không đổi, nên Σβ = Σ(α − α*) = 0 luôn đúng.</div>`;
+    h+=`<div class="eq">v<sub>i</sub><sup>mới</sup> = v<sub>i</sub> + y<sub>i</sub>y<sub>j</sub>(v<sub>j</sub> − v<sub>j</sub><sup>mới</sup>)</div>`;
+    h+=`<table class="g"><tr><th>Biến</th><th>Cũ</th><th>Mới</th><th>Thay đổi</th></tr><tr class="hlr"><td>${vname(S,pr.i)} (i)</td><td>${f(pr.ai,4)}</td><td>${f(pr.aiN,4)}</td><td>${f(pr.aiN-pr.ai,4)}</td></tr><tr class="hlr"><td>${vname(S,pr.j)} (j)</td><td>${f(pr.aj,4)}</td><td>${f(pr.ajN,4)}</td><td>${f(pr.ajN-pr.aj,4)}</td></tr></table>`;
+    h+=`<div class="detail">Σβ mới = ${f(betaOf(S2).reduce((p,q)=>p+q,0),6)} ✔ &nbsp;·&nbsp; D = <b>${f(D)} → ${f(D2)}</b> ${D2>=D-1e-12?'<span class="good">(tăng ✔)</span>':'<span class="badc">(giảm?!)</span>'}. SMO không bao giờ làm D giảm nên hội tụ về nghiệm toàn cục duy nhất.</div>`;
+    h+=`<div class="pitfall">Hình đã vẽ đường cong theo hệ số mới; bấm “Bước tiếp” để xem b.</div>`;
+    break; }
+  case 4: {
+    const nsv=[...Array(n).keys()].filter(i=>typeB(S2,i)>1).length,free=[...Array(n).keys()].filter(i=>typeB(S2,i)===2);
+    h+=`<div class="why">Vector hỗ trợ <i>tự do</i> nằm đúng trên biên ống, tức r<sub>k</sub> = ±ε, nên <b>b = y<sub>k</sub> − ε·sign(β<sub>k</sub>) − Σ β<sub>i</sub>k(x<sub>i</sub>, x<sub>k</sub>)</b>.</div>`;
+    h+=`<div class="detail">${free.length?`Có ${free.length} vector tự do; lấy trung bình b theo chúng`:"Chưa có vector tự do; b lấy giữa hai cận KKT"} ⇒ b = <b>${f(b)} → ${f(b2)}</b></div>`;
+    h+=`<div class="eq">f(<b>x</b>) = Σ<sub>i∈SV</sub> β<sub>i</sub>·k(x<sub>i</sub>, <b>x</b>) + b &nbsp; (${nsv} vector hỗ trợ trong ${n} mẫu)</div>`;
+    h+=`<div class="detail">RMSE so với sin x thật: ${f(rmseTruth(S,b))} → <b>${f(rmseTruth(S2,b2))}</b> · D = ${f(D2)} (D* = ${f(Dst.D)}, còn thiếu ${f(Dst.D-D2,4)}).<br>Hình: nét đen = f(x), vùng vàng = ống ε, nét chấm xám = sin x thật. Bấm “Áp dụng cập nhật và lặp lại” để sang vòng kế.</div>`;
+    h+=`<div class="pitfall"><b>Thưa:</b> mẫu trong ống có β = 0 nên không tham gia dự đoán; chi phí dự đoán tỷ lệ với số vector hỗ trợ.</div>`;
+    break; }
+  }
+  return h;
+}
+function drawDH(C){
+  const svg=$("dh");svg.innerHTML="";const W=560,H=230,m={l:52,r:14,t:14,b:36},pts=thist3.concat([C.D]);
+  svg.appendChild(el("rect",{x:0,y:0,width:W,height:H,fill:"#fff"}));
+  const lo=Math.min(...pts,Dst.D),hi=Math.max(Dst.D,...pts),pad=(hi-lo)*0.08+1e-6,y0=lo-pad,y1=hi+pad;
+  const X=i=>m.l+(W-m.l-m.r)*(pts.length===1?0.02:i/(pts.length-1)),Y=v=>H-m.b-(H-m.t-m.b)*((v-y0)/(y1-y0));
+  for(let g=0;g<=4;g++){const v=y0+(y1-y0)*g/4;svg.appendChild(el("line",{x1:m.l,x2:W-m.r,y1:Y(v),y2:Y(v),stroke:"#E5ECF8"}));svg.appendChild(el("text",{x:m.l-6,y:Y(v)+4,"text-anchor":"end","font-size":12,fill:MUT},f(v,2)))}
+  svg.appendChild(el("line",{x1:m.l,x2:W-m.r,y1:Y(Dst.D),y2:Y(Dst.D),stroke:GRN,"stroke-dasharray":"6 5","stroke-width":2}));
+  svg.appendChild(el("text",{x:W-m.r-2,y:Y(Dst.D)+16,"text-anchor":"end","font-size":12,"font-weight":700,fill:GRN},"D* = "+f(Dst.D)));
+  svg.appendChild(el("polyline",{points:pts.map((v,i)=>`${X(i)},${Y(v)}`).join(" "),fill:"none",stroke:BLUE,"stroke-width":2.5}));
+  if(pts.length<=50)pts.forEach((v,i)=>svg.appendChild(el("circle",{cx:X(i),cy:Y(v),r:i===pts.length-1?6:3,fill:i===pts.length-1?GRN:BLUE})));else svg.appendChild(el("circle",{cx:X(pts.length-1),cy:Y(pts[pts.length-1]),r:6,fill:GRN}));
+  svg.appendChild(el("text",{x:(W+m.l)/2,y:H-8,"text-anchor":"middle","font-size":13,fill:MUT},"vòng lặp SMO"));
+  $("dhcap").textContent=`Đã chạy ${SS.it} vòng · D = ${f(C.D)} · D* = ${f(Dst.D)} · KKT gap = ${f(C.sel.gap,4)}${C.done?" (đã hội tụ)":""}`;
+}
+function drawBeta(C){
+  const svg=$("beta");svg.innerHTML="";const V=C.V,n=V.n1,W=560,H=230,m={l:48,r:14,t:16,b:34},Cc=V.C,be=betaOf(V),mx=Cc,zero=m.t+(H-m.t-m.b)/2,sc=(H-m.t-m.b)/2/mx,bw=(W-m.l-m.r)/n;
+  svg.appendChild(el("rect",{x:0,y:0,width:W,height:H,fill:"#fff"}));
+  [Cc,-Cc].forEach(v=>{svg.appendChild(el("line",{x1:m.l,x2:W-m.r,y1:zero-v*sc,y2:zero-v*sc,stroke:ORG,"stroke-dasharray":"5 4"}));svg.appendChild(el("text",{x:m.l-5,y:zero-v*sc+4,"text-anchor":"end","font-size":11.5,fill:ORG},(v>0?"+":"−")+"C"))});
+  svg.appendChild(el("line",{x1:m.l,x2:W-m.r,y1:zero,y2:zero,stroke:INK}));svg.appendChild(el("text",{x:m.l-5,y:zero+4,"text-anchor":"end","font-size":11.5,fill:MUT},"0"));
+  be.forEach((v,i)=>{const hh=Math.abs(v)*sc;svg.appendChild(el("rect",{x:m.l+i*bw+0.5,y:v>=0?zero-hh:zero,width:Math.max(1,bw-1.5),height:Math.max(0.5,hh),fill:v>=0?BLUE:ORG,rx:1.5,stroke:DS.out.includes(i)?PUR:"none","stroke-width":2}))});
+  svg.appendChild(el("text",{x:(W+m.l)/2,y:H-8,"text-anchor":"middle","font-size":12.5,fill:MUT},"mẫu 1 … "+n+" (theo x tăng dần) · cột xanh: kéo đường lên (β > 0), cam: kéo xuống (β < 0) · viền tím: ngoại lai"));
+  $("betacap").textContent=`Σβ = ${f(be.reduce((p,q)=>p+q,0),6)} (cân bằng lực) · ${be.filter(v=>Math.abs(v)>1e-7).length}/${n} mẫu có lực khác 0 · lực mỗi mẫu bị chặn ở C = ${f(Cc,1)}`;
+}
+function drawVote(C){
+  const svg=$("vote");svg.innerHTML="";const V=C.V,b=C.bV,W=560,H=230,m={l:44,r:14,t:16,b:44};
+  svg.appendChild(el("rect",{x:0,y:0,width:W,height:H,fill:"#fff"}));
+  if(squery==null){svg.appendChild(el("text",{x:W/2,y:H/2,"text-anchor":"middle","font-size":15,"font-weight":700,fill:MUT},"Bấm vào hình bên trên để chọn x"));$("votecap").textContent="";return}
+  const q=zOf(squery),items=[];for(let i=0;i<V.n1;i++){const be=V.al[i]-V.al[i+V.n1];if(Math.abs(be)>1e-7)items.push({i,v:be*V.kf(V.X[i],q)})}
+  items.sort((p,r)=>Math.abs(r.v)-Math.abs(p.v));const top=items.slice(0,14),fv=svrF(V,b,q);
+  const mx=Math.max(0.05,...top.map(t=>Math.abs(t.v))),bw=(W-m.l-m.r)/Math.max(top.length,1),zero=m.t+(H-m.t-m.b)/2,sc=(H-m.t-m.b)/2/mx;
+  svg.appendChild(el("line",{x1:m.l,x2:W-m.r,y1:zero,y2:zero,stroke:INK}));
+  top.forEach((t,k)=>{const hh=Math.abs(t.v)*sc,x=m.l+k*bw+3;svg.appendChild(el("rect",{x,y:t.v>=0?zero-hh:zero,width:bw-6,height:Math.max(1,hh),fill:t.v>=0?BLUE:ORG,rx:3}));
+    svg.appendChild(el("text",{x:x+(bw-6)/2,y:H-m.b+16,"text-anchor":"middle","font-size":11.5,fill:MUT},"#"+(t.i+1)));svg.appendChild(el("text",{x:x+(bw-6)/2,y:t.v>=0?zero-hh-4:zero+hh+12,"text-anchor":"middle","font-size":10.5,fill:INK},f(t.v,2)))});
+  svg.appendChild(el("text",{x:W/2,y:H-6,"text-anchor":"middle","font-size":12.5,fill:MUT},"vector hỗ trợ (theo độ đóng góp) · xanh: đồi (đẩy f lên), cam: hố (kéo f xuống)"));
+  $("votecap").textContent=`x = ${f(squery,2)}: Σ β·k = ${f(items.reduce((p,t)=>p+t.v,0))} + b = ${f(b)} ⇒ f = ${f(fv)} (sin x = ${f(Math.sin(squery))})`;
+}
+
+/* ================= TAB ④ Lưới ε, C, γ ================= */
+let GD4=null;
+function gcCompute(seed){
+  const d=makeSin(42,seed),rows=[
+    {t:"Thay đổi ε (C = 10, γ = 1)",c:[0.02,0.3,1.0].map(e=>({e,C:10,g:1}))},
+    {t:"Thay đổi C (ε = 0,1, γ = 1)",c:[0.1,1,1000].map(C=>({e:0.1,C,g:1}))},
+    {t:"Thay đổi γ (C = 10, ε = 0,1)",c:[0.05,1,50].map(g=>({e:0.1,C:10,g}))}];
+  rows.forEach(r=>r.c.forEach(c=>{const S=svrInit(d.z,d.ys,c.C,c.e,{t:"rbf",g:c.g});smoRun(S,1e-3,120000);c.S=S;c.b=smoBias(S);c.nsv=[...Array(S.n1).keys()].filter(i=>typeB(S,i)>1).length;
+    let s=0,N=120;for(let k=0;k<N;k++){const x=0.1+6*k/(N-1);s+=(svrF(S,c.b,[(x-d.mu)/d.sd,0])-Math.sin(x))**2}c.rmse=Math.sqrt(s/N)}));
+  GD4={d,rows};
+}
+function gcRender(){
+  if(!GD4)gcCompute(5);
+  const box=$("gcgrid");box.innerHTML="";let id=0;
+  GD4.rows.forEach(r=>{
+    const h=document.createElement("h3");h.textContent=r.t;box.appendChild(h);
+    const best=Math.min(...r.c.map(c=>c.rmse));
+    r.c.forEach(c=>{
+      const lab=c.rmse===best?"tốt nhất hàng":(c.rmse>0.3?"dưới khớp":(c.rmse>best*1.15?"kém hơn":"khá"));
+      const cell=document.createElement("div");cell.className="cell "+(c.rmse===best?"best":c.rmse>0.3?"under":"");
+      const k=id++;cell.innerHTML=`<h4>ε = ${f(c.e,2)}, C = ${c.C}, γ = ${c.g<1?f(c.g,2):f(c.g,0)}</h4><svg id="gr${k}" viewBox="0 0 300 200" width="100%"></svg><div class="st">${c.nsv} SV · RMSE = <b>${f(c.rmse)}</b> · ${lab}</div>`;
+      box.appendChild(cell);
+      const rg={};for(let i=0;i<c.S.n1;i++){const t=typeB(c.S,i);if(t>1)rg[i]={c:GRN,w:1.8}}
+      drawReg($("gr"+k),{id:"m"+k,mini:true,dom:[-0.3,6.6,-2.6,2.6],X:GD4.d.xs,Y:GD4.d.ys,fn:x=>svrF(c.S,c.b,[(x-GD4.d.mu)/GD4.d.sd,0]),eps:c.e,truth:sinF,ring:rg,r:()=>2.6,col:GD4.d.ys.map((_,i)=>GD4.d.out.includes(i)?"#7A5CC9":BLUE)});
+    });
+  });
+  const note=document.createElement("div");note.className="pitfall";note.style.gridColumn="1/-1";
+  note.innerHTML="<b>Đọc kết quả:</b> ε quá nhỏ ⇒ gần như mọi mẫu là vector hỗ trợ; ε quá lớn ⇒ ống ôm hết, dưới khớp. C nhỏ ⇒ lực yếu, đường mượt; C rất lớn ⇒ ngoại lai bắt đầu kéo đường cong. γ nhỏ ⇒ quá trơn; γ lớn ⇒ uốn lượn bám nhiễu. Cả ba cùng tương tác nên cần chọn đồng thời bằng kiểm định chéo.";
+  box.appendChild(note);
+}
+
+/* ================= Điều khiển chung ================= */
+let mode="t1";
+const steps=()=>mode==="t1"?STEPS1:mode==="t2"?STEPS2:STEPS3;
+const curStep=()=>mode==="t1"?s1:mode==="t2"?s2:s3;
+function setStep(i){if(mode==="t1")s1=i;else if(mode==="t2")s2=i;else s3=i}
+function drawChips(){const box=$("steps");box.innerHTML="";const cs=curStep();steps().forEach((st,i)=>{const c=document.createElement("div");c.className=`chip ${st.k} ${i===cs?"cur":""} ${i<=cs?"done":"todo"}`;c.textContent=`${i+1}. ${st.t}`;c.onclick=()=>{setStep(i);render()};box.appendChild(c)})}
+function render(){
+  const M1=mode==="t1",M2=mode==="t2",M3=mode==="t3",M4=mode==="t4";
+  ["tab1","tab2","tab3","tab4"].forEach((id,k)=>$(id).classList.toggle("on",mode==="t"+(k+1)));
+  $("ctl1").classList.toggle("hidden",!M1);$("ctl2").classList.toggle("hidden",!M2);$("ctl3").classList.toggle("hidden",!M3);
+  $("stepCard").classList.toggle("hidden",M4);$("mainGrid").classList.toggle("hidden",M4);
+  $("tools2").classList.toggle("hidden",!M2);$("tools3").classList.toggle("hidden",!M3);$("gcWrap").classList.toggle("hidden",!M4);
+  document.querySelectorAll(".trainOnly").forEach(b=>b.classList.toggle("hidden",M1));
+  if(M4){gcRender();return}
+  drawChips();const p=$("panel"),cs=curStep();
+  if(M1){
+    $("ctl1").innerHTML=ctl1HTML();
+    $("d1").onchange=e=>{T1.nd=+e.target.value;render()};
+    if($("y61"))$("y61").oninput=e=>{T1.y6=+e.target.value;render()};
+    $("ctl1").querySelectorAll("[data-y6]").forEach(b=>b.onclick=()=>{T1.y6=+b.dataset.y6;render()});
+    const C=ctx1();plane1(s1,C);p.innerHTML=panel1(s1,C);
+  } else if(M2){
+    $("vry6").textContent=f(R.y6,1);$("vre").textContent=f(R.e,2);$("vrC").textContent=f(rC(),1);$("vreta").textContent=f(R.eta0,2);
+    $("ry6L").classList.toggle("hidden",R.nd===5);$("retaL").classList.toggle("hidden",R.sched!=="const");
+    const C=ctx2();plane2(s2,C);p.innerHTML=panel2(s2,C);
+    p.querySelectorAll("[data-sel]").forEach(b=>b.onclick=()=>{sel=+b.dataset.sel;render()});
+    $("commit").disabled=s2!==STEPS2.length-1;$("tconv").disabled=false;
+    drawHist2(C);drawLoss(C);drawInfl(C);drawParam(C,s2);optCard();
+  } else {
+    $("vse").textContent=f(SC.e,2);$("vsC").textContent=f(CV3[SC.ci],CV3[SC.ci]<1?1:0);$("vsg").textContent=f(GV3[SC.gi],GV3[SC.gi]<1?2:0);
+    const C=ctx3();plane3(s3,C);p.innerHTML=panel3(s3,C);drawDH(C);drawBeta(C);drawVote(C);
+    $("commit").disabled=s3!==STEPS3.length-1||C.done;$("tconv").disabled=C.done;
+  }
+  $("prev").disabled=cs===0;$("next").disabled=cs===steps().length-1;
+}
+function stopPlay(){clearInterval(playTimer);playTimer=null;$("play").textContent="▶ Tự chạy"}
+function commit3(){const C=ctx3();if(C.done)return false;thist3.push(C.D);smoApply(SS,C.pr);return true}
+function iter(k){if(mode==="t2"){for(let i=0;i<k;i++)commit2();s2=0}else{for(let i=0;i<k;i++)if(!commit3())break;s3=0}render()}
+$("next").onclick=()=>{const c=curStep();if(c<steps().length-1){setStep(c+1);render()}};
+$("prev").onclick=()=>{const c=curStep();if(c>0){setStep(c-1);render()}};
+$("commit").onclick=()=>{if(mode==="t2"){commit2();s2=1}else{commit3();s3=0}render()};
+$("t10").onclick=()=>{stopPlay();iter(10)};$("t100").onclick=()=>{stopPlay();iter(100)};
+$("tconv").onclick=()=>{stopPlay();iter(mode==="t2"?2000:30000)};
+$("play").onclick=()=>{
+  if(playTimer){stopPlay();return}$("play").textContent="❚❚ Dừng";
+  playTimer=setInterval(()=>{const n=steps().length;
+    if(curStep()<n-1){setStep(curStep()+1);render()}
+    else if(mode==="t2"){commit2();s2=1;render()}else{if(!commit3()){stopPlay();render();return}s3=0;render()}},1400);
+};
+function readR(){R.nd=+$("rdata").value;R.y6=+$("ry6").value;R.e=+$("re").value;R.ci=+$("rC").value;R.sched=$("rsched").value;R.eta0=+$("reta").value}
+["rdata","ry6","re","rC","rsched","reta"].forEach(id=>$(id).oninput=()=>{stopPlay();readR();resetP();render()});
+$("rreset").onclick=()=>{stopPlay();resetP();render()};
+$("optBtn").onclick=()=>{showOpt=!showOpt;render()};
+function readS(){SC.e=+$("se").value;SC.ci=+$("sC").value;SC.gi=+$("sg").value}
+["se","sC","sg"].forEach(id=>$(id).oninput=()=>{stopPlay();readS();resetS();render()});
+$("snew").onclick=()=>{stopPlay();SC.seed=Math.floor(Math.random()*100000);resetS();render()};
+$("sreset").onclick=()=>{stopPlay();resetS();render()};
+$("gnew").onclick=()=>{GD4=null;gcCompute(Math.floor(Math.random()*100000));gcRender()};
+[["tab1","t1"],["tab2","t2"],["tab3","t3"],["tab4","t4"]].forEach(([id,m])=>$(id).onclick=()=>{stopPlay();mode=m;render()});
+$("plane").addEventListener("click",e=>{
+  if(mode!=="t3"||!GEO)return;
+  const svg=$("plane"),pt=svg.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;const q=pt.matrixTransform(svg.getScreenCTM().inverse());
+  const [x0,x1]=GEO.dom,a=x0+(q.x-GEO.ml)/GEO.pw*(x1-x0);if(a<x0||a>x1)return;squery=a;render();
+});
+document.addEventListener("keydown",e=>{if(["INPUT","SELECT"].includes(e.target.tagName))return;if(e.key==="ArrowRight")$("next").click();if(e.key==="ArrowLeft")$("prev").click()});
+window.__r={solve1D,olsFit,dataL,ctx1,ctx2,commit2,opt2,resetP,get P(){return P},R,svrInit,smoRun,smoBias,svrDual,betaOf,gcCompute,get GD4(){return GD4},get SS(){return SS},get Dst(){return Dst},ctx3,commit3,svrF,rmseTruth,get mode(){return mode}};
+readR();readS();resetP();resetS();render();
+</script>
+</body>
+</html>
