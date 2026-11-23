@@ -27,9 +27,7 @@ Support Vector Regression (SVR) mở rộng ý tưởng của SVM sang bài toá
 | `code/` | Mã nguồn Python: [Xem và tải mã nguồn](code/svm_demo.py) |
 | `documents/` | Tài liệu học tập: [Đọc tài liệu PDF](documents/SVM.pdf) |
 | `html/` | Bài giảng trực tuyến: [1. Xem nội dung trên html](https://chuminhuneti.github.io/Machine-Learning/07_SVM_SVR/html/svm_svr_minh_hoa.html) 
-[2. Huấn luyện SVM từng bước](https://chuminhuneti.github.io/Machine-Learning/07_SVM_SVR/html/svm_huan_luyen_truc_quan.html)
-[3. SVM phi tuyến: thủ thuật kernel](https://chuminhuneti.github.io/Machine-Learning/07_SVM_SVR/html/svm_kernel_truc_quan.html)
-|
+[2. Huấn luyện SVM từng bước](https://chuminhuneti.github.io/Machine-Learning/07_SVM_SVR/html/svm_huan_luyen_truc_quan.html) [3. SVM phi tuyến: thủ thuật kernel](https://chuminhuneti.github.io/Machine-Learning/07_SVM_SVR/html/svm_kernel_truc_quan.html) [4. Huấn luyện SVR](https://chuminhuneti.github.io/Machine-Learning/07_SVM_SVR/html/svr_huan_luyen_truc_quan.html)|
 | `slides/` | Bài giảng trình chiếu: [Xem slide PDF](slides/) |
 
 
