@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Huấn luyện SVM – minh họa từng bước</title>
+<style>
+:root{
+  --bg:#FFFCF5; --card:#FFFFFF; --ink:#17284B; --mut:#5B6784; --line:#C9D6EE;
+  --blue:#1F6AC8; --green:#0E8660; --orange:#D9480F; --purple:#6B3FC9; --pink:#C2185B;
+  --pb:#E3EEFC; --pg:#DDF5EA; --po:#FFE9DC; --py:#FFF1C2; --pp:#EDE7FB;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Nunito Sans","Segoe UI",Arial,sans-serif;line-height:1.5}
+header{background:linear-gradient(135deg,#6B3FC9,#1F6AC8);color:#fff;padding:22px 28px}
+header h1{margin:0 0 4px;font-size:28px}
+header p{margin:0;opacity:.94;max-width:1150px}
+main{max-width:1500px;margin:0 auto;padding:18px 20px 60px}
+.card{background:var(--card);border:2px solid var(--line);border-radius:18px;padding:14px 18px}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.tabs button{background:var(--pb);color:var(--blue);font-size:15px;padding:10px 18px}
+.tabs button.on{background:var(--blue);color:#fff}
+.controls{display:flex;flex-wrap:wrap;gap:14px 26px;align-items:center;margin-bottom:14px}
+.controls label{font-weight:700;font-size:14px;display:flex;flex-direction:column;gap:2px}
+.controls input[type=range]{width:150px}
+.controls select{padding:4px 6px;border-radius:8px;border:2px solid var(--line);font-size:14px;font:inherit;font-size:14px}
+.val{color:var(--blue);font-weight:800}
+button{font:inherit;font-weight:700;border:0;border-radius:12px;padding:8px 16px;cursor:pointer;background:var(--blue);color:#fff}
+button.sec{background:var(--pb);color:var(--blue)}
+button.warn{background:var(--po);color:var(--orange)}
+button.ok{background:var(--green)}
+button:disabled{opacity:.4;cursor:default}
+.steps{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}
+.chip{border-radius:999px;padding:5px 12px;font-size:13px;font-weight:700;cursor:pointer;border:2px solid transparent;user-select:none}
+.chip.f{background:var(--pb);color:var(--blue)}
+.chip.b{background:var(--po);color:var(--orange)}
+.chip.u{background:var(--pg);color:var(--green)}
+.chip.cur{border-color:var(--ink);box-shadow:0 0 0 2px #fff inset}
+.chip.done{opacity:1}.chip.todo{opacity:.55}
+.grid{display:grid;grid-template-columns:minmax(520px,1.05fr) minmax(460px,1fr);gap:16px;align-items:start}
+@media(max-width:1050px){.grid{grid-template-columns:1fr}}
+svg text{font-family:"Nunito Sans","Segoe UI",Arial,sans-serif}
+.panel h2{margin:0 0 6px;font-size:22px}
+.tag{display:inline-block;border-radius:8px;padding:2px 10px;font-size:13px;font-weight:800;margin-right:8px;vertical-align:middle}
+.tag.f{background:var(--pb);color:var(--blue)}.tag.b{background:var(--po);color:var(--orange)}.tag.u{background:var(--pg);color:var(--green)}
+.why{background:var(--py);border-radius:12px;padding:8px 12px;margin:8px 0;font-size:15px}
+.eq{background:#17284B;color:#fff;border-radius:12px;padding:10px 14px;margin:8px 0;font-size:18px;overflow-x:auto}
+.eq b{color:#FFE08A}
+.row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin:8px 0}
+.op{font-size:22px;font-weight:800;color:var(--mut)}
+table.m{border-collapse:separate;border-spacing:0;border-left:3px solid var(--ink);border-right:3px solid var(--ink);border-radius:6px;margin:0 2px}
+table.m td{padding:3px 8px;text-align:right;font-variant-numeric:tabular-nums;font-size:15px;border-radius:4px}
+table.m td.hl{background:#FFE08A}
+table.m td.neg{color:var(--orange)}
+.cap{font-size:12px;color:var(--mut);text-align:center;margin-top:2px}
+.mw{display:flex;flex-direction:column;align-items:center}
+.detail{background:var(--pg);border-radius:12px;padding:8px 12px;margin:8px 0;font-size:15px}
+.detail b{color:var(--green)}
+.pitfall{background:var(--pp);border-radius:12px;padding:8px 12px;margin:8px 0;font-size:14px}
+.sel button{padding:3px 12px;margin-right:6px;font-size:13px;background:var(--pb);color:var(--blue)}
+.sel button.on{background:var(--blue);color:#fff}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--mut);margin-top:6px;align-items:center}
+.dot{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+.sq{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.ln{display:inline-block;width:22px;height:0;border-top:3px solid;margin-right:5px;vertical-align:3px}
+.tools{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(420px,100%),1fr));gap:16px;margin-top:16px}
+table.g{border-collapse:collapse;width:100%;font-size:14px}
+table.g th{background:#C9D9F5;padding:4px 8px;text-align:right}
+table.g td{padding:3px 8px;text-align:right;border-bottom:1px solid #E5ECF8;font-variant-numeric:tabular-nums}
+table.g th:first-child,table.g td:first-child{text-align:left}
+table.g td.pick{cursor:pointer;text-align:center}
+table.g td.pick:hover{background:#FFE08A}
+table.g td.pick.on{background:#FFE08A;outline:3px solid var(--orange);outline-offset:-3px;font-weight:800}
+table.g tr.hlr td{background:#FFF6D6}
+.good{color:var(--green);font-weight:800}
+.warnc{color:#B25B00;font-weight:800}
+.badc{color:var(--orange);font-weight:800}
+details{margin-top:14px}
+details summary{cursor:pointer;font-weight:800;font-size:17px}
+.sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:10px;margin-top:10px}
+.sum div{border-radius:12px;padding:8px 12px;font-size:15px}
+.hidden{display:none!important}
+.note{font-size:13px;color:var(--mut)}
+</style>
+</head>
+<body>
+<header>
+<h1>Huấn luyện SVM, từng bước một</h1>
+<p>Dữ liệu 7 sinh viên (x₁ = giờ học, x₂ = số buổi vắng, nhãn +1 = đậu, −1 = rớt). Tab đầu giải <b>SVM lề cứng</b> bằng tay trên 6 sinh viên; tab thứ hai <b>huấn luyện SVM lề mềm</b> bằng hàm mất mát hinge và gradient descent, từng vòng lặp một. Bấm <b>Bước tiếp</b> (hoặc phím →) để đi qua các bước.</p>
+</header>
+<main>
+
+<div class="tabs">
+  <button id="tabH">① Lề cứng: giải tay trên 6 sinh viên</button>
+  <button id="tabS" class="on">② Lề mềm: huấn luyện bằng hinge + gradient descent</button>
+</div>
+
+<div class="card controls" id="softCtl">
+  <label>Dữ liệu
+    <select id="data"><option value="7" selected>7 sinh viên (SV7 là nhiễu)</option><option value="6">6 sinh viên (tách được)</option></select></label>
+  <label>Hệ số phạt C = <span class="val" id="vC"></span><input type="range" id="C" min="0.05" max="5" step="0.05" value="0.2"></label>
+  <label>Thuật toán
+    <select id="alg"><option value="batch" selected>Batch (dưới đạo hàm)</option><option value="sgd">SGD kiểu Pegasos (1 mẫu/bước)</option></select></label>
+  <label id="schedL">Tốc độ học
+    <select id="sched"><option value="inv" selected>η = 1/t (giảm dần)</option><option value="const">η hằng số</option></select></label>
+  <label id="etaL" class="hidden">η = <span class="val" id="veta"></span><input type="range" id="eta" min="0.01" max="1" step="0.01" value="0.2"></label>
+  <button class="sec" id="reset">Đặt lại (w = 0, b = 0)</button>
+</div>
+
+<div class="card">
+  <div class="steps" id="steps"></div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap">
+    <button class="sec" id="prev">← Bước trước</button>
+    <button id="next">Bước tiếp →</button>
+    <button class="sec" id="play">▶ Tự chạy</button>
+    <button class="ok" id="commit">Áp dụng cập nhật và lặp lại ↻</button>
+    <button class="sec" id="train10">Lặp 10 lần</button>
+    <button class="sec" id="train100">Lặp 100 lần</button>
+  </div>
+</div>
+
+<div class="grid" style="margin-top:14px">
+  <div class="card">
+    <svg id="plane" viewBox="0 0 696 498" width="100%" role="img" aria-label="Mặt phẳng dữ liệu với đường biên và dải lề"></svg>
+    <div class="legend" id="legend"></div>
+  </div>
+  <div class="card panel" id="panel"></div>
+</div>
+
+<div class="tools" id="softTools">
+  <div class="card">
+    <h2 style="margin:0 0 6px;font-size:20px">Hàm mục tiêu J qua các vòng lặp</h2>
+    <svg id="hist" viewBox="0 0 560 230" width="100%"></svg>
+    <div class="note" id="histcap" style="text-align:center"></div>
+  </div>
+  <div class="card">
+    <h2 style="margin:0 0 6px;font-size:20px">Mỗi mẫu nằm ở đâu trên đường hinge?</h2>
+    <svg id="hinge" viewBox="0 0 560 230" width="100%"></svg>
+    <div class="note" style="text-align:center">Hoành độ = margin m của từng sinh viên; tung độ = mất mát. Hinge bằng 0 khi m ≥ 1.</div>
+  </div>
+  <div class="card">
+    <h2 style="margin:0 0 6px;font-size:20px">Đường đi của w trong không gian tham số</h2>
+    <svg id="param" viewBox="0 0 560 260" width="100%"></svg>
+    <div class="note" style="text-align:center">Chấm xanh lá = w hiện tại; mũi tên ở bước 7: xám = co, hồng = đẩy.</div>
+  </div>
+  <div class="card" style="grid-column:1/-1">
+    <h2 style="margin:0 0 6px;font-size:20px">Nghiệm tối ưu (giải bài toán đối ngẫu bằng SMO) và ba loại mẫu</h2>
+    <p style="margin:0 0 8px;font-size:14px;color:var(--mut)">Để biết gradient descent đang tiến gần đến đâu, ta so với nghiệm chính xác. Mỗi mẫu có một hệ số α<sub>i</sub> ∈ [0, C]: w = Σ α<sub>i</sub> y<sub>i</sub> x<sub>i</sub>ᵀ và Σ α<sub>i</sub> y<sub>i</sub> = 0.</p>
+    <button class="sec" id="optBtn">Hiện nghiệm tối ưu trên hình</button>
+    <div id="optOut" style="margin-top:8px"></div>
+  </div>
+</div>
+
+<details class="card" style="margin-top:16px">
+<summary>Tóm tắt: nhớ ba dòng này là đủ</summary>
+<div class="sum">
+ <div style="background:var(--pb)"><b>Bài toán:</b> lề cứng: min ½‖w‖² với y<sub>i</sub>(x<sub>i</sub>w + b) ≥ 1. Lề mềm: J = ½‖w‖² + C Σ max(0, 1 − m<sub>i</sub>), m<sub>i</sub> = y<sub>i</sub>(x<sub>i</sub>w + b).</div>
+ <div style="background:var(--po)"><b>Gradient:</b> a<sub>i</sub> = 1[m<sub>i</sub> &lt; 1]; ∇<sub>w</sub>J = w − C Xᵀ(y ⊙ a); ∂J/∂b = −C yᵀa. Chỉ mẫu <i>lấn lề hoặc sai</i> mới tham gia.</div>
+ <div style="background:var(--pg)"><b>Cập nhật:</b> w ← (1 − η)w + ηC Xᵀ(y ⊙ a) (co rồi đẩy), b ← b + ηC yᵀa. Nghiệm cuối: w = Σ α<sub>i</sub>y<sub>i</sub>x<sub>i</sub>ᵀ, chỉ vector hỗ trợ (α &gt; 0) có mặt.</div>
+</div>
+</details>
+</main>
+
+<script>
+"use strict";
+/* ================= Hằng số, dữ liệu ================= */
+const BLUE="#1F6AC8", ORG="#D9480F", GRN="#0E8660", PINK="#C2185B", INK="#17284B", MUT="#5B6784", GOLD="#E0A100";
+const X7=[[2,4],[3,3],[4,5],[6,1],[8,2],[9,0],[7,1]], Y7=[-1,-1,-1,1,1,1,-1];
+const X6=X7.slice(0,6), Y6=Y7.slice(0,6);
+const NEWSTU=[7,3.6];
+const $=id=>document.getElementById(id);
+const NS="http://www.w3.org/2000/svg";
+function el(tag,attrs,txt){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(txt!==undefined)e.textContent=txt;return e}
+const f=(v,d=3)=>{const z=Math.abs(v)<0.5*Math.pow(10,-d)?0:v;return z.toFixed(d).replace(".",",").replace("-","−")};
+const fs=v=>v>0?"+1":"−1";
+const clone=o=>JSON.parse(JSON.stringify(o));
+
+/* ================= Trạng thái ================= */
+let mode="soft";
+const SC={C:0.2,sched:"inv",eta0:0.2,alg:"batch",nd:7};
+let P={w:[0,0],b:0}, T=1, sstep=0, hstep=0, hist=[], path=[], order=[], showOpt=false, sel=0, playTimer=null;
+let hp={i:1,j:3};                   // cặp ứng viên vector hỗ trợ ở tab lề cứng (0-based)
+const D=()=>SC.nd===7?{X:X7,y:Y7,n:7}:{X:X6,y:Y6,n:6};
+
+/* ================= Toán học ================= */
+const Jfun=(w,b,C,X,y)=>{let s=0;X.forEach((x,i)=>{s+=Math.max(0,1-y[i]*(x[0]*w[0]+x[1]*w[1]+b))});return .5*(w[0]*w[0]+w[1]*w[1])+C*s};
+
+/* SMO (đối ngẫu, kernel tuyến tính) kiểu LIBSVM; nhỏ nên chạy tức thì */
+const _smoCache={};
+function solveSMO(X,y,C){
+  const key=JSON.stringify([X,y,C]); if(_smoCache[key])return _smoCache[key];
+  const n=X.length, K=X.map(a=>X.map(c=>a[0]*c[0]+a[1]*c[1])), Q=K.map((r,i)=>r.map((v,j)=>y[i]*y[j]*v));
+  const al=Array(n).fill(0), G=Array(n).fill(-1); let it=0;
+  for(;it<200000;it++){
+    let i=-1,j=-1,gmax=-Infinity,gmin=Infinity;
+    for(let t=0;t<n;t++){
+      const up=(y[t]===1&&al[t]<C)||(y[t]===-1&&al[t]>0), lo=(y[t]===1&&al[t]>0)||(y[t]===-1&&al[t]<C), v=-y[t]*G[t];
+      if(up&&v>gmax){gmax=v;i=t} if(lo&&v<gmin){gmin=v;j=t}
+    }
+    if(i<0||j<0||gmax-gmin<1e-10)break;
+    const oi=al[i],oj=al[j];
+    if(y[i]!==y[j]){
+      let q=Q[i][i]+Q[j][j]+2*Q[i][j]; if(q<=0)q=1e-12;
+      const delta=(-G[i]-G[j])/q, diff=al[i]-al[j]; al[i]+=delta; al[j]+=delta;
+      if(diff>0){if(al[j]<0){al[j]=0;al[i]=diff}} else {if(al[i]<0){al[i]=0;al[j]=-diff}}
+      if(diff>0){if(al[i]>C){al[i]=C;al[j]=C-diff}} else {if(al[j]>C){al[j]=C;al[i]=C+diff}}
+    } else {
+      let q=Q[i][i]+Q[j][j]-2*Q[i][j]; if(q<=0)q=1e-12;
+      const delta=(G[i]-G[j])/q, sum=al[i]+al[j]; al[i]-=delta; al[j]+=delta;
+      if(sum>C){if(al[i]>C){al[i]=C;al[j]=sum-C}} else {if(al[j]<0){al[j]=0;al[i]=sum}}
+      if(sum>C){if(al[j]>C){al[j]=C;al[i]=sum-C}} else {if(al[i]<0){al[i]=0;al[j]=sum}}
+    }
+    const di=al[i]-oi,dj=al[j]-oj;
+    for(let t=0;t<n;t++)G[t]+=Q[t][i]*di+Q[t][j]*dj;
+  }
+  const w=[0,0]; X.forEach((x,i)=>{w[0]+=al[i]*y[i]*x[0];w[1]+=al[i]*y[i]*x[1]});
+  let ub=Infinity,lb=-Infinity,sf=0,nf=0;
+  for(let t=0;t<n;t++){
+    const yg=y[t]*G[t];
+    if(al[t]>=C-1e-9){ if(y[t]===-1)ub=Math.min(ub,yg); else lb=Math.max(lb,yg) }
+    else if(al[t]<=1e-9){ if(y[t]===1)ub=Math.min(ub,yg); else lb=Math.max(lb,yg) }
+    else {sf+=yg;nf++}
+  }
+  const rho=nf?sf/nf:(ub+lb)/2, b=-rho;
+  const m=X.map((x,i)=>y[i]*(x[0]*w[0]+x[1]*w[1]+b));
+  const dual=al.reduce((p,v)=>p+v,0)-.5*(w[0]*w[0]+w[1]*w[1]);
+  return _smoCache[key]={alpha:al,w,b,m,J:Jfun(w,b,C,X,y),dual,sumAY:al.reduce((p,v,i)=>p+v*y[i],0),iters:it};
+}
+const OPT=()=>{const d=D();return solveSMO(d.X,d.y,SC.C)};
+
+function makeOrder(n){
+  const o=[3,6,1].filter(i=>i<n); let sd=12345;
+  while(o.length<3000){sd=(Math.imul(sd,1103515245)+12345)&0x7fffffff;o.push((sd>>>8)%n)}
+  return o;
+}
+
+/* một vòng lặp của huấn luyện lề mềm */
+function ctxS(){
+  const {X,y,n}=D(), C=SC.C, w=P.w, b=P.b, t=T;
+  const s=X.map(x=>x[0]*w[0]+x[1]*w[1]+b), m=s.map((v,i)=>y[i]*v);
+  const a=m.map(v=>v<1?1:0), xi=m.map(v=>Math.max(0,1-v));
+  const reg=.5*(w[0]*w[0]+w[1]*w[1]), lossSum=xi.reduce((p,q)=>p+q,0), J=reg+C*lossSum;
+  const lam=1/(n*C), idx=SC.alg==="sgd"?order[(t-1)%order.length]:null;
+  let eta,gw,gb,shrink,push,xty=[0,0],ya=0,bn;
+  if(SC.alg==="batch"){
+    eta=SC.sched==="inv"?1/t:SC.eta0;
+    X.forEach((x,i)=>{if(a[i]){xty[0]+=y[i]*x[0];xty[1]+=y[i]*x[1];ya+=y[i]}});
+    gw=[w[0]-C*xty[0],w[1]-C*xty[1]]; gb=-C*ya;
+    shrink=[(1-eta)*w[0],(1-eta)*w[1]]; push=[eta*C*xty[0],eta*C*xty[1]]; bn=b+eta*C*ya;
+  } else {
+    eta=1/(lam*t); const ai=a[idx]; xty=[ai*y[idx]*X[idx][0],ai*y[idx]*X[idx][1]]; ya=ai*y[idx];
+    gw=[lam*w[0]-xty[0],lam*w[1]-xty[1]]; gb=-ya;
+    shrink=[(1-1/t)*w[0],(1-1/t)*w[1]]; push=[eta*xty[0],eta*xty[1]]; bn=b+eta*ya;
+  }
+  const wn=[shrink[0]+push[0],shrink[1]+push[1]];
+  return {X,y,n,C,w,b,t,s,m,a,xi,reg,lossSum,J,lam,idx,eta,gw,gb,shrink,push,xty,ya,wn,bn,Jn:Jfun(wn,bn,C,X,y)};
+}
+function commit(){const c=ctxS();hist.push(c.J);P={w:c.wn,b:c.bn};T++;path.push({w:c.wn,b:c.bn});}
+function resetSoft(){P={w:[0,0],b:0};T=1;hist=[];path=[{w:[0,0],b:0}];sstep=0;order=makeOrder(D().n);}
+
+/* lề cứng: nghiệm của hai ràng buộc đẳng thức cho cặp (i âm, j dương) */
+function ctxH(){
+  const X=X6,y=Y6,{i,j}=hp, d=[X[j][0]-X[i][0],X[j][1]-X[i][1]], dd=d[0]*d[0]+d[1]*d[1];
+  const w=[2*d[0]/dd,2*d[1]/dd], b=1-(X[j][0]*w[0]+X[j][1]*w[1]);
+  const s=X.map(x=>x[0]*w[0]+x[1]*w[1]+b), m=s.map((v,k)=>y[k]*v);
+  const bad=m.map(v=>v<1-1e-9), feas=!bad.some(Boolean), nw=Math.hypot(w[0],w[1]);
+  return {X,y,i,j,d,dd,w,b,s,m,bad,feas,nw,gamma:1/nw,width:2/nw,mid:[(X[i][0]+X[j][0])/2,(X[i][1]+X[j][1])/2]};
+}
+const PCOL=["#6B3FC9","#0E8660","#D9480F","#1F6AC8"];
+const PERC=[{n:"A",w:[4,-8],b:-1},{n:"B",w:[6,-11],b:-1},{n:"C",w:[5,-9],b:-1},{n:"D",w:[2,-4],b:0}];
+PERC.forEach(p=>{p.nw=Math.hypot(p.w[0],p.w[1]);p.gamma=Math.min(...X6.map((x,k)=>Y6[k]*(x[0]*p.w[0]+x[1]*p.w[1]+p.b)))/p.nw;p.snew=NEWSTU[0]*p.w[0]+NEWSTU[1]*p.w[1]+p.b});
+
+/* ================= Định dạng ma trận ================= */
+function mat(rows,opt={}){
+  const {hlCol=-1,hlRows=[],caption="",fmt=null,d=3}=opt;
+  let h='<div class="mw"><table class="m">';
+  rows.forEach((r,i)=>{h+="<tr>"+r.map((v,j)=>`<td class="${(j===hlCol||hlRows.includes(i))?"hl":""} ${v<0?"neg":""}">${fmt?fmt(v):f(v,d)}</td>`).join("")+"</tr>"});
+  return h+"</table>"+(caption?`<div class="cap">${caption}</div>`:"")+"</div>";
+}
+const op=s=>`<span class="op">${s}</span>`;
+const col=a=>a.map(v=>[v]);
+
+/* ================= Mặt phẳng dữ liệu ================= */
+const PL={x0:0,x1:10.5,y0:-1.2,y1:6.2,sc:60,ml:52,mt:14};
+const px=x=>PL.ml+(x-PL.x0)*PL.sc, py=y=>PL.mt+(PL.y1-y)*PL.sc;
+function lineSeg(w,b,c){
+  const nn=w[0]*w[0]+w[1]*w[1]; if(nn<1e-12)return null;
+  const k=(c-b)/nn, p=[w[0]*k,w[1]*k], nw=Math.sqrt(nn), d=[-w[1]/nw,w[0]/nw];
+  return [[p[0]-40*d[0],p[1]-40*d[1]],[p[0]+40*d[0],p[1]+40*d[1]]];
+}
+const pts=a=>a.map(p=>`${px(p[0]).toFixed(1)},${py(p[1]).toFixed(1)}`).join(" ");
+function addLine(g,w,b,c,st){
+  const s=lineSeg(w,b,c); if(!s)return;
+  g.appendChild(el("line",{x1:px(s[0][0]),y1:py(s[0][1]),x2:px(s[1][0]),y2:py(s[1][1]),stroke:st.color,"stroke-width":st.width,"stroke-dasharray":st.dash||"",opacity:st.op??1,"stroke-linecap":"round"}));
+}
+function drawPlane(o){
+  const svg=$("plane"); svg.innerHTML="";
+  const defs=el("defs",{}), cp=el("clipPath",{id:"clipP"});
+  cp.appendChild(el("rect",{x:px(PL.x0),y:py(PL.y1),width:(PL.x1-PL.x0)*PL.sc,height:(PL.y1-PL.y0)*PL.sc}));
+  defs.appendChild(cp);
+  [["mk-pink",PINK],["mk-gray",MUT],["mk-blue",BLUE],["mk-grn",GRN],["mk-org",ORG]].forEach(([id,c])=>{
+    const m=el("marker",{id,viewBox:"0 0 10 10",refX:"7",refY:"5",markerWidth:"6",markerHeight:"6",orient:"auto-start-reverse"});
+    m.appendChild(el("path",{d:"M0 0L10 5L0 10z",fill:c}));defs.appendChild(m);
+  });
+  svg.appendChild(defs);
+  svg.appendChild(el("rect",{x:px(PL.x0),y:py(PL.y1),width:(PL.x1-PL.x0)*PL.sc,height:(PL.y1-PL.y0)*PL.sc,fill:"#fff",stroke:"#C9D6EE","stroke-width":2}));
+  for(let x=0;x<=10;x++){
+    svg.appendChild(el("line",{x1:px(x),x2:px(x),y1:py(PL.y1),y2:py(PL.y0),stroke:"#EDF1F9"}));
+    svg.appendChild(el("text",{x:px(x),y:py(PL.y0)+16,"text-anchor":"middle","font-size":12,fill:MUT},String(x)));
+  }
+  for(let v=-1;v<=6;v++){
+    svg.appendChild(el("line",{x1:px(PL.x0),x2:px(PL.x1),y1:py(v),y2:py(v),stroke:v===0?"#C9D6EE":"#EDF1F9"}));
+    svg.appendChild(el("text",{x:px(PL.x0)-8,y:py(v)+4,"text-anchor":"end","font-size":12,fill:MUT},String(v)));
+  }
+  svg.appendChild(el("text",{x:px(5.25),y:py(PL.y0)+36,"text-anchor":"middle","font-size":14,"font-weight":700,fill:MUT},"x₁ = giờ học"));
+  const yl=el("text",{x:14,y:py(2.5),"text-anchor":"middle","font-size":14,"font-weight":700,fill:MUT,transform:`rotate(-90 14 ${py(2.5)})`},"x₂ = số buổi vắng");
+  svg.appendChild(yl);
+  const g=el("g",{"clip-path":"url(#clipP)"}); svg.appendChild(g);
+  const M=o.model;
+  if(M&&M.w[0]*M.w[0]+M.w[1]*M.w[1]>1e-12){
+    const nw=Math.hypot(M.w[0],M.w[1]), u=[M.w[0]/nw,M.w[1]/nw], s0=lineSeg(M.w,M.b,0), sp=lineSeg(M.w,M.b,1), sm=lineSeg(M.w,M.b,-1);
+    const off=(s,k)=>s.map(p=>[p[0]+k*u[0],p[1]+k*u[1]]);
+    g.appendChild(el("polygon",{points:pts([s0[0],s0[1],...off(s0,40).reverse()]),fill:"rgba(31,106,200,.07)"}));
+    g.appendChild(el("polygon",{points:pts([s0[0],s0[1],...off(s0,-40).reverse()]),fill:"rgba(217,72,15,.07)"}));
+    if(!o.noBand) g.appendChild(el("polygon",{points:pts([sm[0],sm[1],sp[1],sp[0]]),fill:"rgba(255,213,79,.32)"}));
+  }
+  if(o.ghost){const G=o.ghost;[-1,1].forEach(c=>addLine(g,G.w,G.b,c,{color:MUT,width:1.5,dash:"5 5",op:.55}));addLine(g,G.w,G.b,0,{color:MUT,width:2.5,dash:"7 5",op:.7})}
+  (o.lines||[]).forEach(L=>addLine(g,L.w,L.b,L.c,L));
+  if(M){[-1,1].forEach(c=>addLine(g,M.w,M.b,c,{color:INK,width:1.8,dash:"7 5",op:.8}));addLine(g,M.w,M.b,0,{color:INK,width:3.4})}
+  if(showOpt&&o.opt){const O=o.opt;[-1,1].forEach(c=>addLine(g,O.w,O.b,c,{color:GRN,width:1.4,dash:"3 5",op:.9}));addLine(g,O.w,O.b,0,{color:GRN,width:2.6,dash:"9 5"})}
+  (o.segs||[]).forEach(S=>{
+    g.appendChild(el("line",{x1:px(S.a[0]),y1:py(S.a[1]),x2:px(S.b[0]),y2:py(S.b[1]),stroke:S.color,"stroke-width":S.width||2.2,"stroke-dasharray":S.dash||"",
+      "marker-end":S.arrow?`url(#${S.arrow})`:"","marker-start":S.arrow2?`url(#${S.arrow})`:""}));
+  });
+  if(!M&&!o.lines&&o.msg) svg.appendChild(el("text",{x:px(5.25),y:py(5.65),"text-anchor":"middle","font-size":15,"font-weight":800,fill:ORG},o.msg));
+  (o.marks||[]).forEach(k=>{
+    svg.appendChild(el("circle",{cx:px(k.p[0]),cy:py(k.p[1]),r:5,fill:k.color,stroke:"#fff","stroke-width":2}));
+    if(k.t)svg.appendChild(el("text",{x:px(k.p[0])+9,y:py(k.p[1])-8,"font-size":12.5,"font-weight":800,fill:k.color},k.t));
+  });
+  (o.texts||[]).forEach(k=>{
+    const gg=el("g",{});
+    gg.appendChild(el("rect",{x:px(k.p[0])-k.w/2,y:py(k.p[1])-13,width:k.w,height:19,rx:6,fill:"#fff",opacity:.92,stroke:k.color,"stroke-width":1}));
+    gg.appendChild(el("text",{x:px(k.p[0]),y:py(k.p[1])+1,"text-anchor":"middle","font-size":12.5,"font-weight":800,fill:k.color},k.t));
+    svg.appendChild(gg);
+  });
+  if(o.star){svg.appendChild(el("text",{x:px(o.star[0]),y:py(o.star[1])+9,"text-anchor":"middle","font-size":30,fill:"#6B3FC9"},"★"));svg.appendChild(el("text",{x:px(o.star[0])+14,y:py(o.star[1])+26,"font-size":12.5,"font-weight":800,fill:"#6B3FC9"},"SV mới"))}
+  o.X.forEach((x,i)=>{
+    const cx=px(x[0]),cy=py(x[1]),pos=o.y[i]===1,dim=o.dim&&o.dim[i];
+    const gg=el("g",{opacity:dim?.4:1});
+    const R=o.rings&&o.rings[i];
+    if(R){ if(pos)gg.appendChild(el("rect",{x:cx-19,y:cy-19,width:38,height:38,rx:9,fill:"none",stroke:R.c,"stroke-width":R.w||5}));
+           else gg.appendChild(el("circle",{cx,cy,r:19,fill:"none",stroke:R.c,"stroke-width":R.w||5})); }
+    if(pos)gg.appendChild(el("rect",{x:cx-13,y:cy-13,width:26,height:26,rx:6,fill:BLUE,stroke:"#fff","stroke-width":2}));
+    else gg.appendChild(el("circle",{cx,cy,r:14,fill:ORG,stroke:"#fff","stroke-width":2}));
+    gg.appendChild(el("text",{x:cx,y:cy+5,"text-anchor":"middle","font-size":14,"font-weight":800,fill:"#fff"},String(i+1)));
+    const L=o.labels&&o.labels[i];
+    if(L){
+      const ly=pos?cy+34:cy-24;
+      gg.appendChild(el("rect",{x:cx-30,y:ly-13,width:60,height:18,rx:6,fill:"#fff",opacity:.92,stroke:L.c,"stroke-width":1}));
+      gg.appendChild(el("text",{x:cx,y:ly+1,"text-anchor":"middle","font-size":12,"font-weight":800,fill:L.c},L.t));
+    }
+    svg.appendChild(gg);
+  });
+}
+function setLegend(items){$("legend").innerHTML=items.join("")}
+const LG_BASE=[`<span><span class="sq" style="background:${BLUE}"></span>đậu (y = +1)</span>`,`<span><span class="dot" style="background:${ORG}"></span>rớt (y = −1)</span>`];
+const LG_SOFT=[...LG_BASE,`<span><span class="ln" style="border-color:${INK}"></span>đường biên xw + b = 0</span>`,`<span><span class="ln" style="border-color:${INK};border-top-style:dashed"></span>hai biên lề = ±1</span>`,`<span><span class="sq" style="background:#FFD54F"></span>dải lề</span>`];
+
+/* ================= Tab lề mềm: các bước ================= */
+const STEPS_S=[
+ {k:"f",t:"Dữ liệu và tham số"},
+ {k:"f",t:"s = Xw + b"},
+ {k:"f",t:"m = y ⊙ s"},
+ {k:"f",t:"a = 1[m < 1] và ξ (hinge)"},
+ {k:"f",t:"Hàm mục tiêu J"},
+ {k:"b",t:"Dưới đạo hàm g"},
+ {k:"u",t:"Cập nhật w, b"}
+];
+const stColor=m=>m<0?ORG:(m<1?GOLD:GRN);
+const stName=m=>m<0?'<span class="badc">sai phía</span>':(m<1?'<span class="warnc">đúng nhưng lấn lề</span>':'<span class="good">ngoài dải lề</span>');
+
+function planeSoft(s,C){
+  const {X,y,n}=C, w=C.w, b=C.b, sgd=SC.alg==="sgd", idx=C.idx;
+  const o={X,y,model:{w,b},opt:OPT(),msg:"w = 0: mọi điểm có s = 0, chưa có đường biên"};
+  const labels={},rings={},dim={},segs=[],texts=[];
+  const nw=Math.hypot(w[0],w[1]), nn=nw*nw;
+  const act=i=>!sgd||i===idx;
+  if(sgd&&s>=1&&s<=5) X.forEach((_,i)=>{if(i!==idx)dim[i]=true});
+  if(s===1&&nn>1e-12) X.forEach((x,i)=>{ if(!act(i))return;
+    const k=C.s[i]/nn; segs.push({a:x,b:[x[0]-k*w[0],x[1]-k*w[1]],color:C.s[i]>=0?BLUE:ORG,width:1.8,dash:"4 4"});
+    labels[i]={t:"s="+f(C.s[i],2),c:C.s[i]>=0?BLUE:ORG}; });
+  if(s===1&&nn<=1e-12) X.forEach((_,i)=>{if(act(i))labels[i]={t:"s=0",c:MUT}});
+  if(s===2) X.forEach((_,i)=>{ if(!act(i))return; labels[i]={t:"m="+f(C.m[i],2),c:stColor(C.m[i])}; rings[i]={c:stColor(C.m[i]),w:4}; });
+  if(s===3||s===4) X.forEach((x,i)=>{ if(!act(i))return;
+    if(C.a[i]){ rings[i]={c:PINK,w:5}; labels[i]={t:"ξ="+f(C.xi[i],2),c:PINK};
+      if(nn>1e-12){ const k=(1-C.m[i])/nn; segs.push({a:x,b:[x[0]+y[i]*w[0]*k,x[1]+y[i]*w[1]*k],color:PINK,width:3.5,arrow:"mk-pink"}); } }
+    else { labels[i]={t:"ξ=0",c:GRN}; if(!sgd)dim[i]=true; } });
+  if(s===4&&nn>1e-12){
+    const cx=X.reduce((p,x)=>p+x[0],0)/n, cy=X.reduce((p,x)=>p+x[1],0)/n, sc=cx*w[0]+cy*w[1]+b, f0=[cx-sc*w[0]/nn,cy-sc*w[1]/nn];
+    segs.push({a:[f0[0]-w[0]/nn,f0[1]-w[1]/nn],b:[f0[0]+w[0]/nn,f0[1]+w[1]/nn],color:PURPLE(),width:3,arrow:"mk-blue",arrow2:true});
+    texts.push({p:[f0[0]+0.5*w[0]/nn+0.25,f0[1]+0.5*w[1]/nn],t:"2/‖w‖ = "+f(2/nw,2),color:BLUE,w:112});
+  }
+  if(s===5) X.forEach((x,i)=>{ if(!act(i))return; if(C.a[i]){rings[i]={c:PINK,w:5};labels[i]={t:"a=1 · "+(y[i]>0?"+":"−")+"x",c:PINK}} else {labels[i]={t:"a=0",c:GRN};if(!sgd)dim[i]=true} });
+  if(s===6){ o.ghost={w,b}; o.model={w:C.wn,b:C.bn}; o.msg="w mới vẫn bằng 0"; }
+  Object.assign(o,{labels,rings,dim,segs,texts});
+  drawPlane(o);
+  setLegend([...LG_SOFT,`<span><span class="ring" style="display:inline-block;width:12px;height:12px;border-radius:50%;border:3px solid ${PINK};vertical-align:-2px;margin-right:5px"></span>mẫu vi phạm (a = 1)</span>`,`<span><span class="ln" style="border-color:${GRN};border-top-style:dashed"></span>nghiệm tối ưu (khi bật)</span>`]);
+}
+function PURPLE(){return "#6B3FC9"}
+
+function panelSoft(s,C){
+  const {X,y,n}=C, sgd=SC.alg==="sgd", idx=C.idx, j=Math.min(sel,n-1), i=sgd?idx:j;
+  const st=STEPS_S[s], tag=st.k==="f"?'<span class="tag f">ĐÁNH GIÁ →</span>':st.k==="b"?'<span class="tag b">← GRADIENT</span>':'<span class="tag u">CẬP NHẬT</span>';
+  const selBtns=()=>sgd?"":`<div class="sel" style="margin:6px 0">Xem chi tiết sinh viên: `+[...Array(n).keys()].map(k=>`<button class="${k===j?"on":""}" data-sel="${k}">${k+1}</button>`).join("")+"</div>";
+  let h=`<h2>${tag}Vòng ${C.t} · Bước ${s+1}/${STEPS_S.length}: ${st.t}</h2>`;
+  const w=C.w, b=C.b, hi=sgd?[idx]:[j];
+  const lamTxt=`λ = 1/(nC) = 1/(${n}·${f(C.C,2)}) = ${f(C.lam)}`;
+  switch(s){
+  case 0:
+    h+=`<div class="why">SVM lề mềm đi tìm <b>w</b> (2 trọng số) và <b>b</b> làm nhỏ nhất J(w, b) = ½‖w‖² + C·Σ max(0, 1 − m<sub>i</sub>). Số hạng đầu giữ lề rộng; số hạng sau phạt mẫu <i>sai hoặc lấn vào lề</i>. Mỗi vòng lặp gồm 7 bước: đo từng mẫu → tính gradient → đi ngược gradient.</div>`;
+    h+=`<div class="row">${mat(X,{caption:"X ("+n+"×2): giờ học, số buổi vắng",d:0,hlRows:sgd?hi:[]})}${mat(col(y),{caption:"y",fmt:fs,hlRows:sgd?hi:[]})}${mat(col(w),{caption:"w (2×1)"})}${mat([[b]],{caption:"b"})}</div>`;
+    h+=`<div class="detail">Vòng <b>${C.t}</b>: C = <b>${f(C.C,2)}</b>, η<sub>t</sub> = <b>${f(C.eta,3)}</b> ${sgd?`(Pegasos: η<sub>t</sub> = 1/(λt), ${lamTxt})`:(SC.sched==="inv"?"(= 1/t)":"(hằng số)")}.<br>J hiện tại = <b>${f(C.J)}</b>. ${sgd?`Bước này Pegasos chỉ dùng <b>một</b> mẫu được rút ngẫu nhiên: sinh viên <b>${idx+1}</b> (x = (${f(X[idx][0],0)}; ${f(X[idx][1],0)}), y = ${fs(y[idx])}).`:`Batch dùng <b>cả ${n}</b> mẫu ở mỗi bước.`}</div>`;
+    if(C.t===1) h+=`<div class="pitfall"><b>Khởi tạo:</b> w = 0, b = 0 ⇒ mọi điểm số bằng 0, mọi margin bằng 0 &lt; 1, nên <i>cả ${n} mẫu</i> đều vi phạm lề ở vòng đầu. Đường biên chưa tồn tại (w = 0).</div>`;
+    else h+=`<div class="pitfall"><b>Gợi ý:</b> bấm <b>Lặp 10 lần</b> hoặc <b>Lặp 100 lần</b> để xem J giảm; mở khung “Nghiệm tối ưu” ở dưới để so sánh với đáp án chính xác.</div>`;
+    break;
+  case 1:
+    h+=`<div class="why">Điểm số của mẫu là <b>xw + b</b> (như Perceptron). Dấu của s cho nhãn dự đoán, độ lớn |s|/‖w‖ là khoảng cách đến đường biên (đường nét đứt xanh/cam trên hình).</div>`;
+    h+=`<div class="eq"><b>s</b> = <b>X</b> <b>w</b> + b·<b>1</b></div>`;
+    if(!sgd){
+      h+=`<div class="row">${mat(X,{caption:"X",d:0,hlRows:hi})}${op("·")}${mat(col(w),{caption:"w"})}${op("+ "+f(b))}${op("=")}${mat(col(C.s),{caption:"s",hlRows:hi})}</div>`;
+      h+=selBtns();
+      h+=`<div class="detail">s<sub>${j+1}</sub> = x₁·w₁ + x₂·w₂ + b = ${f(X[j][0],0)}·${f(w[0])} + ${f(X[j][1],0)}·${f(w[1])} + ${f(b)} = <b>${f(C.s[j])}</b></div>`;
+    } else {
+      h+=`<div class="detail">Chỉ tính cho mẫu được chọn: s<sub>${idx+1}</sub> = ${f(X[idx][0],0)}·${f(w[0])} + ${f(X[idx][1],0)}·${f(w[1])} + ${f(b)} = <b>${f(C.s[idx])}</b></div>`;
+    }
+    break;
+  case 2:
+    h+=`<div class="why">Margin <b>m = y·s</b> gộp nhãn và điểm số: m &gt; 0 nghĩa là đúng phía, m ≥ 1 nghĩa là đúng và nằm <i>ngoài dải lề</i>, m &lt; 1 nghĩa là sai hoặc lấn lề.</div>`;
+    h+=`<div class="eq"><b>m</b> = <b>y</b> ⊙ <b>s</b>,&nbsp; m<sub>i</sub> = y<sub>i</sub>(x<sub>i</sub>w + b)</div>`;
+    if(!sgd){
+      h+=`<div class="row">${mat(col(y),{caption:"y",fmt:fs,hlRows:hi})}${op("⊙")}${mat(col(C.s),{caption:"s",hlRows:hi})}${op("=")}${mat(col(C.m),{caption:"m",hlRows:hi})}</div>`;
+      h+=selBtns();
+      h+=`<div class="detail">m<sub>${j+1}</sub> = ${fs(y[j])} · ${f(C.s[j])} = <b>${f(C.m[j])}</b> → ${stName(C.m[j])}.</div>`;
+    } else h+=`<div class="detail">m<sub>${idx+1}</sub> = ${fs(y[idx])} · ${f(C.s[idx])} = <b>${f(C.m[idx])}</b> → ${stName(C.m[idx])}.</div>`;
+    h+=`<div class="pitfall"><b>Khác Perceptron:</b> Perceptron chỉ quan tâm m &lt; 0 (sai). SVM dời ngưỡng lên <b>m &lt; 1</b>, nên mẫu đúng nhưng sát đường biên vẫn bị “nhắc”. Đó chính là nguồn gốc của <i>lề</i>.</div>`;
+    break;
+  case 3: {
+    h+=`<div class="why">Vector chỉ báo <b>a<sub>i</sub> = 1[m<sub>i</sub> &lt; 1]</b> đánh dấu mẫu vi phạm. Mất mát hinge của mẫu là <b>ξ<sub>i</sub> = max(0, 1 − m<sub>i</sub>)</b>: độ “thiếu” để mẫu lên tới biên lề (mũi tên hồng trên hình).</div>`;
+    let rows="";
+    X.forEach((x,k)=>{ if(sgd&&k!==idx)return; rows+=`<tr class="${C.a[k]?"hlr":""}"><td>SV${k+1}</td><td>${fs(y[k])}</td><td>${f(C.m[k])}</td><td>${stName(C.m[k])}</td><td>${C.a[k]}</td><td>${f(C.xi[k])}</td></tr>`});
+    h+=`<table class="g"><tr><th>Mẫu</th><th>y</th><th>m</th><th>Vị trí</th><th>a</th><th>ξ = max(0, 1−m)</th></tr>${rows}</table>`;
+    if(!sgd) h+=`<div class="detail">Số mẫu vi phạm: <b>${C.a.reduce((p,q)=>p+q,0)}/${n}</b> &nbsp;·&nbsp; Σξ = ${C.xi.map(v=>f(v,2)).join(" + ")} = <b>${f(C.lossSum)}</b></div>`;
+    else h+=`<div class="detail">Mẫu SV${idx+1}: a = <b>${C.a[idx]}</b> ⇒ ${C.a[idx]?"có bước <b>đẩy</b> ở bước 7":"chỉ có bước <b>co</b> w ở bước 7 (không đẩy)"}.</div>`;
+    h+=`<div class="pitfall"><b>Tính thưa:</b> mẫu có a = 0 (ngoài dải lề) <i>không</i> góp gì vào gradient. Hãy nhìn các mẫu mờ đi trên hình.</div>`;
+    break; }
+  case 4:
+    h+=`<div class="why">Gộp hai thứ vào một con số: <b>độ rộng lề</b> (qua ½‖w‖², càng nhỏ lề càng rộng) và <b>tổng vi phạm</b> (qua Σξ), cân bằng bởi C.</div>`;
+    h+=`<div class="eq">J = ½‖<b>w</b>‖² + C·Σ ξ<sub>i</sub> = ½(${f(w[0])}² + ${f(w[1])}²) + ${f(C.C,2)}·${f(C.lossSum)} = ${f(C.reg)} + ${f(C.C*C.lossSum)} = <b>${f(C.J)}</b></div>`;
+    h+=`<div class="row">
+      <div class="detail" style="margin:0;flex:1;min-width:170px"><b>Số hạng lề:</b> ½‖w‖² = ${f(C.reg)}<br>‖w‖ = ${f(Math.hypot(w[0],w[1]))}, lề rộng 2/‖w‖ = ${Math.hypot(w[0],w[1])>1e-9?f(2/Math.hypot(w[0],w[1]),2):"∞"}</div>
+      <div class="detail" style="margin:0;flex:1;min-width:170px;background:var(--po)"><b style="color:var(--orange)">Số hạng phạt:</b> C·Σξ = ${f(C.C*C.lossSum)}<br>${C.a.reduce((p,q)=>p+q,0)} mẫu vi phạm</div></div>`;
+    h+=`<div class="detail">Mốc: tại w = 0, b = 0 thì J = C·n = ${f(C.C*n,2)}. Nghiệm tối ưu của bài toán này có J* = <b>${f(OPT().J)}</b>. Hiện còn cách ${f(C.J-OPT().J)}.</div>`;
+    h+=`<div class="pitfall"><b>Lưu ý:</b> J lồi nên chỉ có một “đáy” toàn cục, nhưng hinge có “góc nhọn” tại m = 1 nên một bước gradient dưới đạo hàm <i>không đảm bảo</i> làm J giảm; vì vậy ta dùng η giảm dần.</div>`;
+    break;
+  case 5:
+    if(!sgd){
+      h+=`<div class="why">Dưới đạo hàm của hinge: mẫu vi phạm (a = 1) có đạo hàm −y·xᵀ theo w và −y theo b; mẫu ngoài lề có đạo hàm 0. Cộng thêm đạo hàm w của ½‖w‖².</div>`;
+      h+=`<div class="eq"><b>g</b><sub>w</sub> = <b>w</b> − C·<b>X</b>ᵀ(<b>y</b> ⊙ <b>a</b>) &nbsp;&nbsp; g<sub>b</sub> = −C·<b>y</b>ᵀ<b>a</b></div>`;
+      let contrib=X.map((x,k)=>C.a[k]?`${fs(y[k])}·(${f(x[0],0)}; ${f(x[1],0)})`:null).filter(Boolean).join(" + ")||"0";
+      h+=`<div class="detail">Xᵀ(y ⊙ a) = Σ<sub>vi phạm</sub> y<sub>i</sub>x<sub>i</sub> = ${contrib} = <b>(${f(C.xty[0],1)}; ${f(C.xty[1],1)})</b><br>yᵀa = Σ<sub>vi phạm</sub> y<sub>i</sub> = <b>${f(C.ya,0)}</b></div>`;
+      h+=`<div class="row">${mat([w],{caption:"wᵀ"})}${op("− "+f(C.C,2)+" ·")}${mat([C.xty],{caption:"Xᵀ(y⊙a)",d:1})}${op("=")}${mat([C.gw],{caption:"g_w"})}</div>`;
+      h+=`<div class="detail">g<sub>b</sub> = −${f(C.C,2)} · (${f(C.ya,0)}) = <b>${f(C.gb)}</b></div>`;
+    } else {
+      h+=`<div class="why">Với một mẫu i, dưới đạo hàm của λ/2·‖w‖² + hinge<sub>i</sub> là <b>λw − a·y·xᵀ</b> (theo w) và <b>−a·y</b> (theo b).</div>`;
+      h+=`<div class="eq"><b>g</b><sub>w</sub> = λ<b>w</b> − a<sub>i</sub> y<sub>i</sub> <b>x</b><sub>i</sub>ᵀ &nbsp;&nbsp; g<sub>b</sub> = −a<sub>i</sub> y<sub>i</sub></div>`;
+      h+=`<div class="detail">${lamTxt}<br>g<sub>w</sub> = ${f(C.lam)}·(${f(w[0])}; ${f(w[1])}) − ${C.a[idx]}·${fs(y[idx])}·(${f(X[idx][0],0)}; ${f(X[idx][1],0)}) = <b>(${f(C.gw[0])}; ${f(C.gw[1])})</b><br>g<sub>b</sub> = <b>${f(C.gb)}</b></div>`;
+    }
+    h+=`<div class="pitfall"><b>So với lan truyền ngược:</b> ở mạng nơ-ron ta phải truyền δ qua nhiều lớp; ở SVM tuyến tính chỉ có một lớp nên gradient tính trực tiếp từ các mẫu vi phạm.</div>`;
+    break;
+  case 6: {
+    const up=C.Jn<C.J-1e-12;
+    if(!sgd){
+      h+=`<div class="why">Đi ngược hướng gradient một bước η<sub>t</sub> = ${f(C.eta,3)}. Cập nhật tách làm hai phần dễ hiểu: <b>co</b> w về 0 (giữ lề rộng) rồi <b>đẩy</b> w về phía y<sub>i</sub>x<sub>i</sub> của các mẫu vi phạm (nâng margin của chúng).</div>`;
+      h+=`<div class="eq"><b>w</b> ← (1 − η)<b>w</b> + ηC·<b>X</b>ᵀ(<b>y</b> ⊙ <b>a</b>) &nbsp;&nbsp; b ← b + ηC·<b>y</b>ᵀ<b>a</b></div>`;
+      h+=`<div class="row">${mat([C.shrink],{caption:"co: (1−η)·wᵀ"})}${op("+")}${mat([C.push],{caption:"đẩy: η·C·Xᵀ(y⊙a)"})}${op("=")}${mat([C.wn],{caption:"w mới"})}</div>`;
+      h+=`<div class="detail">b mới = ${f(b)} + ${f(C.eta,3)}·${f(C.C,2)}·(${f(C.ya,0)}) = <b>${f(C.bn)}</b></div>`;
+    } else {
+      h+=`<div class="why">Với η<sub>t</sub> = 1/(λt) thì ηλ = 1/t, nên bước cập nhật Pegasos là: <b>co</b> w một hệ số (1 − 1/t) rồi <b>đẩy</b> nếu mẫu vi phạm.</div>`;
+      h+=`<div class="eq"><b>w</b> ← (1 − 1/t)<b>w</b> + η<sub>t</sub> a<sub>i</sub> y<sub>i</sub> <b>x</b><sub>i</sub>ᵀ &nbsp;&nbsp; b ← b + η<sub>t</sub> a<sub>i</sub> y<sub>i</sub></div>`;
+      h+=`<div class="row">${mat([C.shrink],{caption:"co: (1−1/t)·wᵀ, t="+C.t})}${op("+")}${mat([C.push],{caption:"đẩy: ηₜ·a·y·xᵀ, η="+f(C.eta,3)})}${op("=")}${mat([C.wn],{caption:"w mới"})}</div>`;
+      h+=`<div class="detail">b mới = ${f(b)} + ${f(C.eta,3)}·${C.a[idx]}·${fs(y[idx])} = <b>${f(C.bn)}</b></div>`;
+    }
+    h+=`<div class="detail">Chạy lại với tham số mới: J = <b>${f(C.J)} → ${f(C.Jn)}</b> ${up?'<span class="good">(giảm ✔)</span>':'<span class="warnc">(không giảm: bình thường với dưới đạo hàm; η giảm dần sẽ làm J ổn định)</span>'}<br>Bấm <b>Áp dụng cập nhật và lặp lại</b> để giữ tham số mới và sang vòng ${C.t+1}.</div>`;
+    h+=`<div class="pitfall"><b>Ba mô hình, một dạng cập nhật:</b> Perceptron dùng trọng số 1[m &lt; 0], SVM dùng 1[m &lt; 1] và có co w, Logistic dùng σ(−m) trơn.</div>`;
+    break; }
+  }
+  return h;
+}
+
+/* ================= Tab lề mềm: ba biểu đồ phụ ================= */
+function drawHist(C){
+  const svg=$("hist"); svg.innerHTML="";
+  const W=560,H=230,m={l:48,r:14,t:14,b:36};
+  svg.appendChild(el("rect",{x:0,y:0,width:W,height:H,fill:"#fff"}));
+  const pts=hist.concat([C.J]), o=OPT();
+  const maxJ=Math.max(o.J*1.6,...pts,0.1)*1.08, minJ=0;
+  const X=i=>m.l+(W-m.l-m.r)*(pts.length===1?0.5:i/(pts.length-1)), Y=v=>H-m.b-(H-m.t-m.b)*((v-minJ)/(maxJ-minJ));
+  for(let g=0;g<=4;g++){const v=maxJ*g/4;svg.appendChild(el("line",{x1:m.l,x2:W-m.r,y1:Y(v),y2:Y(v),stroke:"#E5ECF8"}));svg.appendChild(el("text",{x:m.l-6,y:Y(v)+4,"text-anchor":"end","font-size":12,fill:MUT},f(v,2)))}
+  svg.appendChild(el("line",{x1:m.l,x2:W-m.r,y1:Y(o.J),y2:Y(o.J),stroke:GRN,"stroke-dasharray":"6 5","stroke-width":2}));
+  svg.appendChild(el("text",{x:W-m.r-2,y:Y(o.J)-5,"text-anchor":"end","font-size":12,"font-weight":700,fill:GRN},"J* = "+f(o.J)+" (tối ưu)"));
+  svg.appendChild(el("polyline",{points:pts.map((v,i)=>`${X(i)},${Y(v)}`).join(" "),fill:"none",stroke:BLUE,"stroke-width":2.5}));
+  if(pts.length<=60)pts.forEach((v,i)=>svg.appendChild(el("circle",{cx:X(i),cy:Y(v),r:i===pts.length-1?6:3.2,fill:i===pts.length-1?GRN:BLUE})));
+  else svg.appendChild(el("circle",{cx:X(pts.length-1),cy:Y(pts[pts.length-1]),r:6,fill:GRN}));
+  svg.appendChild(el("text",{x:(W+m.l)/2,y:H-8,"text-anchor":"middle","font-size":13,fill:MUT},"vòng lặp t (1 … "+pts.length+")"));
+  $("histcap").textContent=`Đã cập nhật ${hist.length} lần · J hiện tại = ${f(C.J)} · J* = ${f(o.J)} · mẫu vi phạm: ${C.a.reduce((p,q)=>p+q,0)}/${C.n}`;
+}
+function drawHinge(C){
+  const svg=$("hinge"); svg.innerHTML="";
+  const W=560,H=230,m={l:44,r:14,t:14,b:34}, x0=-3.2,x1=3.2,y0=0,y1=3.4;
+  const X=v=>m.l+(W-m.l-m.r)*(v-x0)/(x1-x0), Y=v=>H-m.b-(H-m.t-m.b)*(v-y0)/(y1-y0);
+  svg.appendChild(el("rect",{x:0,y:0,width:W,height:H,fill:"#fff"}));
+  for(let v=-3;v<=3;v++){svg.appendChild(el("line",{x1:X(v),x2:X(v),y1:Y(y1),y2:Y(0),stroke:v===0?"#C9D6EE":"#EDF1F9"}));svg.appendChild(el("text",{x:X(v),y:H-m.b+16,"text-anchor":"middle","font-size":12,fill:MUT},String(v).replace("-","−")))}
+  for(let v=0;v<=3;v++){svg.appendChild(el("line",{x1:m.l,x2:W-m.r,y1:Y(v),y2:Y(v),stroke:"#EDF1F9"}));svg.appendChild(el("text",{x:m.l-6,y:Y(v)+4,"text-anchor":"end","font-size":12,fill:MUT},String(v)))}
+  svg.appendChild(el("line",{x1:X(1),x2:X(1),y1:Y(y1),y2:Y(0),stroke:GRN,"stroke-dasharray":"4 4"}));
+  svg.appendChild(el("text",{x:X(1)+4,y:Y(y1)+12,"font-size":12,"font-weight":700,fill:GRN},"m = 1"));
+  const curve=(fn,c,w,d)=>{const p=[];for(let v=x0;v<=x1+1e-9;v+=0.05)p.push(`${X(v)},${Y(Math.min(y1,fn(v)))}`);svg.appendChild(el("polyline",{points:p.join(" "),fill:"none",stroke:c,"stroke-width":w,"stroke-dasharray":d||""}))};
+  curve(v=>Math.max(0,-v),"#9AA5BD",2,"5 4"); curve(v=>Math.log(1+Math.exp(-v)),"#E0A38A",2,"5 4"); curve(v=>Math.max(0,1-v),BLUE,3.5);
+  svg.appendChild(el("text",{x:X(-2.9),y:Y(3.15),"font-size":12,"font-weight":800,fill:BLUE},"hinge"));
+  svg.appendChild(el("text",{x:X(1.6),y:Y(0.5),"font-size":11.5,fill:"#9AA5BD"},"Perceptron"));
+  svg.appendChild(el("text",{x:X(1.6),y:Y(0.33),"font-size":11.5,fill:"#C97B5B"},"Logistic"));
+  const sgd=SC.alg==="sgd";
+  C.m.forEach((mv,i)=>{
+    const mm=Math.max(x0+0.15,Math.min(x1-0.15,mv)), yy=Math.max(0,1-mv);
+    const g=el("g",{opacity:(sgd&&i!==C.idx)?0.3:1});
+    g.appendChild(el("circle",{cx:X(mm),cy:Y(Math.min(y1-0.1,yy)),r:10,fill:C.y[i]>0?BLUE:ORG,stroke:C.a[i]?PINK:"#fff","stroke-width":C.a[i]?3:2}));
+    g.appendChild(el("text",{x:X(mm),y:Y(Math.min(y1-0.1,yy))+4,"text-anchor":"middle","font-size":11.5,"font-weight":800,fill:"#fff"},String(i+1)));
+    svg.appendChild(g);
+  });
+  svg.appendChild(el("text",{x:(W+m.l)/2,y:H-6,"text-anchor":"middle","font-size":13,fill:MUT},"margin m = y(xw + b)"));
+}
+function drawParam(C,s){
+  const svg=$("param"); svg.innerHTML="";
+  const W=560,H=260,m={l:50,r:20,t:14,b:36}, o=OPT();
+  const all=path.map(p=>p.w).concat([C.w,o.w,[0,0]]); if(s>=5)all.push(C.wn,C.shrink);
+  let a0=Math.min(...all.map(p=>p[0])),a1=Math.max(...all.map(p=>p[0])),c0=Math.min(...all.map(p=>p[1])),c1=Math.max(...all.map(p=>p[1]));
+  const pa=Math.max(0.3,(a1-a0)*0.15), pc=Math.max(0.3,(c1-c0)*0.15); a0-=pa;a1+=pa;c0-=pc;c1+=pc;
+  const X=v=>m.l+(W-m.l-m.r)*(v-a0)/(a1-a0), Y=v=>H-m.b-(H-m.t-m.b)*(v-c0)/(c1-c0);
+  svg.appendChild(el("rect",{x:0,y:0,width:W,height:H,fill:"#fff"}));
+  const tick=(lo,hi)=>{const r=hi-lo,st=Math.pow(10,Math.floor(Math.log10(r/4))),k=[1,2,5].find(q=>r/(q*st)<=6)*st,a=[];for(let v=Math.ceil(lo/k)*k;v<=hi;v+=k)a.push(+v.toFixed(6));return a};
+  tick(a0,a1).forEach(v=>{svg.appendChild(el("line",{x1:X(v),x2:X(v),y1:Y(c1),y2:Y(c0),stroke:Math.abs(v)<1e-9?"#C9D6EE":"#EDF1F9"}));svg.appendChild(el("text",{x:X(v),y:H-m.b+15,"text-anchor":"middle","font-size":11.5,fill:MUT},f(v,2)))});
+  tick(c0,c1).forEach(v=>{svg.appendChild(el("line",{x1:X(a0),x2:X(a1),y1:Y(v),y2:Y(v),stroke:Math.abs(v)<1e-9?"#C9D6EE":"#EDF1F9"}));svg.appendChild(el("text",{x:m.l-6,y:Y(v)+4,"text-anchor":"end","font-size":11.5,fill:MUT},f(v,2)))});
+  svg.appendChild(el("text",{x:(W+m.l)/2,y:H-6,"text-anchor":"middle","font-size":13,fill:MUT},"w₁ (hệ số giờ học)"));
+  svg.appendChild(el("text",{x:12,y:(H-m.b)/2,"text-anchor":"middle","font-size":13,fill:MUT,transform:`rotate(-90 12 ${(H-m.b)/2})`},"w₂ (hệ số vắng)"));
+  const pp=path.map(p=>p.w); const all2=pp.concat([C.w]);
+  svg.appendChild(el("polyline",{points:(path.length>1?pp:all2).map(p=>`${X(p[0])},${Y(p[1])}`).join(" "),fill:"none",stroke:"#9AB7E6","stroke-width":2}));
+  if(pp.length<=40)pp.forEach(p=>svg.appendChild(el("circle",{cx:X(p[0]),cy:Y(p[1]),r:3,fill:BLUE})));
+  svg.appendChild(el("path",{d:`M${X(o.w[0])-9} ${Y(o.w[1])} l9 -9 l9 9 l-9 9z`,fill:GRN,stroke:"#fff","stroke-width":2}));
+  svg.appendChild(el("text",{x:X(o.w[0])+14,y:Y(o.w[1])-10,"font-size":12,"font-weight":800,fill:GRN},"w* tối ưu"));
+  if(s>=6){
+    svg.appendChild(el("line",{x1:X(C.w[0]),y1:Y(C.w[1]),x2:X(C.shrink[0]),y2:Y(C.shrink[1]),stroke:MUT,"stroke-width":3,"marker-end":"url(#pmk-g)"}));
+    svg.appendChild(el("line",{x1:X(C.shrink[0]),y1:Y(C.shrink[1]),x2:X(C.wn[0]),y2:Y(C.wn[1]),stroke:PINK,"stroke-width":3,"marker-end":"url(#pmk-p)"}));
+    svg.appendChild(el("circle",{cx:X(C.wn[0]),cy:Y(C.wn[1]),r:5,fill:"#fff",stroke:PINK,"stroke-width":2.5}));
+  }
+  svg.appendChild(el("circle",{cx:X(C.w[0]),cy:Y(C.w[1]),r:7,fill:GRN,stroke:"#fff","stroke-width":2}));
+  const defs=el("defs",{});[["pmk-g",MUT],["pmk-p",PINK]].forEach(([id,c])=>{const mk=el("marker",{id,viewBox:"0 0 10 10",refX:"7",refY:"5",markerWidth:"6",markerHeight:"6",orient:"auto"});mk.appendChild(el("path",{d:"M0 0L10 5L0 10z",fill:c}));defs.appendChild(mk)});svg.insertBefore(defs,svg.firstChild);
+}
+function optCard(){
+  const o=OPT(), {X,y,n}=D(), C=SC.C;
+  $("optBtn").textContent=showOpt?"Ẩn nghiệm tối ưu trên hình":"Hiện nghiệm tối ưu trên hình";
+  const typ=a=>a<1e-7?'<span class="good">loại 1: ngoài lề (α = 0)</span>':(a>C-1e-7?'<span class="badc">loại 3: bị chặn (α = C): lấn lề/sai</span>':'<span class="warnc">loại 2: trên biên lề (0 &lt; α &lt; C)</span>');
+  let rows="";
+  X.forEach((x,i)=>rows+=`<tr><td>SV${i+1}</td><td>${fs(y[i])}</td><td>${f(o.m[i])}</td><td>${f(o.alpha[i],4)}</td><td style="text-align:left">${typ(o.alpha[i])}</td><td>${f(o.alpha[i]*y[i]*x[0],3)}; ${f(o.alpha[i]*y[i]*x[1],3)}</td></tr>`);
+  const nsv=o.alpha.filter(a=>a>1e-7).length;
+  const cur=P.w, dist=Math.hypot(cur[0]-o.w[0],cur[1]-o.w[1]);
+  $("optOut").innerHTML=`<table class="g"><tr><th>Mẫu</th><th>y</th><th>m*</th><th>α*</th><th style="text-align:left">Loại</th><th>lực α·y·xᵀ</th></tr>${rows}</table>
+  <p style="margin:8px 0 0">w* = (${f(o.w[0])}; ${f(o.w[1])}), b* = ${f(o.b)}, J* = <b>${f(o.J)}</b>. Có <b>${nsv}/${n}</b> vector hỗ trợ (α &gt; 0): chỉ các mẫu này tạo ra đường biên.<br>
+  Kiểm tra: Σ α·y = ${f(o.sumAY,6)} ≈ 0 ✔ &nbsp;·&nbsp; w = Σ α·y·x = (${f(o.w[0])}; ${f(o.w[1])}) &nbsp;·&nbsp; đối ngẫu D = ${f(o.dual)} = J* ${Math.abs(o.dual-o.J)<1e-6?'<span class="good">✔ (đối ngẫu mạnh)</span>':'<span class="badc">✗</span>'}<br>
+  Gradient descent hiện tại: ‖w − w*‖ = <b>${f(dist)}</b>, J − J* = <b>${f(Jfun(P.w,P.b,C,X,y)-o.J)}</b>.</p>`;
+}
+
+/* ================= Tab lề cứng ================= */
+const STEPS_H=[
+ {k:"f",t:"Dữ liệu và bài toán",tag:"BÀI TOÁN"},
+ {k:"f",t:"Vô số đường đúng, chọn đường nào?",tag:"ĐẶT VẤN ĐỀ"},
+ {k:"b",t:"Chọn ứng viên vector hỗ trợ",tag:"ĐOÁN"},
+ {k:"b",t:"Giải hai ràng buộc đẳng thức",tag:"GIẢI"},
+ {k:"b",t:"Kiểm tra các ràng buộc còn lại",tag:"KIỂM TRA"},
+ {k:"u",t:"Đọc kết quả",tag:"KẾT QUẢ"}
+];
+function planeHard(s,H){
+  const o={X:X6,y:Y6,noBand:true};
+  const labels={},rings={},segs=[],marks=[],texts=[];
+  if(s===1){ o.lines=[]; const cols=PCOL;
+    PERC.forEach((p,k)=>{o.lines.push({w:p.w,b:p.b,c:0,color:cols[k],width:2.8,op:.9});
+      const sg=lineSeg(p.w,p.b,0), t=(k+1)/6; const yy=sg[0][1]+(sg[1][1]-sg[0][1])*0; // nhãn ở mép phải
+      // đặt nhãn tại x = 10
+      const xx=7.9+0.8*k, y2=-(p.w[0]*xx+p.b)/p.w[1]; texts.push({p:[xx,y2+0.42],t:p.n,color:cols[k],w:24});});
+    o.star=NEWSTU; }
+  if(s===2){ const a=X6[hp.i],b=X6[hp.j]; segs.push({a,b,color:PINK,width:3.5,dash:"8 5"}); rings[hp.i]={c:PINK};rings[hp.j]={c:PINK};
+    marks.push({p:[(a[0]+b[0])/2,(a[1]+b[1])/2],color:PINK,t:"d² = "+H.dd}); }
+  if(s>=3){ o.model={w:H.w,b:H.b};
+    rings[hp.i]={c:PINK};rings[hp.j]={c:PINK};
+    if(s===3){ segs.push({a:X6[hp.i],b:X6[hp.j],color:PINK,width:2.5,dash:"8 5"}); marks.push({p:H.mid,color:PINK,t:"trung điểm"}) }
+  }
+  if(s===4) X6.forEach((_,k)=>{labels[k]={t:"m="+f(H.m[k],2),c:H.bad[k]?ORG:(Math.abs(H.m[k]-1)<1e-9?PINK:GRN)}; if(H.bad[k])rings[k]={c:ORG,w:5}; });
+  if(s===5&&H.feas){
+    const nn=H.nw*H.nw, p0=[H.mid[0],H.mid[1]];
+    segs.push({a:[p0[0]-H.w[0]/nn,p0[1]-H.w[1]/nn],b:[p0[0]+H.w[0]/nn,p0[1]+H.w[1]/nn],color:BLUE,width:3,arrow:"mk-blue",arrow2:true});
+    texts.push({p:[p0[0]+0.9,p0[1]+0.35],t:"lề rộng "+f(H.width,2),color:BLUE,w:118});
+    o.star=NEWSTU; }
+  if(s===5&&!H.feas) X6.forEach((_,k)=>{if(H.bad[k]){rings[k]={c:ORG,w:5};labels[k]={t:"m="+f(H.m[k],2),c:ORG}}});
+  Object.assign(o,{labels,rings,segs,marks,texts});
+  drawPlane(o);
+  const lg=[...LG_BASE];
+  if(s>=3)lg.push(`<span><span class="ln" style="border-color:${INK}"></span>H₀: xw + b = 0</span>`,`<span><span class="ln" style="border-color:${INK};border-top-style:dashed"></span>H₊, H₋: xw + b = ±1</span>`);
+  if(s===1||s===5)lg.push(`<span style="color:#6B3FC9;font-weight:800">★ sinh viên mới (7; 3,6)</span>`);
+  setLegend(lg);
+}
+const fr=(h,v)=>f(v);
+function panelHard(s,H){
+  const st=STEPS_H[s], tag=`<span class="tag ${st.k}">${st.tag}</span>`;
+  let h=`<h2>${tag}Bước ${s+1}/${STEPS_H.length}: ${st.t}</h2>`;
+  const isOpt=hp.i===1&&hp.j===3;
+  switch(s){
+  case 0: {
+    const G=X6.map((x,k)=>[Y6[k]*x[0],Y6[k]*x[1],Y6[k]]);
+    h+=`<div class="why">Dữ liệu tách được tuyến tính. Có vô số đường biên đúng; SVM lề cứng chọn đường <b>cách đều</b> hai lớp và có <b>lề rộng nhất</b>. Chuẩn hóa thang đo sao cho các mẫu gần nhất có y(xw + b) = 1, bài toán trở thành một bài toán tối ưu có ràng buộc.</div>`;
+    h+=`<div class="row">${mat(X6,{caption:"X (6×2)",d:0})}${mat(col(Y6),{caption:"y (+1 đậu, −1 rớt)",fmt:fs})}${mat(G,{caption:"G = [diag(y)X  y] (6×3)",d:0})}</div>`;
+    h+=`<div class="eq">min<sub>w, b</sub> ½‖<b>w</b>‖² &nbsp; với &nbsp; y<sub>i</sub>(<b>x</b><sub>i</sub><b>w</b> + b) ≥ 1,&nbsp; i = 1…6</div>`;
+    h+=`<div class="detail">3 biến (w₁, w₂, b) và 6 ràng buộc tuyến tính: <b>−2w₁ − 4w₂ − b ≥ 1</b> (SV1), … , <b>9w₁ + b ≥ 1</b> (SV6). Độ rộng dải lề là <b>2/‖w‖</b>, nên <i>làm ‖w‖ nhỏ nhất</i> chính là <i>làm lề rộng nhất</i>.</div>`;
+    h+=`<div class="pitfall"><b>Vì sao ½‖w‖² mà không phải ‖w‖?</b> Cùng nghiệm nhưng ½‖w‖² trơn và lồi chặt, đạo hàm gọn là wᵀ.</div>`;
+    break; }
+  case 1: {
+    let rows=PERC.map((p,k)=>`<tr><td><b style="color:${PCOL[k]}">● ${p.n}</b></td><td>(${f(p.w[0],0)}; ${f(p.w[1],0)}), b = ${f(p.b,0)}</td><td>${f(p.gamma,2)}</td><td>${f(p.snew,1)}</td><td>${p.snew>0?'<span class="good">Đậu</span>':'<span class="badc">Rớt</span>'}</td></tr>`).join("");
+    h+=`<div class="why">Perceptron (và các mô hình trước) chỉ đảm bảo “đúng hết dữ liệu huấn luyện”. Bốn đường A–D bên dưới đều đúng cả 6 mẫu, nhưng cho kết luận trái ngược với sinh viên mới ★ (học 7 giờ, vắng 3,6 buổi).</div>`;
+    h+=`<table class="g"><tr><th>Đường</th><th>(w; b)</th><th>Lề γ</th><th>s của SV mới</th><th>Dự đoán</th></tr>${rows}</table>`;
+    h+=`<div class="detail">Lề của đường = khoảng cách từ mẫu gần nhất đến đường: γ = min y<sub>i</sub>(x<sub>i</sub>w + b)/‖w‖. Bốn đường có γ từ <b>${f(Math.min(...PERC.map(p=>p.gamma)),2)}</b> đến <b>${f(Math.max(...PERC.map(p=>p.gamma)),2)}</b> và dự đoán phụ thuộc đường nào <i>tình cờ</i> được chọn.</div>`;
+    h+=`<div class="pitfall"><b>Ý tưởng SVM:</b> trong vô số đường đúng, hãy chọn đường có γ lớn nhất. Ở tab sau ta sẽ thấy lề tối ưu là √13/2 ≈ 1,80, lớn hơn cả bốn đường trên.</div>`;
+    break; }
+  case 2: {
+    const dsq=(i,j)=>(X6[j][0]-X6[i][0])**2+(X6[j][1]-X6[i][1])**2;
+    let hdr=`<tr><th>d² (rớt ↓ / đậu →)</th>${[3,4,5].map(j=>`<th>SV${j+1} (${X6[j][0]}; ${X6[j][1]})</th>`).join("")}</tr>`;
+    let rows=[0,1,2].map(i=>`<tr><td><b>SV${i+1}</b> (${X6[i][0]}; ${X6[i][1]})</td>${[3,4,5].map(j=>`<td class="pick ${hp.i===i&&hp.j===j?"on":""}" data-pi="${i}" data-pj="${j}">${dsq(i,j)}</td>`).join("")}</tr>`).join("");
+    h+=`<div class="why">Vector hỗ trợ là các mẫu nằm sát đường biên nhất, và đường biên nằm giữa hai lớp. Ứng viên tự nhiên là <b>cặp khác lớp gần nhau nhất</b>. Ta <i>đoán</i> hai mẫu đó là vector hỗ trợ, tức ràng buộc của chúng là đẳng thức.</div>`;
+    h+=`<table class="g">${hdr}${rows}</table>`;
+    h+=`<div class="detail">Cặp gần nhất là <b>SV2 và SV4</b>, d² = 13 (d = √13 ≈ 3,61). <b>Bấm vào một ô</b> để thử cặp khác và xem bước 5 phát hiện ra lỗi như thế nào.<br>Đang chọn: SV${hp.i+1} (rớt) và SV${hp.j+1} (đậu), d² = <b>${H.dd}</b> ${isOpt?'<span class="good">(cặp gần nhất)</span>':'<span class="warnc">(không phải cặp gần nhất)</span>'}.</div>`;
+    break; }
+  case 3: {
+    const i=hp.i,j=hp.j,xi=X6[i],xj=X6[j];
+    h+=`<div class="why">Với SV${i+1} (y = −1) và SV${j+1} (y = +1) là vector hỗ trợ, hai ràng buộc thành <b>đẳng thức</b>. Trừ vế theo vế để khử b, rồi dùng bất đẳng thức Cauchy–Schwarz để tìm w ngắn nhất.</div>`;
+    h+=`<div class="eq">${f(xi[0],0)}w₁ + ${f(xi[1],0)}w₂ + b = −1<br>${f(xj[0],0)}w₁ + ${f(xj[1],0)}w₂ + b = +1</div>`;
+    h+=`<div class="detail">Trừ: (${f(H.d[0],0)}) w₁ + (${f(H.d[1],0)}) w₂ = 2, tức <b>(x<sub>${j+1}</sub> − x<sub>${i+1}</sub>)·w = 2</b>.<br>Cauchy–Schwarz: 2 ≤ ‖x<sub>${j+1}</sub> − x<sub>${i+1}</sub>‖·‖w‖ = √${H.dd}·‖w‖ ⇒ ‖w‖ ≥ 2/√${H.dd}. Dấu “=” khi <b>w cùng hướng với x<sub>${j+1}</sub> − x<sub>${i+1}</sub></b>:</div>`;
+    h+=`<div class="eq"><b>w</b> = (2 / d²)·(<b>x</b><sub>${j+1}</sub> − <b>x</b><sub>${i+1}</sub>) = (2/${H.dd})·(${f(H.d[0],0)}; ${f(H.d[1],0)}) = <b>(${f(H.w[0])}; ${f(H.w[1])})</b></div>`;
+    h+=`<div class="detail">b = y<sub>${j+1}</sub> − x<sub>${j+1}</sub>w = 1 − (${f(xj[0],0)}·${f(H.w[0])} + ${f(xj[1],0)}·${f(H.w[1])}) = <b>${f(H.b)}</b><br>${isOpt?`Dạng phân số: w = (6/13; −4/13), b = −19/13. Đường biên 3x₁ − 2x₂ − 9,5 = 0 là <b>đường trung trực</b> của đoạn nối SV2 và SV4, đi qua trung điểm (${f(H.mid[0],1)}; ${f(H.mid[1],1)}).`:`Đường biên là đường trung trực của đoạn nối hai mẫu, đi qua trung điểm (${f(H.mid[0],2)}; ${f(H.mid[1],2)}).`}</div>`;
+    h+=`<div class="pitfall"><b>Vì sao hợp lý?</b> w là pháp tuyến của đường biên; đoạn nối hai vector hỗ trợ cũng vuông góc với đường biên, nên chúng cùng phương.</div>`;
+    break; }
+  case 4: {
+    let rows=X6.map((x,k)=>{const tight=Math.abs(H.m[k]-1)<1e-9; return `<tr class="${H.bad[k]?"hlr":""}"><td>SV${k+1}</td><td>${fs(Y6[k])}</td><td>${f(H.s[k])}</td><td>${f(H.m[k])}</td><td>${H.bad[k]?'<span class="badc">VI PHẠM (m &lt; 1)</span>':(tight?'<span class="warnc">chặt: vector hỗ trợ</span>':'<span class="good">lỏng (m &gt; 1)</span>')}</td></tr>`}).join("");
+    h+=`<div class="why">Hai ràng buộc đã thỏa chắc chắn. Giờ ta phải kiểm tra <b>cả sáu</b> ràng buộc: nếu một mẫu có m<sub>i</sub> &lt; 1 thì đoán sai.</div>`;
+    h+=`<div class="eq"><b>s</b> = <b>X</b><b>w</b> + b·<b>1</b>,&nbsp; <b>m</b> = <b>y</b> ⊙ <b>s</b></div>`;
+    h+=`<div class="row">${mat(X6,{caption:"X",d:0})}${op("·")}${mat(col(H.w),{caption:"w"})}${op("+ "+f(H.b))}${op("=")}${mat(col(H.s),{caption:"s"})}${op("→ ⊙y →")}${mat(col(H.m),{caption:"m"})}</div>`;
+    h+=`<table class="g"><tr><th>Mẫu</th><th>y</th><th>s</th><th>m = y·s</th><th style="text-align:right">Trạng thái</th></tr>${rows}</table>`;
+    h+=H.feas?`<div class="detail">Cả sáu ràng buộc đều thỏa, và đúng hai ràng buộc chặt (SV${hp.i+1}, SV${hp.j+1}) như giả thiết ✔</div>`:`<div class="pitfall" style="background:var(--po)"><b>Cặp ứng viên này sai:</b> ${H.bad.map((v,k)=>v?"SV"+(k+1):null).filter(Boolean).join(", ")} có m &lt; 1, nên (w, b) này không khả thi. Hãy quay lại bước 3 và chọn cặp khác (ví dụ cặp gần nhất SV2–SV4).</div>`;
+    break; }
+  case 5: {
+    const o=solveSMO(X6,Y6,1e6), same=Math.hypot(o.w[0]-H.w[0],o.w[1]-H.w[1])<1e-4;
+    if(!H.feas){
+      h+=`<div class="pitfall" style="background:var(--po)"><b>Chưa có nghiệm:</b> cặp SV${hp.i+1}–SV${hp.j+1} không cho một bộ (w, b) khả thi (xem bước 5). Hãy chọn lại ở bước 3.</div>`;
+      h+=`<div class="detail">Để so sánh, bộ giải số (SMO trên bài toán đối ngẫu) cho nghiệm duy nhất: w* = (${f(o.w[0])}; ${f(o.w[1])}), b* = ${f(o.b)}, lề γ = ${f(1/Math.hypot(o.w[0],o.w[1]),2)}, các α khác 0 là: ${o.alpha.map((a,k)=>a>1e-6?"SV"+(k+1):null).filter(Boolean).join(", ")}.</div>`;
+      break;}
+    const sNew=NEWSTU[0]*H.w[0]+NEWSTU[1]*H.w[1]+H.b;
+    h+=`<div class="why">Nghiệm của bài toán rút gọn (chỉ 2 ràng buộc) có tập khả thi <i>lớn hơn</i> bài toán đầy đủ nên không thể kém hơn. Vì nó lại khả thi cho cả 6 ràng buộc, nó chính là <b>nghiệm tối ưu duy nhất</b>${same?"":" (nếu thật sự tối ưu; xem so sánh SMO bên dưới)"}.</div>`;
+    h+=`<div class="eq">γ = 1/‖w‖ = ${f(H.gamma,3)} &nbsp;·&nbsp; độ rộng dải lề = 2/‖w‖ = <b>${f(H.width,3)}</b></div>`;
+    h+=`<div class="detail">H₀: ${f(H.w[0])}x₁ ${H.w[1]<0?"−":"+"} ${f(Math.abs(H.w[1]))}x₂ ${H.b<0?"−":"+"} ${f(Math.abs(H.b))} = 0<br>H₊ (xw + b = +1) đi qua SV${hp.j+1}; H₋ (xw + b = −1) đi qua SV${hp.i+1}. ${isOpt?"Dạng gọn: H₀: 3x₁ − 2x₂ − 9,5 = 0; H₊: 3x₁ − 2x₂ − 16 = 0; H₋: 3x₁ − 2x₂ − 3 = 0.":""}</div>`;
+    h+=`<div class="detail"><b>Sinh viên mới ★ (7; 3,6):</b> s = 7·${f(H.w[0])} ${H.w[1]<0?"−":"+"} 3,6·${f(Math.abs(H.w[1]))} ${H.b<0?"−":"+"} ${f(Math.abs(H.b))} = <b>${f(sNew)}</b> ⇒ ${sNew>0?"<b>Đậu</b>":"<b>Rớt</b>"}; |s| ${Math.abs(sNew)<1?"&lt; 1 nên nằm <i>trong dải lề</i> (hợp lệ: ràng buộc |s| ≥ 1 chỉ áp cho mẫu huấn luyện)":"≥ 1"}. Khác Perceptron, SVM luôn cho <b>một</b> câu trả lời xác định.</div>`;
+    h+=`<table class="g"><tr><th>Mô hình</th><th>Lề γ</th><th>Số nghiệm</th></tr><tr><td>Perceptron (A–D)</td><td>${f(Math.min(...PERC.map(p=>p.gamma)),2)} … ${f(Math.max(...PERC.map(p=>p.gamma)),2)}</td><td>≥ 20 (tùy thứ tự duyệt)</td></tr><tr class="hlr"><td><b>SVM lề cứng</b></td><td><b>${f(H.gamma,2)}</b></td><td><b>đúng 1</b></td></tr></table>`;
+    h+=`<div class="${same?"detail":"pitfall"}">Đối chiếu bộ giải số SMO (C = 10⁶): w* = (${f(o.w[0])}; ${f(o.w[1])}), b* = ${f(o.b)}. ${same?'<span class="good">Trùng khớp phép tính tay ✔</span>':'<span class="warnc">Khác: cặp bạn chọn khả thi nhưng ‖w‖ lớn hơn, nên lề nhỏ hơn mức tối ưu.</span>'}</div>`;
+    break; }
+  }
+  return h;
+}
+
+/* ================= Điều khiển chung ================= */
+const nSteps=()=>mode==="soft"?STEPS_S.length:STEPS_H.length;
+const curStep=()=>mode==="soft"?sstep:hstep;
+function setStep(i){if(mode==="soft")sstep=i;else hstep=i}
+function drawChips(){
+  const box=$("steps"); box.innerHTML="";
+  const A=mode==="soft"?STEPS_S:STEPS_H, cs=curStep();
+  A.forEach((st,i)=>{const c=document.createElement("div");c.className=`chip ${st.k} ${i===cs?"cur":""} ${i<=cs?"done":"todo"}`;c.textContent=`${i+1}. ${st.t}`;c.onclick=()=>{setStep(i);render()};box.appendChild(c)});
+}
+function render(){
+  const soft=mode==="soft";
+  $("tabS").classList.toggle("on",soft);$("tabH").classList.toggle("on",!soft);
+  $("softCtl").classList.toggle("hidden",!soft);$("softTools").classList.toggle("hidden",!soft);
+  $("commit").classList.toggle("hidden",!soft);$("train10").classList.toggle("hidden",!soft);$("train100").classList.toggle("hidden",!soft);$("play").classList.toggle("hidden",!soft);
+  $("vC").textContent=f(SC.C,2);$("veta").textContent=f(SC.eta0,2);
+  $("schedL").classList.toggle("hidden",SC.alg==="sgd");
+  $("etaL").classList.toggle("hidden",!(SC.alg==="batch"&&SC.sched==="const"));
+  drawChips();
+  const cs=curStep(), p=$("panel");
+  if(soft){
+    const C=ctxS();
+    planeSoft(sstep,C); p.innerHTML=panelSoft(sstep,C);
+    p.querySelectorAll("[data-sel]").forEach(b=>b.onclick=()=>{sel=+b.dataset.sel;render()});
+    $("commit").disabled=sstep!==STEPS_S.length-1;
+    drawHist(C);drawHinge(C);drawParam(C,sstep);optCard();
+  } else {
+    const H=ctxH();
+    planeHard(hstep,H); p.innerHTML=panelHard(hstep,H);
+    p.querySelectorAll("[data-pi]").forEach(td=>td.onclick=()=>{hp={i:+td.dataset.pi,j:+td.dataset.pj};render()});
+  }
+  $("prev").disabled=cs===0; $("next").disabled=cs===nSteps()-1;
+}
+function stopPlay(){clearInterval(playTimer);playTimer=null;$("play").textContent="▶ Tự chạy"}
+function iterate(k){for(let i=0;i<k;i++)commit();sstep=0;render()}
+$("next").onclick=()=>{const c=curStep();if(c<nSteps()-1){setStep(c+1);render()}};
+$("prev").onclick=()=>{const c=curStep();if(c>0){setStep(c-1);render()}};
+$("commit").onclick=()=>{commit();sstep=1;render()};
+$("train10").onclick=()=>{stopPlay();iterate(10)};
+$("train100").onclick=()=>{stopPlay();iterate(100)};
+$("play").onclick=()=>{
+  if(playTimer){stopPlay();return}
+  $("play").textContent="❚❚ Dừng";
+  playTimer=setInterval(()=>{if(sstep<STEPS_S.length-1){sstep++;render()}else{commit();sstep=1;render()}},1500);
+};
+$("reset").onclick=()=>{stopPlay();resetSoft();render()};
+$("optBtn").onclick=()=>{showOpt=!showOpt;render()};
+function readCfg(){
+  SC.C=+$("C").value;SC.alg=$("alg").value;SC.sched=$("sched").value;SC.eta0=+$("eta").value;SC.nd=+$("data").value;
+}
+["data","C","alg","sched","eta"].forEach(id=>$(id).oninput=()=>{stopPlay();readCfg();resetSoft();render()});
+$("tabS").onclick=()=>{stopPlay();mode="soft";render()};
+$("tabH").onclick=()=>{stopPlay();mode="hard";render()};
+document.addEventListener("keydown",e=>{
+  if(["INPUT","SELECT"].includes(e.target.tagName))return;
+  if(e.key==="ArrowRight")$("next").click();
+  if(e.key==="ArrowLeft")$("prev").click();
+});
+window.__svm={get P(){return P},get T(){return T},get mode(){return mode},ctxS,ctxH,solveSMO,SC,OPT,commit};
+readCfg();resetSoft();render();
+</script>
+</body>
+</html>
