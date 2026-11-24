@@ -27,7 +27,7 @@ Từ nền tảng cây quyết định, nhiều thuật toán học tổ hợp (
 |---|---|
 | `notebooks/` | Notebook thực hành các mô hình cây quyết định |
 | `code/` | Mã nguồn Python |
-| `documents/` | Tài liệu bài giảng |
+| `documents/` | Tài liệu bài giảng [Đọc tài liệu PDF](documents/Decision_Tree.pdf)|
 | `html/` | Bài giảng trực tuyến |
 | `slides/` | Slide trình chiếu |
 
